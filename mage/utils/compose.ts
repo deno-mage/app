@@ -8,6 +8,10 @@ export const compose = (handlers: MageHandler[]): ComposedHandler => {
     let lastIndex = -1;
 
     async function dispatch(i: number): Promise<void> {
+      // flush any promises in the context created by the previous handler
+      await context.flush();
+
+      // prevent calling next() multiple times in a single handler
       if (i <= lastIndex) {
         throw new Error("next() called multiple times");
       }
@@ -21,13 +25,18 @@ export const compose = (handlers: MageHandler[]): ComposedHandler => {
       }
 
       let nextPromise: Promise<void> | undefined;
-      await handler(context, async () => {
-        nextPromise = dispatch(i + 1);
-        await nextPromise;
-      });
 
-      if (!nextPromise) {
+      // capture the next handler execution so we can
+      // await it without consumers needing to
+      const dispatchNext = () => {
         nextPromise = dispatch(i + 1);
+      };
+
+      await handler(context, dispatchNext);
+
+      // if the handler didn't call next(), we need to manually
+      if (!nextPromise) {
+        dispatchNext();
       }
 
       await nextPromise;

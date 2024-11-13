@@ -2,7 +2,6 @@ import { MageContext } from "./mage-context.ts";
 import { MageHandler } from "./mage-handler.ts";
 import { compose } from "./utils/compose.ts";
 import { getAvailablePort } from "./utils/ports.ts";
-import { getStatusText } from "./utils/status-codes.ts";
 
 interface Middleware {
   method?: "get" | "post" | "put" | "delete" | "patch";
@@ -77,11 +76,11 @@ export class MageApp {
 
       await composed(context);
 
-      return new Response(context.bodyInit, {
-        headers: context.headers,
-        status: context.status,
-        statusText: getStatusText(context.status),
-      });
+      if (!context.response) {
+        throw new Error("Response not set");
+      }
+
+      return context.response;
     });
   }
 }

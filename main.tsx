@@ -4,16 +4,17 @@ import {
   handleUnhandled,
   minifyJson,
   setSecureHeaders,
-} from "./mage/middlewares.ts";
+} from "./mage/middleware.ts";
 import { StatusCode } from "./mage/utils/status-codes.ts";
 
 const app = new MageApp();
 
 app.use(handleErrors());
+app.use(setSecureHeaders());
 app.use(handleUnhandled());
 app.use(minifyJson());
 
-app.get("/", (context) => {
+app.get("/text", (context) => {
   context.text(StatusCode.OK, "Hello, World!");
 });
 
@@ -21,18 +22,16 @@ app.get("/json", (context) => {
   context.json(StatusCode.OK, { message: "Hello, World!" });
 });
 
-app.get("/render-static", async (context) => {
-  await context.renderStatic(
+app.get("/render-static", (context) => {
+  context.renderStatic(
     StatusCode.OK,
     <html lang="en">
       <body>
-        <h1>Hello, world from JSX!</h1>
+        <h1>Hello, World!</h1>
       </body>
     </html>
   );
 });
-
-app.use(setSecureHeaders());
 
 app.run({
   port: 8000,

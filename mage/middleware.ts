@@ -18,7 +18,7 @@ export const handleUnhandled =
   () => async (context: MageContext, next: MageNextHandler) => {
     await next();
 
-    if (!context.bodyInit) {
+    if (!context.response) {
       context.text(StatusCode.OK, "Not Found");
     }
   };
