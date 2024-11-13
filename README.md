@@ -66,3 +66,12 @@ app.use(handleUnhandled());
 // will minify JSON responses
 app.use(minifyJson());
 ```
+
+You can chain middleware together for individual requests:
+
+```tsx
+// only this route will minify JSON
+app.get("/small-json", minifyJson(), (context) => {
+  context.text(StatusCode.OK, { message: "Hello, World!" });
+});
+```
