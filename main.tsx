@@ -1,6 +1,28 @@
-import "./imports/react.ts";
-import { renderToReadableStream } from "./imports/react-dom/server.ts";
+import { MageApp } from "./mage/app.ts";
+import {
+  handleErrors,
+  minifyJson,
+  setSecureHeaders,
+} from "./mage/middlewares.ts";
 
-Deno.serve(async (_req) => {
-  return new Response(await renderToReadableStream(<div>Hello, World!!!</div>));
+const app = new MageApp();
+
+app.use(handleErrors());
+app.use(setSecureHeaders());
+app.use(minifyJson());
+
+app.get("/", (context, next) => {
+  context.text("Hello, World!");
+
+  return next();
+});
+
+app.get("/json", (context, next) => {
+  context.json({ message: "Hello, World!" });
+
+  return next();
+});
+
+app.run({
+  port: 8000,
 });
