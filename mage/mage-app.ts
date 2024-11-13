@@ -1,7 +1,8 @@
 import { MageContext } from "./mage-context.ts";
 import { MageHandler } from "./mage-handler.ts";
-import { compose } from "./utlis/compose.ts";
-import { getAvailablePort } from "./utlis/get-available-port.ts";
+import { compose } from "./utils/compose.ts";
+import { getAvailablePort } from "./utils/ports.ts";
+import { getStatusText } from "./utils/status-codes.ts";
 
 interface Middleware {
   method?: "get" | "post" | "put" | "delete" | "patch";
@@ -51,8 +52,6 @@ export class MageApp {
         throw new Error("Invalid URL");
       }
 
-      console.log(url);
-
       const context: MageContext = new MageContext(_req);
 
       const middlewares = this.middleware.filter((middleware) => {
@@ -78,11 +77,11 @@ export class MageApp {
 
       await composed(context);
 
-      if (!context.response) {
-        return new Response("Not Found", { status: 404 });
-      }
-
-      return context.response;
+      return new Response(context.bodyInit, {
+        headers: context.headers,
+        status: context.status,
+        statusText: getStatusText(context.status),
+      });
     });
   }
 }

@@ -20,7 +20,17 @@ export const compose = (handlers: MageHandler[]): ComposedHandler => {
         return;
       }
 
-      await handler(context, () => dispatch(i + 1));
+      let nextPromise: Promise<void> | undefined;
+      await handler(context, async () => {
+        nextPromise = dispatch(i + 1);
+        await nextPromise;
+      });
+
+      if (!nextPromise) {
+        nextPromise = dispatch(i + 1);
+      }
+
+      await nextPromise;
     }
 
     await dispatch(0);
