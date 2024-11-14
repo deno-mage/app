@@ -1,5 +1,5 @@
 import { renderToReadableStream } from "../imports/react-dom/server.ts";
-import { getStatusText, StatusCode } from "./utils/status-codes.ts";
+import { getStatusText, StatusCode } from "./status-codes.ts";
 
 type JSONValues = string | number | boolean | null | JSONValues[];
 type JSON = { [key: string]: JSONValues } | JSONValues[];

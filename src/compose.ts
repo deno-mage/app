@@ -1,5 +1,5 @@
-import { MageContext } from "../mage-context.ts";
-import { MageHandler } from "../mage-handler.ts";
+import { MageContext } from "./context.ts";
+import { MageHandler } from "./handler.ts";
 
 export type ComposedHandler = (context: MageContext) => Promise<void>;
 

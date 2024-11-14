@@ -1,18 +1,8 @@
-import { MageApp } from "./mage/mage-app.ts";
-import {
-  handleErrors,
-  handleUnhandled,
-  minifyJson,
-  setSecureHeaders,
-} from "./mage/middleware.ts";
-import { StatusCode } from "./mage/utils/status-codes.ts";
+import { MageApp, MageMiddleware, StatusCode } from "./main.ts";
 
 const app = new MageApp();
 
-app.use(handleErrors());
-app.use(setSecureHeaders());
-app.use(handleUnhandled());
-app.use(minifyJson());
+app.use(...MageMiddleware.recommended());
 
 app.get("/text", (context) => {
   context.text(StatusCode.OK, "Hello, World!");
