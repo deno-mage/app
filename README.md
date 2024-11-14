@@ -72,6 +72,6 @@ You can chain middleware together for individual requests:
 ```tsx
 // only this route will minify JSON
 app.get("/small-json", minifyJson(), (context) => {
-  context.text(StatusCode.OK, { message: "Hello, World!" });
+  context.json(StatusCode.OK, { message: "Hello, World!" });
 });
 ```
