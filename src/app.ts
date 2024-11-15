@@ -1,14 +1,8 @@
 import { MageContext } from "./context.ts";
-import { MageMiddlewareFunction } from "./middleware.ts";
+import { MageMiddlewareFunction, Middleware } from "./middleware.ts";
 import { compose } from "./compose.ts";
 import { getAvailablePort } from "./ports.ts";
-import { getStatusText, StatusCode } from "./status-codes.ts";
-
-interface Middleware {
-  method?: "get" | "post" | "put" | "delete" | "patch";
-  path?: string;
-  middlewareFunctions: MageMiddlewareFunction[];
-}
+import { handleOptionsRequests } from "./middleware/handle-options-requests.ts";
 
 export interface RunOptions {
   port: number;
@@ -54,7 +48,7 @@ export class MageApp {
 
       const context: MageContext = new MageContext(_req);
 
-      const middlewares = this.middleware.filter((middleware) => {
+      const matchingMiddleware = this.middleware.filter((middleware) => {
         if (
           middleware.method &&
           middleware.method !== _req.method.toLowerCase()
@@ -69,22 +63,12 @@ export class MageApp {
         return true;
       });
 
-      const handlers = middlewares
+      const handlers = matchingMiddleware
         .map((middleware) => middleware.middlewareFunctions)
         .flat();
 
       if (_req.method === "OPTIONS") {
-        handlers.push((context: MageContext) => {
-          context.headers.set(
-            "Allow",
-            this.middleware
-              .filter((middleware) => middleware.path === url.pathname)
-              .map((middleware) => middleware.method?.toUpperCase())
-              .join(", ")
-          );
-
-          context.text(StatusCode.OK, getStatusText(StatusCode.OK));
-        });
+        handlers.push(handleOptionsRequests(url, this.middleware));
       }
 
       const composed = compose(handlers);
