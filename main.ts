@@ -1,7 +1,7 @@
 export { MageApp } from "./src/app.ts";
 export type { RunOptions } from "./src/app.ts";
 export { MageContext } from "./src/context.ts";
-export { MageMiddleware } from "./src/middleware.ts";
+export { middleware } from "./src/middleware.ts";
 export type {
   MageMiddlewareFunction,
   MageNextMiddlewareFunction,

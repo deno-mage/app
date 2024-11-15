@@ -4,3 +4,4 @@
 # Deno
 deno.lock
 *.tsbuildinfo
+coverage

@@ -1,9 +1,11 @@
 import { MageContext } from "./context.ts";
-import { MageHandler } from "./handler.ts";
+import { MageMiddlewareFunction } from "./middleware.ts";
 
 export type ComposedHandler = (context: MageContext) => Promise<void>;
 
-export const compose = (handlers: MageHandler[]): ComposedHandler => {
+export const compose = (
+  middlewareFunctions: MageMiddlewareFunction[]
+): ComposedHandler => {
   return async function (context: MageContext): Promise<void> {
     let lastIndex = -1;
 
@@ -18,7 +20,8 @@ export const compose = (handlers: MageHandler[]): ComposedHandler => {
 
       lastIndex = i;
 
-      const handler: MageHandler | undefined = handlers[i];
+      const handler: MageMiddlewareFunction | undefined =
+        middlewareFunctions[i];
 
       if (!handler) {
         return;

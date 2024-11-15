@@ -2,6 +2,7 @@ import { MageContext } from "./context.ts";
 import { MageMiddlewareFunction } from "./middleware.ts";
 import { compose } from "./compose.ts";
 import { getAvailablePort } from "./ports.ts";
+import { getStatusText, StatusCode } from "./status-codes.ts";
 
 interface Middleware {
   method?: "get" | "post" | "put" | "delete" | "patch";
@@ -45,7 +46,7 @@ export class MageApp {
       port: getAvailablePort(options.port),
     };
 
-    Deno.serve(serveOptions, async (_req) => {
+    return Deno.serve(serveOptions, async (_req) => {
       const url = URL.parse(_req.url);
       if (!url) {
         throw new Error("Invalid URL");
@@ -71,6 +72,20 @@ export class MageApp {
       const handlers = middlewares
         .map((middleware) => middleware.middlewareFunctions)
         .flat();
+
+      if (_req.method === "OPTIONS") {
+        handlers.push((context: MageContext) => {
+          context.headers.set(
+            "Allow",
+            this.middleware
+              .filter((middleware) => middleware.path === url.pathname)
+              .map((middleware) => middleware.method?.toUpperCase())
+              .join(", ")
+          );
+
+          context.text(StatusCode.OK, getStatusText(StatusCode.OK));
+        });
+      }
 
       const composed = compose(handlers);
 

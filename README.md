@@ -33,7 +33,7 @@ Render JSX to static HTML:
 
 ```tsx
 app.get("/", (context) => {
-  context.renderStatic(
+  context.html(
     StatusCode.OK,
     <html lang="en">
       <body>
