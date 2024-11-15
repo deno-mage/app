@@ -1,4 +1,4 @@
-import { renderToReadableStream } from "../imports/react-dom/server.ts";
+import { renderToReadableStream } from "../npm/react-dom/server.ts";
 import { getStatusText, StatusCode } from "./status-codes.ts";
 
 type JSONValues = string | number | boolean | null | JSONValues[];
