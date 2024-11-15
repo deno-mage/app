@@ -2,7 +2,7 @@ import { MageContext } from "./context.ts";
 import { MageMiddlewareFunction, Middleware } from "./middleware.ts";
 import { compose } from "./compose.ts";
 import { getAvailablePort } from "./ports.ts";
-import { handleOptionsRequests } from "./middleware/handle-options-requests.ts";
+import { handleOptionsRequests } from "./middleware/options.ts";
 
 export interface RunOptions {
   port: number;

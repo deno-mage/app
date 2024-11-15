@@ -1,6 +1,6 @@
 import { MageContext } from "../context.ts";
 import { MageMiddlewareFunction, Middleware } from "../middleware.ts";
-import { getStatusText, StatusCode } from "../status-codes.ts";
+import { StatusCode } from "../status-codes.ts";
 
 export const handleOptionsRequests = (
   url: URL,
@@ -15,6 +15,6 @@ export const handleOptionsRequests = (
         .join(", ")
     );
 
-    context.text(StatusCode.OK, getStatusText(StatusCode.OK));
+    context.text(StatusCode.OK, "");
   };
 };

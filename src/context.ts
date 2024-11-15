@@ -1,5 +1,5 @@
 import { renderToReadableStream } from "../npm/react-dom/server.ts";
-import { getStatusText, StatusCode } from "./status-codes.ts";
+import { statusTextMap, StatusCode } from "./status-codes.ts";
 
 type JSONValues = string | number | boolean | null | JSONValues[];
 type JSON = { [key: string]: JSONValues } | JSONValues[];
@@ -16,7 +16,7 @@ export class MageContext {
     this.headers.set("Content-Type", "text/plain; charset=utf-8");
     this.response = new Response(body, {
       status: status,
-      statusText: getStatusText(status),
+      statusText: statusTextMap[status],
       headers: this.headers,
     });
   }
@@ -25,7 +25,7 @@ export class MageContext {
     this.headers.set("Content-Type", "application/json");
     this.response = new Response(JSON.stringify(body), {
       status: status,
-      statusText: getStatusText(status),
+      statusText: statusTextMap[status],
       headers: this.headers,
     });
   }
@@ -35,7 +35,7 @@ export class MageContext {
       this.headers.set("Content-Type", "text/html; charset=utf-8");
       this.response = new Response(await renderToReadableStream(body), {
         status: status,
-        statusText: getStatusText(status),
+        statusText: statusTextMap[status],
         headers: this.headers,
       });
     });

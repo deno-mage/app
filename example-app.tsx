@@ -3,9 +3,9 @@ import { MageApp, middleware, StatusCode } from "./main.ts";
 const app = new MageApp();
 
 app.use(
-  middleware.setSecurityHeaders(),
-  middleware.handleErrors(),
-  middleware.handleUnhandledRequests()
+  middleware.useSecurityHeaders(),
+  middleware.useErrorHandler(),
+  middleware.useNotFoundHandler()
 );
 
 app.get("/text", (context) => {

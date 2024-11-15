@@ -8,7 +8,7 @@ let server: MageTestServer;
 beforeEach(() => {
   server = new MageTestServer();
 
-  server.app.use(middleware.setSecurityHeaders());
+  server.app.use(middleware.useSecurityHeaders());
 
   server.app.get("/", (context) => {
     context.text(StatusCode.OK, "Hello, World!");

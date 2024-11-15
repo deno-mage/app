@@ -1,6 +1,6 @@
-import { handleErrors } from "./src/middleware/handle-errors.ts";
-import { handleUnhandledRequests } from "./src/middleware/handle-unhandled-requests.ts";
-import { setSecurityHeaders } from "./src/middleware/security-headers.ts";
+import { useErrorHandler } from "./src/middleware/error-handler.ts";
+import { useNotFoundHandler } from "./src/middleware/not-found-handler.ts";
+import { useSecurityHeaders } from "./src/middleware/security-headers.ts";
 
 export { MageApp } from "./src/app.ts";
 export type { RunOptions } from "./src/app.ts";
@@ -12,7 +12,7 @@ export type {
 export { StatusCode } from "./src/status-codes.ts";
 
 export const middleware = {
-  handleErrors,
-  handleUnhandledRequests,
-  setSecurityHeaders,
+  useErrorHandler,
+  useNotFoundHandler,
+  useSecurityHeaders,
 };

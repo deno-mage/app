@@ -87,5 +87,5 @@ it("should return available methods for OPTIONS", async () => {
 
   expect(response.status).toBe(StatusCode.OK);
   expect(response.headers.get("Allow")).toBe("DELETE, GET, PATCH, POST, PUT");
-  expect(await response.text()).toBe("OK");
+  expect(await response.text()).toBe("");
 });
