@@ -54,9 +54,9 @@ export class MageApp {
     return Deno.serve(serveOptions, async (_req) => {
       const url = new URL(_req.url);
 
-      const context: MageContext = new MageContext(_req);
+      const context: MageContext = new MageContext(_req, url);
 
-      const middleware = this.router.match(_req.method, url.pathname);
+      const middleware = this.router.match(_req.method, url.pathname, context);
 
       await compose(middleware)(context);
 

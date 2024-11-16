@@ -1,11 +1,11 @@
-import { afterEach, beforeEach, it } from "@std/testing/bdd";
+import { afterAll, beforeAll, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
 import { StatusCode } from "../exports.ts";
 import { MageTestServer } from "./utils/server.ts";
 
 let server: MageTestServer;
 
-beforeEach(() => {
+beforeAll(() => {
   server = new MageTestServer();
 
   server.app.delete("/", (context) => {
@@ -34,13 +34,13 @@ beforeEach(() => {
 
   server.app.options("/", (context) => {
     context.text(StatusCode.OK, "options");
-    context.headers.set("Allow", "CUSTOM OPTIONS");
+    context.response.headers.set("Allow", "CUSTOM OPTIONS");
   });
 
   server.start();
 });
 
-afterEach(async () => {
+afterAll(async () => {
   await server.stop();
 });
 

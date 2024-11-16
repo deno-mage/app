@@ -35,7 +35,11 @@ class MiddlewareRegister {
     ];
   }
 
-  public match(method: string, path: string): MageMiddleware[] {
+  public match(
+    method: string,
+    path: string,
+    context: MageContext
+  ): MageMiddleware[] {
     const matchedEntries = [...this.pushedEntries, ...this.defaultEntries]
       .filter((entry) => {
         if (entry.methods && !entry.methods.includes(method)) {
@@ -44,6 +48,10 @@ class MiddlewareRegister {
 
         if (entry.pathname && entry.pathname !== path) {
           return false;
+        }
+
+        if (entry.pathname) {
+          context.isRouteMatched = true;
         }
 
         return true;
@@ -57,8 +65,12 @@ class MiddlewareRegister {
 export class MageRouter {
   private middlewareRegister = new MiddlewareRegister();
 
-  public match(method: string, path: string): MageMiddleware[] {
-    return this.middlewareRegister.match(method, path);
+  public match(
+    method: string,
+    path: string,
+    context: MageContext
+  ): MageMiddleware[] {
+    return this.middlewareRegister.match(method, path, context);
   }
 
   public use(...middleware: MageMiddleware[]) {

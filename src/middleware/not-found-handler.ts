@@ -5,7 +5,7 @@ export const useNotFoundHandler = (): MageMiddleware => {
   return async (context, next) => {
     await next();
 
-    if (!context.response) {
+    if (!context.isRouteMatched) {
       context.text(StatusCode.NotFound, "Not Found");
     }
   };

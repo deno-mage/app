@@ -100,10 +100,10 @@ You can also set headers for the response:
 context.set("Content-Type", "text/plain");
 ```
 
-You can determine if a request has been handled by checking if there is a response object on the context:
+You can determine if a request has been matched to a route by checking `isRouteMatched` on the context:
 
 ```tsx
-if (context.response) {
+if (context.isRouteMatched) {
   // Request has been handled
 }
 ```

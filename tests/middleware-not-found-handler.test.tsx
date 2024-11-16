@@ -1,11 +1,11 @@
-import { afterEach, beforeEach, it } from "@std/testing/bdd";
+import { afterAll, beforeAll, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
 import { middleware, StatusCode } from "../exports.ts";
 import { MageTestServer } from "./utils/server.ts";
 
 let server: MageTestServer;
 
-beforeEach(() => {
+beforeAll(() => {
   server = new MageTestServer();
 
   server.app.use(middleware.useNotFoundHandler());
@@ -13,7 +13,7 @@ beforeEach(() => {
   server.start();
 });
 
-afterEach(async () => {
+afterAll(async () => {
   await server.stop();
 });
 

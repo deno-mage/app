@@ -10,13 +10,16 @@ export const useOptions = (config: OptionsConfig[]): MageMiddleware => {
   return async (context, next) => {
     await next();
 
-    if (context.request.method !== HttpMethod.Options || context.response) {
+    if (
+      context.request.method !== HttpMethod.Options ||
+      context.response.headers.has("Allow")
+    ) {
       // no need to handle options requests if not an
       // options request or has already been handled
       return;
     }
 
-    context.headers.set(
+    context.response.headers.set(
       "Allow",
       config
         .filter((middleware) => middleware.pathname === context.url.pathname)
