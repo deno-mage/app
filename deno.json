@@ -12,5 +12,5 @@
     "jsx": "react-jsx",
     "jsxImportSource": "react"
   },
-  "exports": "./main.ts"
+  "exports": "./exports.ts"
 }

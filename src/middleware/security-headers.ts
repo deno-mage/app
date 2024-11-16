@@ -1,6 +1,6 @@
-import { MageMiddlewareFunction } from "../middleware.ts";
+import { MageMiddleware } from "../router.ts";
 
-export const useSecurityHeaders = (): MageMiddlewareFunction => {
+export const useSecurityHeaders = (): MageMiddleware => {
   return (context) => {
     context.headers.set(
       "Content-Security-Policy",

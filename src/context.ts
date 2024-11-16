@@ -1,16 +1,25 @@
 import { renderToReadableStream } from "../npm/react-dom/server.ts";
-import { statusTextMap, StatusCode } from "./status-codes.ts";
+import { statusTextMap, StatusCode } from "./http.ts";
 
 type JSONValues = string | number | boolean | null | JSONValues[];
 type JSON = { [key: string]: JSONValues } | JSONValues[];
 
 export class MageContext {
   public headers: Headers = new Headers();
+  public url: URL;
   public response: Response | undefined;
 
   private promises: Promise<unknown>[] = [];
 
-  public constructor(public request: Request) {}
+  public constructor(public request: Request) {
+    const parsedUrl = URL.parse(request.url);
+
+    if (parsedUrl === null) {
+      throw new Error("Failed to parse URL");
+    }
+
+    this.url = parsedUrl;
+  }
 
   public text(status: StatusCode, body: string) {
     this.headers.set("Content-Type", "text/plain; charset=utf-8");

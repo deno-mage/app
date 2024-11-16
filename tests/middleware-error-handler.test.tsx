@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, it } from "@std/testing/bdd";
 import { spy } from "@std/testing/mock";
 import { expect } from "@std/expect";
-import { middleware, StatusCode } from "../main.ts";
+import { middleware, StatusCode } from "../exports.ts";
 import { MageTestServer } from "./utils/server.ts";
 
 let server: MageTestServer;

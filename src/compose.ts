@@ -1,11 +1,7 @@
 import { MageContext } from "./context.ts";
-import { MageMiddlewareFunction } from "./middleware.ts";
+import { MageMiddleware } from "./router.ts";
 
-export type ComposedHandler = (context: MageContext) => Promise<void>;
-
-export const compose = (
-  middlewareFunctions: MageMiddlewareFunction[]
-): ComposedHandler => {
+export const compose = (middleware: MageMiddleware[]) => {
   return async function (context: MageContext): Promise<void> {
     let lastIndex = -1;
 
@@ -20,22 +16,20 @@ export const compose = (
 
       lastIndex = i;
 
-      const handler: MageMiddlewareFunction | undefined =
-        middlewareFunctions[i];
+      const currentMiddleware: MageMiddleware | undefined = middleware[i];
 
-      if (!handler) {
+      if (!currentMiddleware) {
         return;
       }
 
-      let nextPromise: Promise<void> | undefined;
-
       // capture the next handler execution so we can
       // await it without consumers needing to
+      let nextPromise: Promise<void> | undefined;
       const dispatchNext = () => {
         nextPromise = dispatch(i + 1);
       };
 
-      await handler(context, dispatchNext);
+      await currentMiddleware(context, dispatchNext);
 
       // if the handler didn't call next(), we need to manually
       if (!nextPromise) {

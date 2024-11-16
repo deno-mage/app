@@ -1,17 +1,26 @@
-import { MageContext } from "../context.ts";
-import { MageMiddlewareFunction, Middleware } from "../middleware.ts";
-import { StatusCode } from "../status-codes.ts";
+import { MageMiddleware } from "../router.ts";
+import { HttpMethod, StatusCode } from "../http.ts";
 
-export const handleOptionsRequests = (
-  url: URL,
-  middleware: Middleware[]
-): MageMiddlewareFunction => {
-  return (context: MageContext) => {
+interface OptionsConfig {
+  methods: string[];
+  pathname: string;
+}
+
+export const useOptions = (config: OptionsConfig[]): MageMiddleware => {
+  return async (context, next) => {
+    await next();
+
+    if (context.request.method !== HttpMethod.Options || context.response) {
+      // no need to handle options requests if not an
+      // options request or has already been handled
+      return;
+    }
+
     context.headers.set(
       "Allow",
-      middleware
-        .filter((middleware) => middleware.path === url.pathname)
-        .map((middleware) => middleware.method?.toUpperCase())
+      config
+        .filter((middleware) => middleware.pathname === context.url.pathname)
+        .map((entry) => entry.methods?.join(", "))
         .join(", ")
     );
 

@@ -1,4 +1,4 @@
-import { MageApp } from "../../main.ts";
+import { MageApp } from "../../exports.ts";
 
 const TEST_PORT_FLOOR = 60000;
 

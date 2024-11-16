@@ -1,4 +1,4 @@
-import { MageApp, middleware, StatusCode } from "./main.ts";
+import { MageApp, middleware, StatusCode } from "./exports.ts";
 
 const app = new MageApp();
 

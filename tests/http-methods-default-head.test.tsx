@@ -9,7 +9,7 @@ beforeEach(() => {
   server = new MageTestServer();
 
   server.app.get("/", (context) => {
-    context.json(StatusCode.OK, { message: "Hello, World!" });
+    context.text(StatusCode.OK, "Hello, World!");
   });
 
   server.start();
@@ -19,12 +19,12 @@ afterEach(async () => {
   await server.stop();
 });
 
-it("should return json response", async () => {
+it("should return result of GET without body when HEAD requested", async () => {
   const response = await fetch(server.url("/"), {
-    method: "GET",
+    method: "HEAD",
   });
 
   expect(response.status).toBe(StatusCode.OK);
-  expect(response.headers.get("content-type")).toBe("application/json");
-  expect(await response.json()).toEqual({ message: "Hello, World!" });
+  expect(response.headers.get("Content-Length")).toBe("13");
+  expect(await response.text()).toBe("");
 });

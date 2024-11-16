@@ -1,7 +1,7 @@
-import { MageMiddlewareFunction } from "../middleware.ts";
-import { StatusCode } from "../status-codes.ts";
+import { MageMiddleware } from "../router.ts";
+import { StatusCode } from "../http.ts";
 
-export const useErrorHandler = (): MageMiddlewareFunction => {
+export const useErrorHandler = (): MageMiddleware => {
   return async (context, next) => {
     try {
       await next();

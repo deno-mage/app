@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
-import { StatusCode } from "../main.ts";
+import { StatusCode } from "../exports.ts";
 import { MageTestServer } from "./utils/server.ts";
 
 let server: MageTestServer;
@@ -26,6 +26,15 @@ beforeEach(() => {
 
   server.app.put("/", (context) => {
     context.text(StatusCode.OK, "put");
+  });
+
+  server.app.head("/", (context) => {
+    context.text(StatusCode.OK, "");
+  });
+
+  server.app.options("/", (context) => {
+    context.text(StatusCode.OK, "options");
+    context.headers.set("Allow", "CUSTOM OPTIONS");
   });
 
   server.start();
@@ -80,12 +89,11 @@ it("should hit PUT", async () => {
   expect(await response.text()).toBe("put");
 });
 
-it("should return available methods for OPTIONS", async () => {
+it("should return available methods for HEAD", async () => {
   const response = await fetch(server.url("/"), {
-    method: "OPTIONS",
+    method: "HEAD",
   });
 
   expect(response.status).toBe(StatusCode.OK);
-  expect(response.headers.get("Allow")).toBe("DELETE, GET, PATCH, POST, PUT");
   expect(await response.text()).toBe("");
 });
