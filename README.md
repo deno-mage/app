@@ -94,10 +94,11 @@ context.html(
 );
 ```
 
-You can also set headers for the response:
+You can also configure headers for the response:
 
 ```tsx
-context.set("Content-Type", "text/plain");
+context.response.headers.set("Content-Type", "text/plain");
+context.response.headers.delete("Content-Type", "text/plain");
 ```
 
 You can determine if a request has been matched to a route by checking `isRouteMatched` on the context:
