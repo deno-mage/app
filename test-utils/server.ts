@@ -1,4 +1,4 @@
-import { MageApp } from "../../exports.ts";
+import { MageApp } from "../exports.ts";
 
 const TEST_PORT_FLOOR = 60000;
 
@@ -13,13 +13,9 @@ export class MageTestServer {
   }
 
   url(path: string) {
-    if (!this.server) {
-      throw new Error("Unable to get URL, server is not running");
-    }
-
     return new URL(
       path,
-      `http://${this.server.addr.hostname}:${this.server.addr.port}`
+      `http://${this.server?.addr.hostname}:${this.server?.addr.port}`,
     );
   }
 

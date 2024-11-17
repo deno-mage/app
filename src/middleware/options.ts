@@ -1,32 +1,33 @@
+import { StatusCode } from "../http.ts";
 import { MageMiddleware } from "../router.ts";
-import { HttpMethod, StatusCode } from "../http.ts";
 
-interface OptionsConfig {
-  methods: string[];
-  pathname: string;
+/**
+ * Options for the useOptionsAllow middleware.
+ */
+interface OptionsOptions {
+  /**
+   * Function to return methods that are allowed for the requested
+   * pathname.
+   */
+  getAllowedMethods: () => string[];
 }
 
-export const useOptions = (config: OptionsConfig[]): MageMiddleware => {
+/**
+ * Non-CORS handling of preflight (OPTIONS) requests. Responds with
+ * an Allow header containing the available methods for the requested
+ * pathname.
+ *
+ * @returns MageMiddleware
+ */
+export const useOptions = (options: OptionsOptions): MageMiddleware => {
   return async (context, next) => {
-    await next();
-
-    if (
-      context.request.method !== HttpMethod.Options ||
-      context.response.headers.has("Allow")
-    ) {
-      // no need to handle options requests if not an
-      // options request or has already been handled
-      return;
-    }
+    context.empty(StatusCode.NoContent);
 
     context.response.headers.set(
       "Allow",
-      config
-        .filter((middleware) => middleware.pathname === context.url.pathname)
-        .map((entry) => entry.methods?.join(", "))
-        .join(", ")
+      options.getAllowedMethods().join(", "),
     );
 
-    context.text(StatusCode.OK, "");
+    await next();
   };
 };

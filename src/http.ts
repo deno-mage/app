@@ -1,3 +1,6 @@
+/**
+ * Supported HTTP methods.
+ */
 export enum HttpMethod {
   Get = "GET",
   Post = "POST",
@@ -8,6 +11,17 @@ export enum HttpMethod {
   Head = "HEAD",
 }
 
+/**
+ * Supported redirect types.
+ */
+export enum RedirectType {
+  Permanent,
+  Temporary,
+}
+
+/**
+ * Supported HTTP status codes.
+ */
 export enum StatusCode {
   Continue = 100,
   SwitchingProtocols = 101,
@@ -74,6 +88,9 @@ export enum StatusCode {
   NetworkAuthenticationRequired = 511,
 }
 
+/**
+ * Default status text for each status code.
+ */
 export enum StatusText {
   Continue = "Continue",
   SwitchingProtocols = "Switching Protocols",
@@ -140,6 +157,9 @@ export enum StatusText {
   NetworkAuthenticationRequired = "Network Authentication Required",
 }
 
+/**
+ * Map of status codes to default status text.
+ */
 export const statusTextMap: Record<StatusCode, StatusText> = {
   [StatusCode.Continue]: StatusText.Continue,
   [StatusCode.SwitchingProtocols]: StatusText.SwitchingProtocols,

@@ -1,61 +1,110 @@
-import { renderToReadableStream } from "../npm/react-dom/server.ts";
-import { statusTextMap, StatusCode } from "./http.ts";
+import { renderToReadableStream } from "../.npm/react-dom/server.ts";
+import { RedirectType, StatusCode, statusTextMap } from "./http.ts";
+import { MageRouter } from "./router.ts";
 
+/**
+ * Serializable JSON value
+ */
 type JSONValues = string | number | boolean | null | JSONValues[];
+
+/**
+ * Serializable JSON object
+ */
 type JSON = { [key: string]: JSONValues } | JSONValues[];
 
+/**
+ * Context object that is passed to each middleware. It persists throughout the
+ * request/response cycle and is used to interact with the request and response.
+ */
 export class MageContext {
-  public isRouteMatched = false;
+  /**
+   * The URL of the request
+   */
+  public url: URL;
+
+  /**
+   * The response object that will be sent at the end of the request/response
+   * cycle.
+   */
   public response = new Response();
 
-  private promises: Promise<unknown>[] = [];
+  public constructor(public request: Request, private router: MageRouter) {
+    this.url = new URL(request.url);
+  }
 
-  public constructor(public request: Request, public url: URL) {}
-
+  /**
+   * Sends a text response with the provided status code and body
+   * @param status
+   * @param body
+   */
   public text(status: StatusCode, body: string) {
     this.response = new Response(body, {
       status: status,
       statusText: statusTextMap[status],
       headers: this.response.headers,
     });
+
     this.response.headers.set("Content-Type", "text/plain; charset=utf-8");
   }
 
+  /**
+   * Sends a JSON response with the provided status code and body
+   * @param status
+   * @param body
+   */
   public json(status: StatusCode, body: JSON) {
     this.response = new Response(JSON.stringify(body), {
       status: status,
       statusText: statusTextMap[status],
       headers: this.response.headers,
     });
+
     this.response.headers.set("Content-Type", "application/json");
   }
 
-  public async html(status: StatusCode, body: JSX.Element) {
-    await this.capturePromise(async () => {
-      this.response = new Response(await renderToReadableStream(body), {
-        status: status,
-        statusText: statusTextMap[status],
-        headers: this.response.headers,
-      });
-      this.response.headers.set("Content-Type", "text/html; charset=utf-8");
+  /**
+   * Renders a JSX element to the response body with the provided status code
+   * @param status
+   * @param body
+   */
+  public async render(status: StatusCode, body: JSX.Element) {
+    this.response = new Response(await renderToReadableStream(body), {
+      status: status,
+      statusText: statusTextMap[status],
+      headers: this.response.headers,
+    });
+
+    this.response.headers.set("Content-Type", "text/html; charset=utf-8");
+  }
+
+  /**
+   * Sends an empty response with the provided status code
+   * @param status
+   */
+  public empty(status: StatusCode) {
+    this.response = new Response(null, {
+      status: status,
+      statusText: statusTextMap[status],
+      headers: this.response.headers,
     });
   }
 
-  // flush any promises created within context during handler execution
-  public async flush() {
-    await Promise.all(this.promises);
-    this.promises = [];
-  }
+  /**
+   * Redirects the request to the provided location with the specified redirect
+   * @param redirectType
+   * @param location
+   */
+  public redirect(redirectType: RedirectType, location: URL | string) {
+    const status = redirectType === RedirectType.Permanent
+      ? StatusCode.PermanentRedirect
+      : StatusCode.TemporaryRedirect;
 
-  // capture promises created within context so we can flush them
-  // before moving between handlers
-  private async capturePromise(fn: () => Promise<void>) {
-    const promise = new Promise<void>((resolve) => {
-      fn().then(() => resolve());
+    this.response = new Response(null, {
+      status,
+      statusText: statusTextMap[status],
+      headers: this.response.headers,
     });
 
-    this.promises.push(promise);
-
-    await promise;
+    this.response.headers.set("Location", location.toString());
   }
 }

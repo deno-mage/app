@@ -1,0 +1,17 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.1.0
+    hooks:
+      - id: detect-aws-credentials
+        args:
+          - "--allow-missing-credentials"
+      - id: detect-private-key
+      - id: mixed-line-ending
+      - id: no-commit-to-branch
+
+  - repo: local
+    hooks:
+      - id: pre-commit
+        name: Custom Pre-Commit Hook
+        entry: ./.git-hooks/pre-commit.sh
+        language: script
