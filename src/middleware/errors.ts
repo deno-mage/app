@@ -9,7 +9,7 @@ export const useErrors = (): MageMiddleware => {
       console.error(error);
       context.text(
         StatusCode.InternalServerError,
-        StatusText.InternalServerError
+        StatusText.InternalServerError,
       );
     }
   };

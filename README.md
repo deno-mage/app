@@ -14,7 +14,7 @@ const app = new MageApp();
 app.use(
   middleware.useSecurityHeaders(),
   middleware.useErrors(),
-  middleware.useNotFound()
+  middleware.useNotFound(),
 );
 
 app.get("/text", (context) => {
@@ -32,7 +32,7 @@ app.get("/render", async (context) => {
       <body>
         <h1>Hello, World!</h1>
       </body>
-    </html>
+    </html>,
   );
 });
 
@@ -43,7 +43,8 @@ app.run({
 
 ## Middleware
 
-Mage APIs are composed of stacked middleware. A simple middlware looks like this:
+Mage APIs are composed of stacked middleware. A simple middlware looks like
+this:
 
 ```tsx
 app.get("/", async (context, next) => {
@@ -53,7 +54,8 @@ app.get("/", async (context, next) => {
 });
 ```
 
-If you want to complete handling a request you simply don't call the next middleware:
+If you want to complete handling a request you simply don't call the next
+middleware:
 
 ```tsx
 app.get("/", (context) => {
@@ -74,7 +76,9 @@ A collection of prebuilt middleware is available to use.
 
 ## Context
 
-The context object is passed to each middleware and contains details about the request and response. Additionally it contains utility functions to respond to the request.
+The context object is passed to each middleware and contains details about the
+request and response. Additionally it contains utility functions to respond to
+the request.
 
 ```tsx
 // Text response
@@ -90,7 +94,7 @@ await context.render(
     <body>
       <h1>Hello, World!</h1>
     </body>
-  </html>
+  </html>,
 );
 ```
 
@@ -101,7 +105,8 @@ context.response.headers.set("Content-Type", "text/plain");
 context.response.headers.delete("Content-Type", "text/plain");
 ```
 
-You can determine if a request has been matched to a route by checking `matchedPathname` on the context.
+You can determine if a request has been matched to a route by checking
+`matchedPathname` on the context.
 
 ```tsx
 app.get("/books/:id", (context) => {
@@ -114,7 +119,9 @@ app.get("/books/:id", (context) => {
 
 ## Routing
 
-You can register middleware to execute on every route and method via the `app.use` method. This is useful for middleware that should run on every request.
+You can register middleware to execute on every route and method via the
+`app.use` method. This is useful for middleware that should run on every
+request.
 
 ```tsx
 app.use(async (context, next) => {

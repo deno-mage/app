@@ -15,7 +15,7 @@ beforeAll(() => {
         <body>
           <h1>Hello, World!</h1>
         </body>
-      </html>
+      </html>,
     );
   });
 
@@ -34,6 +34,6 @@ it("should render jsx to html response", async () => {
   expect(response.status).toBe(StatusCode.OK);
   expect(response.headers.get("content-type")).toBe("text/html; charset=utf-8");
   expect(await response.text()).toBe(
-    '<!DOCTYPE html><html lang="en"><body><h1>Hello, World!</h1></body></html>'
+    '<!DOCTYPE html><html lang="en"><body><h1>Hello, World!</h1></body></html>',
   );
 });

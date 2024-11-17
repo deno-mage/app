@@ -26,7 +26,7 @@ it("should return text response", async () => {
 
   expect(response.status).toBe(StatusCode.OK);
   expect(response.headers.get("content-type")).toBe(
-    "text/plain; charset=utf-8"
+    "text/plain; charset=utf-8",
   );
   expect(await response.text()).toBe("Hello, World!");
 });

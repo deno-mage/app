@@ -3,7 +3,7 @@ import { HttpMethod } from "./http.ts";
 
 export type MageMiddleware = (
   context: MageContext,
-  next: () => Promise<void> | void
+  next: () => Promise<void> | void,
 ) => Promise<void> | void;
 
 interface MiddlewareRegisterEntry {

@@ -8,7 +8,7 @@ let server: MageTestServer;
 beforeAll(() => {
   server = new MageTestServer();
 
-  server.app.use(middleware.useNotFound());
+  server.app.use(middleware.useNotFound(), middleware.useOptions());
 
   server.start();
 });
@@ -24,4 +24,14 @@ it("should handle unhandled requests", async () => {
 
   expect(response.status).toEqual(StatusCode.NotFound);
   expect(await response.text()).toBe("Not Found");
+});
+
+it("should not handle OPTIONS requests", async () => {
+  const response = await fetch(server.url("/"), {
+    method: "OPTIONS",
+  });
+
+  expect(response.status).toEqual(StatusCode.NoContent);
+  expect(response.headers.get("Allow")).toBe("");
+  expect(await response.text()).toBe("");
 });

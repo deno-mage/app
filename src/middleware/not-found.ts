@@ -1,12 +1,15 @@
+import { HttpMethod } from "../http.ts";
 import { MageMiddleware } from "../router.ts";
-import { StatusCode, StatusText } from "../http.ts";
 
 export const useNotFound = (): MageMiddleware => {
   return async (context, next) => {
-    if (context.matchedPathname) {
-      await next();
-    }
+    await next();
 
-    context.text(StatusCode.NotFound, StatusText.NotFound);
+    if (
+      !context.matchedPathname &&
+      context.request.method !== HttpMethod.Options
+    ) {
+      context.notFound();
+    }
   };
 };

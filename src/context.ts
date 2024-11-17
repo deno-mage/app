@@ -1,5 +1,5 @@
-import { renderToReadableStream } from "../npm/react-dom/server.ts";
-import { statusTextMap, StatusCode, RedirectType, StatusText } from "./http.ts";
+import { renderToReadableStream } from "../.npm/react-dom/server.ts";
+import { RedirectType, StatusCode, StatusText, statusTextMap } from "./http.ts";
 import { MageRouter } from "./router.ts";
 
 type JSONValues = string | number | boolean | null | JSONValues[];
@@ -47,18 +47,19 @@ export class MageContext {
   public empty() {
     this.response = new Response(null, {
       status: StatusCode.NoContent,
-      statusText: StatusText.NoContent,
+      statusText: statusTextMap[StatusCode.NoContent],
       headers: this.response.headers,
     });
+  }
 
-    this.response.headers.set("Content-Length", "0");
+  public notFound() {
+    this.text(StatusCode.NotFound, StatusText.NotFound);
   }
 
   public redirect(redirectType: RedirectType, location: URL | string) {
-    const status =
-      redirectType === RedirectType.Permanent
-        ? StatusCode.PermanentRedirect
-        : StatusCode.TemporaryRedirect;
+    const status = redirectType === RedirectType.Permanent
+      ? StatusCode.PermanentRedirect
+      : StatusCode.TemporaryRedirect;
 
     this.response = new Response(null, {
       status,

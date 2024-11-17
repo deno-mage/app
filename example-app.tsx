@@ -5,7 +5,7 @@ const app = new MageApp();
 app.use(
   middleware.useSecurityHeaders(),
   middleware.useErrors(),
-  middleware.useNotFound()
+  middleware.useNotFound(),
 );
 
 app.get("/text", (context) => {
@@ -23,7 +23,7 @@ app.get("/render", async (context) => {
       <body>
         <h1>Hello, World!</h1>
       </body>
-    </html>
+    </html>,
   );
 });
 

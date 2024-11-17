@@ -1,6 +1,8 @@
 {
   "tasks": {
-    "dev": "deno run --allow-net --allow-env --watch example-app.tsx"
+    "dev": "deno run --allow-net --allow-env --watch example-app.tsx",
+    "test": "deno test --allow-net",
+    "lint": "deno lint"
   },
   "imports": {
     "@std/expect": "jsr:@std/expect@^1.0.8",

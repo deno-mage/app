@@ -22,7 +22,7 @@ beforeAll(() => {
     (context) => {
       context.response.headers.delete("X-Test");
       context.text(StatusCode.OK, "unset");
-    }
+    },
   );
 
   server.start();

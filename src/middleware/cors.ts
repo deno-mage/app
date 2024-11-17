@@ -35,21 +35,21 @@ export const useCors = (options: CorsOptions): MageMiddleware => {
     if (allowedMethods.length > 0) {
       context.response.headers.set(
         "Access-Control-Allow-Methods",
-        allowedMethods.join(", ")
+        allowedMethods.join(", "),
       );
     }
 
     if (allowedHeaders.length > 0) {
       context.response.headers.set(
         "Access-Control-Allow-Headers",
-        allowedHeaders.join(", ")
+        allowedHeaders.join(", "),
       );
     }
 
     if (exposeHeaders.length > 0) {
       context.response.headers.set(
         "Access-Control-Expose-Headers",
-        exposeHeaders.join(", ")
+        exposeHeaders.join(", "),
       );
     }
 
@@ -60,7 +60,7 @@ export const useCors = (options: CorsOptions): MageMiddleware => {
     if (allowedMaxAge) {
       context.response.headers.set(
         "Access-Control-Max-Age",
-        allowedMaxAge.toString()
+        allowedMaxAge.toString(),
       );
     }
 

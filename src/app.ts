@@ -1,7 +1,7 @@
 import { MageContext } from "./context.ts";
 import { compose } from "./compose.ts";
 import { getAvailablePort } from "./ports.ts";
-import { MageRouter, MageMiddleware } from "./router.ts";
+import { MageMiddleware, MageRouter } from "./router.ts";
 
 interface RunOptions {
   port: number;

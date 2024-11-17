@@ -19,7 +19,7 @@ export class MageTestServer {
 
     return new URL(
       path,
-      `http://${this.server.addr.hostname}:${this.server.addr.port}`
+      `http://${this.server.addr.hostname}:${this.server.addr.port}`,
     );
   }
 
