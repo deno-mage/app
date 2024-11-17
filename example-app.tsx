@@ -4,8 +4,8 @@ const app = new MageApp();
 
 app.use(
   middleware.useSecurityHeaders(),
-  middleware.useErrorHandler(),
-  middleware.useNotFoundHandler()
+  middleware.useErrors(),
+  middleware.useNotFound()
 );
 
 app.get("/text", (context) => {
@@ -16,8 +16,8 @@ app.get("/json", (context) => {
   context.json(StatusCode.OK, { message: "Hello, World!" });
 });
 
-app.get("/html", (context) => {
-  context.html(
+app.get("/render", async (context) => {
+  await context.render(
     StatusCode.OK,
     <html lang="en">
       <body>

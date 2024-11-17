@@ -1,16 +1,18 @@
 import { renderToReadableStream } from "../npm/react-dom/server.ts";
-import { statusTextMap, StatusCode } from "./http.ts";
+import { statusTextMap, StatusCode, RedirectType, StatusText } from "./http.ts";
+import { MageRouter } from "./router.ts";
 
 type JSONValues = string | number | boolean | null | JSONValues[];
 type JSON = { [key: string]: JSONValues } | JSONValues[];
 
 export class MageContext {
-  public isRouteMatched = false;
+  public url: URL;
+  public matchedPathname: string | undefined;
   public response = new Response();
 
-  private promises: Promise<unknown>[] = [];
-
-  public constructor(public request: Request, public url: URL) {}
+  public constructor(public request: Request, private router: MageRouter) {
+    this.url = new URL(request.url);
+  }
 
   public text(status: StatusCode, body: string) {
     this.response = new Response(body, {
@@ -18,6 +20,7 @@ export class MageContext {
       statusText: statusTextMap[status],
       headers: this.response.headers,
     });
+
     this.response.headers.set("Content-Type", "text/plain; charset=utf-8");
   }
 
@@ -27,35 +30,46 @@ export class MageContext {
       statusText: statusTextMap[status],
       headers: this.response.headers,
     });
+
     this.response.headers.set("Content-Type", "application/json");
   }
 
-  public async html(status: StatusCode, body: JSX.Element) {
-    await this.capturePromise(async () => {
-      this.response = new Response(await renderToReadableStream(body), {
-        status: status,
-        statusText: statusTextMap[status],
-        headers: this.response.headers,
-      });
-      this.response.headers.set("Content-Type", "text/html; charset=utf-8");
-    });
-  }
-
-  // flush any promises created within context during handler execution
-  public async flush() {
-    await Promise.all(this.promises);
-    this.promises = [];
-  }
-
-  // capture promises created within context so we can flush them
-  // before moving between handlers
-  private async capturePromise(fn: () => Promise<void>) {
-    const promise = new Promise<void>((resolve) => {
-      fn().then(() => resolve());
+  public async render(status: StatusCode, body: JSX.Element) {
+    this.response = new Response(await renderToReadableStream(body), {
+      status: status,
+      statusText: statusTextMap[status],
+      headers: this.response.headers,
     });
 
-    this.promises.push(promise);
+    this.response.headers.set("Content-Type", "text/html; charset=utf-8");
+  }
 
-    await promise;
+  public empty() {
+    this.response = new Response(null, {
+      status: StatusCode.NoContent,
+      statusText: StatusText.NoContent,
+      headers: this.response.headers,
+    });
+
+    this.response.headers.set("Content-Length", "0");
+  }
+
+  public redirect(redirectType: RedirectType, location: URL | string) {
+    const status =
+      redirectType === RedirectType.Permanent
+        ? StatusCode.PermanentRedirect
+        : StatusCode.TemporaryRedirect;
+
+    this.response = new Response(null, {
+      status,
+      statusText: statusTextMap[status],
+      headers: this.response.headers,
+    });
+
+    this.response.headers.set("Location", location.toString());
+  }
+
+  public getAvailableMethods(pathname: string): string[] {
+    return this.router.getAvailableMethods(pathname);
   }
 }

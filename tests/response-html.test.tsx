@@ -8,8 +8,8 @@ let server: MageTestServer;
 beforeAll(() => {
   server = new MageTestServer();
 
-  server.app.get("/", (context) => {
-    context.html(
+  server.app.get("/", async (context) => {
+    await context.render(
       StatusCode.OK,
       <html lang="en">
         <body>
@@ -26,7 +26,7 @@ afterAll(async () => {
   await server.stop();
 });
 
-it("should return html response", async () => {
+it("should render jsx to html response", async () => {
   const response = await fetch(server.url("/"), {
     method: "GET",
   });

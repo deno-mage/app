@@ -1,7 +1,7 @@
 import { MageMiddleware } from "../router.ts";
 
 export const useSecurityHeaders = (): MageMiddleware => {
-  return (context) => {
+  return async (context, next) => {
     context.response.headers.set(
       "Content-Security-Policy",
       "default-src 'self';base-uri 'self';font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';img-src 'self' data:;object-src 'none';script-src 'self';script-src-attr 'none';style-src 'self' https: 'unsafe-inline';upgrade-insecure-requests"
@@ -21,5 +21,7 @@ export const useSecurityHeaders = (): MageMiddleware => {
     context.response.headers.set("X-Permitted-Cross-Domain-Policies", "none");
     context.response.headers.set("X-XSS-Protection", "0");
     context.response.headers.delete("X-Powered-By");
+
+    await next();
   };
 };

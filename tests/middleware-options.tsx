@@ -1,12 +1,14 @@
 import { afterAll, beforeAll, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
-import { StatusCode } from "../exports.ts";
+import { middleware, StatusCode } from "../exports.ts";
 import { MageTestServer } from "./utils/server.ts";
 
 let server: MageTestServer;
 
 beforeAll(() => {
   server = new MageTestServer();
+
+  server.app.use(middleware.useOptions());
 
   server.app.delete("/", (context) => {
     context.text(StatusCode.OK, "delete");

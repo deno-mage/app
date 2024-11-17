@@ -15,8 +15,9 @@ beforeAll(() => {
 
   server.app.get(
     "/delete",
-    (context) => {
+    async (context, next) => {
       context.response.headers.set("X-Test", "test");
+      await next();
     },
     (context) => {
       context.response.headers.delete("X-Test");

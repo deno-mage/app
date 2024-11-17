@@ -8,7 +8,7 @@ let server: MageTestServer;
 beforeAll(() => {
   server = new MageTestServer();
 
-  server.app.use(middleware.useNotFoundHandler());
+  server.app.use(middleware.useNotFound());
 
   server.start();
 });

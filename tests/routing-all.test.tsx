@@ -70,7 +70,7 @@ it("should hit OPTIONS", async () => {
   });
 
   expect(response.status).toBe(StatusCode.OK);
-  expect(await response.text()).toBe("");
+  expect(await response.text()).toBe("all");
 });
 
 it("should hit HEAD", async () => {

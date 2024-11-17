@@ -8,6 +8,11 @@ export enum HttpMethod {
   Head = "HEAD",
 }
 
+export enum RedirectType {
+  Permanent,
+  Temporary,
+}
+
 export enum StatusCode {
   Continue = 100,
   SwitchingProtocols = 101,

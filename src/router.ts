@@ -1,6 +1,5 @@
 import { MageContext } from "./context.ts";
 import { HttpMethod } from "./http.ts";
-import { useOptions } from "./middleware/options.ts";
 
 export type MageMiddleware = (
   context: MageContext,
@@ -15,43 +14,24 @@ interface MiddlewareRegisterEntry {
 
 class MiddlewareRegister {
   private pushedEntries: MiddlewareRegisterEntry[] = [];
-  private defaultEntries: MiddlewareRegisterEntry[] = [];
 
   public push(entry: MiddlewareRegisterEntry) {
     this.pushedEntries.push(entry);
-    this.defaultEntries = [
-      {
-        middleware: [
-          useOptions(
-            this.pushedEntries
-              .filter((entry) => entry.methods?.length && entry.pathname)
-              .map((entry) => ({
-                methods: entry.methods!,
-                pathname: entry.pathname!,
-              }))
-          ),
-        ],
-      },
-    ];
   }
 
-  public match(
-    method: string,
-    path: string,
-    context: MageContext
-  ): MageMiddleware[] {
-    const matchedEntries = [...this.pushedEntries, ...this.defaultEntries]
+  public match(context: MageContext): MageMiddleware[] {
+    const matchedEntries = this.pushedEntries
       .filter((entry) => {
-        if (entry.methods && !entry.methods.includes(method)) {
+        if (entry.methods && !entry.methods.includes(context.request.method)) {
           return false;
         }
 
-        if (entry.pathname && entry.pathname !== path) {
+        if (entry.pathname && entry.pathname !== context.url.pathname) {
           return false;
         }
 
         if (entry.pathname) {
-          context.isRouteMatched = true;
+          context.matchedPathname = entry.pathname;
         }
 
         return true;
@@ -60,17 +40,25 @@ class MiddlewareRegister {
 
     return matchedEntries;
   }
+
+  public getAvailableMethods(pathname: string): string[] {
+    const methods = this.pushedEntries
+      .filter((entry) => entry.pathname === pathname)
+      .flatMap((entry) => entry.methods ?? []);
+
+    return methods;
+  }
 }
 
 export class MageRouter {
   private middlewareRegister = new MiddlewareRegister();
 
-  public match(
-    method: string,
-    path: string,
-    context: MageContext
-  ): MageMiddleware[] {
-    return this.middlewareRegister.match(method, path, context);
+  public match(context: MageContext): MageMiddleware[] {
+    return this.middlewareRegister.match(context);
+  }
+
+  public getAvailableMethods(pathname: string): string[] {
+    return this.middlewareRegister.getAvailableMethods(pathname);
   }
 
   public use(...middleware: MageMiddleware[]) {

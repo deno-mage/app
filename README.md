@@ -13,8 +13,8 @@ const app = new MageApp();
 
 app.use(
   middleware.useSecurityHeaders(),
-  middleware.useErrorHandler(),
-  middleware.useNotFoundHandler()
+  middleware.useErrors(),
+  middleware.useNotFound()
 );
 
 app.get("/text", (context) => {
@@ -25,8 +25,8 @@ app.get("/json", (context) => {
   context.json(StatusCode.OK, { message: "Hello, World!" });
 });
 
-app.get("/html", (context) => {
-  context.html(
+app.get("/render", async (context) => {
+  await context.render(
     StatusCode.OK,
     <html lang="en">
       <body>
@@ -47,16 +47,16 @@ Mage APIs are composed of stacked middleware. A simple middlware looks like this
 
 ```tsx
 app.get("/", async (context, next) => {
-  context.text(StatusCode.OK, "Hello, World!");
+  console.log("Request received");
 
   await next();
 });
 ```
 
-The next middleware will automatically be called if you don't call it so this is equivalent:
+If you want to complete handling a request you simply don't call the next middleware:
 
 ```tsx
-app.get("/", (context, next) => {
+app.get("/", (context) => {
   context.text(StatusCode.OK, "Hello, World!");
 });
 ```
@@ -65,12 +65,12 @@ app.get("/", (context, next) => {
 
 A collection of prebuilt middleware is available to use.
 
-|                        |                                                                    |
-| ---------------------- | ------------------------------------------------------------------ |
-| `useSecurityHeaders()` | Adds security headers to the response                              |
-| `useErrorHandler()`    | Logs error and responds with 500                                   |
-| `useNotFoundHandler()` | Responds with 404 when no response is set                          |
-| `useOptions(config)`   | Handle OPTIONS requests, this is configured out the box internally |
+|                        |                                           |
+| ---------------------- | ----------------------------------------- |
+| `useCors()`            | Configure CORS request handling           |
+| `useSecurityHeaders()` | Adds security headers to the response     |
+| `useErrors()`          | Logs error and responds with 500          |
+| `useNotFound()`        | Responds with 404 when no response is set |
 
 ## Context
 
@@ -83,8 +83,8 @@ context.text(StatusCode.OK, "Hello, World!");
 // JSON response
 context.json(StatusCode.OK, { message: "Hello, World!" });
 
-// HTML response (JSX)
-context.html(
+// Render JSX to HTML response
+await context.render(
   StatusCode.OK,
   <html lang="en">
     <body>
@@ -101,12 +101,15 @@ context.response.headers.set("Content-Type", "text/plain");
 context.response.headers.delete("Content-Type", "text/plain");
 ```
 
-You can determine if a request has been matched to a route by checking `isRouteMatched` on the context:
+You can determine if a request has been matched to a route by checking `matchedPathname` on the context.
 
 ```tsx
-if (context.isRouteMatched) {
-  // Request has been handled
-}
+app.get("/books/:id", (context) => {
+  if (context.matchedPathname) {
+    console.log(`Matched: ${context.matchedPathname}`);
+    // Matched: /books/:id
+  }
+});
 ```
 
 ## Routing
@@ -114,8 +117,10 @@ if (context.isRouteMatched) {
 You can register middleware to execute on every route and method via the `app.use` method. This is useful for middleware that should run on every request.
 
 ```tsx
-app.use((context) => {
+app.use(async (context, next) => {
   console.log("Request received");
+
+  await next();
 });
 ```
 

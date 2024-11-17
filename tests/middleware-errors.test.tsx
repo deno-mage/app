@@ -9,7 +9,7 @@ let server: MageTestServer;
 beforeAll(() => {
   server = new MageTestServer();
 
-  server.app.use(middleware.useErrorHandler());
+  server.app.use(middleware.useErrors());
 
   server.app.get("/error", () => {
     throw new Error("Hello, World!");

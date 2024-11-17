@@ -1,32 +1,18 @@
 import { MageMiddleware } from "../router.ts";
-import { HttpMethod, StatusCode } from "../http.ts";
+import { HttpMethod } from "../http.ts";
 
-interface OptionsConfig {
-  methods: string[];
-  pathname: string;
-}
-
-export const useOptions = (config: OptionsConfig[]): MageMiddleware => {
-  return async (context, next) => {
-    await next();
-
+export const useOptions = (): MageMiddleware => {
+  return (context) => {
     if (
-      context.request.method !== HttpMethod.Options ||
-      context.response.headers.has("Allow")
+      context.request.method === HttpMethod.Options &&
+      context.matchedPathname
     ) {
-      // no need to handle options requests if not an
-      // options request or has already been handled
-      return;
+      context.empty();
+
+      context.response.headers.set(
+        "Allow",
+        context.getAvailableMethods(context.matchedPathname).join(", ")
+      );
     }
-
-    context.response.headers.set(
-      "Allow",
-      config
-        .filter((middleware) => middleware.pathname === context.url.pathname)
-        .map((entry) => entry.methods?.join(", "))
-        .join(", ")
-    );
-
-    context.text(StatusCode.OK, "");
   };
 };
