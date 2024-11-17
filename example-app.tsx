@@ -1,8 +1,8 @@
-import { MageApp, middleware, StatusCode } from "./exports.ts";
+import { MageApp, StatusCode, useSecurityHeaders } from "./exports.ts";
 
 const app = new MageApp();
 
-app.use(middleware.useSecurityHeaders());
+app.use(useSecurityHeaders());
 
 app.get("/text", (context) => {
   context.text(StatusCode.OK, "Hello, World!");
@@ -25,4 +25,7 @@ app.get("/render", async (context) => {
 
 app.run({
   port: 8000,
+  onListen({ hostname, port }) {
+    console.log(`Listening on ${hostname}:${port}`);
+  },
 });

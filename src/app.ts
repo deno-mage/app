@@ -6,6 +6,7 @@ import { StatusCode } from "./http.ts";
 import { useOptions } from "./middleware/options.ts";
 import { useNotFound } from "./middleware/not-found.ts";
 import { useMethodNotAllowed } from "./middleware/method-not-allowed.ts";
+import { StatusText } from "../exports.ts";
 
 /**
  * Options for running a Mage application
@@ -17,6 +18,13 @@ interface RunOptions {
    * found.
    */
   port: number;
+  /**
+   * A callback that is called when the application starts listening for
+   * incoming requests.
+   *
+   * @param localAddr
+   */
+  onListen?: (localAddr: Deno.NetAddr) => void;
 }
 
 /**
@@ -153,8 +161,9 @@ export class MageApp {
    * @returns
    */
   public run(options: RunOptions) {
-    const serveOptions = {
+    const serveOptions: Deno.ServeTcpOptions = {
       port: getAvailablePort(options.port),
+      onListen: options.onListen,
     };
 
     return Deno.serve(serveOptions, async (_req) => {
@@ -185,7 +194,10 @@ export class MageApp {
         await compose(middleware)(context);
       } catch (error) {
         console.error(error);
-        context.empty(StatusCode.InternalServerError);
+        context.text(
+          StatusCode.InternalServerError,
+          StatusText.InternalServerError,
+        );
       }
 
       return context.response;

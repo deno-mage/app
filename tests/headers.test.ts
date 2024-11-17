@@ -1,12 +1,16 @@
-import { afterAll, beforeAll, it } from "@std/testing/bdd";
+import { afterAll, beforeAll, describe, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
 import { StatusCode } from "../exports.ts";
-import { MageTestServer } from "./utils/server.ts";
+import { MageTestServer } from "../test-utils/server.ts";
 
 let server: MageTestServer;
 
 beforeAll(() => {
   server = new MageTestServer();
+
+  server.app.get("/get", (context) => {
+    context.text(StatusCode.OK, context.request.headers.get("X-Test")!);
+  });
 
   server.app.get("/set", (context) => {
     context.response.headers.set("X-Test", "test");
@@ -32,20 +36,33 @@ afterAll(async () => {
   await server.stop();
 });
 
-it("should set header", async () => {
-  const response = await fetch(server.url("/set"), {
-    method: "GET",
+describe("headers", () => {
+  it("should get request header", async () => {
+    const response = await fetch(server.url("/get"), {
+      method: "GET",
+      headers: {
+        "X-Test": "test",
+      },
+    });
+
+    expect(await response.text()).toBe("test");
   });
 
-  expect(response.headers.get("X-Test")).toBe("test");
-  expect(await response.text()).toBe("set");
-});
+  it("should set response header", async () => {
+    const response = await fetch(server.url("/set"), {
+      method: "GET",
+    });
 
-it("should delete header", async () => {
-  const response = await fetch(server.url("/delete"), {
-    method: "GET",
+    expect(response.headers.get("X-Test")).toBe("test");
+    expect(await response.text()).toBe("set");
   });
 
-  expect(response.headers.get("X-Test")).toBe(null);
-  expect(await response.text()).toBe("unset");
+  it("should delete response header", async () => {
+    const response = await fetch(server.url("/delete"), {
+      method: "GET",
+    });
+
+    expect(response.headers.get("X-Test")).toBe(null);
+    expect(await response.text()).toBe("unset");
+  });
 });

@@ -1,7 +1,7 @@
 {
   "tasks": {
     "dev": "deno run --allow-net --allow-env --watch example-app.tsx",
-    "test": "deno test --allow-net",
+    "test": "deno test --allow-net --clean --reporter=dot",
     "lint": "deno lint"
   },
   "imports": {
