@@ -1,8 +1,9 @@
 import { MageMiddleware } from "../router.ts";
 import { HttpMethod } from "../../exports.ts";
+import { StatusCode } from "../http.ts";
 
 interface CorsOptions {
-  origins: "*" | string[];
+  origins?: "*" | string[];
   methods?: "*" | HttpMethod[];
   headers?: string[];
   exposeHeaders?: string[];
@@ -20,7 +21,7 @@ export const useCors = (options: CorsOptions): MageMiddleware => {
   return async (context, next) => {
     const origin = context.request.headers.get("Origin");
 
-    const allowedOrigins = [options.origins].flat();
+    const allowedOrigins = [options.origins ?? "*"].flat();
     const allowedMethods = [options.methods ?? []].flat();
     const allowedHeaders = [options.headers ?? []].flat();
     const exposeHeaders = [options.exposeHeaders ?? []].flat();
@@ -71,8 +72,9 @@ export const useCors = (options: CorsOptions): MageMiddleware => {
     }
 
     if (context.request.method === HttpMethod.Options) {
-      // don't continue with the middleware chain if handling preflight request
-      context.empty();
+      // don't continue with the middleware chain if handling preflight request,
+      // just return an empty response with the appropriate headers
+      context.empty(StatusCode.NoContent);
 
       return;
     }

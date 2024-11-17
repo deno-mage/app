@@ -1,14 +1,12 @@
 import { afterAll, beforeAll, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
-import { middleware, StatusCode } from "../exports.ts";
+import { StatusCode, StatusText } from "../exports.ts";
 import { MageTestServer } from "./utils/server.ts";
 
 let server: MageTestServer;
 
 beforeAll(() => {
   server = new MageTestServer();
-
-  server.app.use(middleware.useNotFound(), middleware.useOptions());
 
   server.start();
 });
@@ -17,17 +15,17 @@ afterAll(async () => {
   await server.stop();
 });
 
-it("should handle unhandled requests", async () => {
-  const response = await fetch(server.url("/"), {
+it("should send 404 when route not matched", async () => {
+  const response = await fetch(server.url("/foo"), {
     method: "GET",
   });
 
   expect(response.status).toEqual(StatusCode.NotFound);
-  expect(await response.text()).toBe("Not Found");
+  expect(await response.text()).toBe(StatusText.NotFound);
 });
 
 it("should not handle OPTIONS requests", async () => {
-  const response = await fetch(server.url("/"), {
+  const response = await fetch(server.url("/foo"), {
     method: "OPTIONS",
   });
 

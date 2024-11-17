@@ -19,7 +19,7 @@ export type MageMiddleware = (
 /**
  * MiddlewareRegisterEntry is an entry in the MiddlewareRegister.
  */
-interface MiddlewareRegisterEntry {
+interface RouterEntry {
   /**
    * The methods that this middleware should run for. If not provided, the
    * middleware will run for all methods.
@@ -36,62 +36,10 @@ interface MiddlewareRegisterEntry {
   middleware: MageMiddleware[];
 }
 
-/**
- * MiddlewareRegister is a class for registering middleware for a Mage
- * application and matching middleware to a given context.
- */
-class MiddlewareRegister {
-  private entries: MiddlewareRegisterEntry[] = [];
-
-  /**
-   * Pushes a new entry into the register.
-   *
-   * @param entry
-   */
-  public push(entry: MiddlewareRegisterEntry) {
-    this.entries.push(entry);
-  }
-  /**
-   * Match middleware for a given context.
-   *
-   * @param context
-   * @returns
-   */
-  public match(context: MageContext): MageMiddleware[] {
-    const matchedEntries = this.entries
-      .filter((entry) => {
-        if (entry.methods && !entry.methods.includes(context.request.method)) {
-          return false;
-        }
-
-        if (entry.routename && entry.routename !== context.url.pathname) {
-          return false;
-        }
-
-        if (entry.routename) {
-          context.matchedRoutename = entry.routename;
-        }
-
-        return true;
-      })
-      .flatMap((entry) => entry.middleware);
-
-    return matchedEntries;
-  }
-
-  /**
-   * Get available methods for a given pathname.
-   *
-   * @param pathname
-   * @returns
-   */
-  public getAvailableMethods(pathname: string): string[] {
-    const methods = this.entries
-      .filter((entry) => entry.routename === pathname)
-      .flatMap((entry) => entry.methods ?? []);
-
-    return methods;
-  }
+interface MatchResult {
+  middleware: MageMiddleware[];
+  matchedRoutename: boolean;
+  matchedMethod: boolean;
 }
 
 /**
@@ -99,7 +47,7 @@ class MiddlewareRegister {
  * application.
  */
 export class MageRouter {
-  private middlewareRegister = new MiddlewareRegister();
+  private entries: RouterEntry[] = [];
 
   /**
    * Match middleware for a given context.
@@ -107,8 +55,37 @@ export class MageRouter {
    * @param context
    * @returns
    */
-  public match(context: MageContext): MageMiddleware[] {
-    return this.middlewareRegister.match(context);
+  public match(context: MageContext): MatchResult {
+    let matchedRoutename = false;
+    let matchedMethod = false;
+
+    const middleware = this.entries
+      .filter((entry) => {
+        if (entry.routename && entry.routename !== context.url.pathname) {
+          return false;
+        }
+
+        if (entry.routename) {
+          matchedRoutename = true;
+        }
+
+        if (entry.methods && !entry.methods.includes(context.request.method)) {
+          return false;
+        }
+
+        if (entry.methods) {
+          matchedMethod = true;
+        }
+
+        return true;
+      })
+      .flatMap((entry) => entry.middleware);
+
+    return {
+      middleware,
+      matchedRoutename,
+      matchedMethod,
+    };
   }
 
   /**
@@ -117,31 +94,41 @@ export class MageRouter {
    * @param pathname
    * @returns
    */
-  public getAvailableMethods(pathname: string): string[] {
-    return this.middlewareRegister.getAvailableMethods(pathname);
+  public getAvailableMethods(context: MageContext): string[] {
+    const methods = this.entries
+      .filter((entry) => entry.routename === context.url.pathname)
+      .flatMap((entry) => entry.methods ?? []);
+
+    return methods;
   }
 
   /**
-   * Adds middleware to the router that will be run for every request.
+   * Adds middleware to the router that will be run for every request. If a
+   * request is only handled by middleware registered via `use(...)` then the
+   * request will be responded to with a 404 Not Found status code by default.
    *
    * @param middleware
    */
   public use(...middleware: MageMiddleware[]) {
-    this.middlewareRegister.push({
+    this.entries.push({
       middleware,
     });
   }
 
   /**
-   * Adds middleware to the application that will be run for every request
-   * for the specified route.
+   * Adds middleware to the application that will be run for every request.
+   * If a routename is provided, the middleware will only run for that route.
    *
-   * @param routename
+   * @param routenameOrMiddleware
    * @param middleware
    */
-  public all(routename: string, ...middleware: MageMiddleware[]) {
-    this.middlewareRegister.push({
-      methods: [
+  public all(
+    routenameOrMiddleware: string | MageMiddleware,
+    ...middleware: MageMiddleware[]
+  ): void {
+    this.pushEntry(
+      routenameOrMiddleware,
+      [
         HttpMethod.Get,
         HttpMethod.Post,
         HttpMethod.Put,
@@ -150,113 +137,129 @@ export class MageRouter {
         HttpMethod.Options,
         HttpMethod.Head,
       ],
-      routename,
-      middleware,
-    });
+      ...middleware,
+    );
   }
 
   /**
-   * Adds middleware to the application that will be run for GET requests
-   * for the specified route.
+   * Adds middleware to the application that will be run for GET requests.
+   * If a routename is provided, the middleware will only run for that route.
    *
-   * @param routename
+   * @param routenameOrMiddleware
    * @param middleware
    */
-  public get(routename: string, ...middleware: MageMiddleware[]): void {
-    this.middlewareRegister.push({
-      methods: [HttpMethod.Get, HttpMethod.Head],
-      routename,
-      middleware,
-    });
+  public get(
+    routenameOrMiddleware: string | MageMiddleware,
+    ...middleware: MageMiddleware[]
+  ): void {
+    this.pushEntry(
+      routenameOrMiddleware,
+      [HttpMethod.Get, HttpMethod.Head],
+      ...middleware,
+    );
   }
 
   /**
-   * Adds middleware to the application that will be run for POST requests
-   * for the specified route.
+   * Adds middleware to the application that will be run for POST requests.
+   * If a routename is provided, the middleware will only run for that route.
    *
-   * @param routename
+   * @param routenameOrMiddleware
    * @param middleware
    */
-  public post(routename: string, ...middleware: MageMiddleware[]): void {
-    this.middlewareRegister.push({
-      methods: [HttpMethod.Post],
-      routename,
-      middleware,
-    });
+  public post(
+    routenameOrMiddleware: string | MageMiddleware,
+    ...middleware: MageMiddleware[]
+  ): void {
+    this.pushEntry(routenameOrMiddleware, [HttpMethod.Post], ...middleware);
   }
 
   /**
-   * Adds middleware to the application that will be run for PUT requests
-   * for the specified route.
+   * Adds middleware to the application that will be run for PUT requests.
+   * If a routename is provided, the middleware will only run for that route.
    *
-   * @param routename
+   * @param routenameOrMiddleware
    * @param middleware
    */
-  public put(routename: string, ...middleware: MageMiddleware[]): void {
-    this.middlewareRegister.push({
-      methods: [HttpMethod.Put],
-      routename,
-      middleware,
-    });
+  public put(
+    routenameOrMiddleware: string | MageMiddleware,
+    ...middleware: MageMiddleware[]
+  ): void {
+    this.pushEntry(routenameOrMiddleware, [HttpMethod.Put], ...middleware);
   }
 
   /**
-   * Adds middleware to the application that will be run for DELETE requests
-   * for the specified route.
+   * Adds middleware to the application that will be run for DELETE requests.
+   * If a routename is provided, the middleware will only run for that route.
    *
-   * @param routename
+   * @param routenameOrMiddleware
    * @param middleware
    */
-  public delete(routename: string, ...middleware: MageMiddleware[]): void {
-    this.middlewareRegister.push({
-      methods: [HttpMethod.Delete],
-      routename,
-      middleware,
-    });
+  public delete(
+    routenameOrMiddleware: string | MageMiddleware,
+    ...middleware: MageMiddleware[]
+  ): void {
+    this.pushEntry(routenameOrMiddleware, [HttpMethod.Delete], ...middleware);
   }
 
   /**
-   * Adds middleware to the application that will be run for PATCH requests
-   * for the specified route.
+   * Adds middleware to the application that will be run for PATCH requests.
+   * If a routename is provided, the middleware will only run for that route.
    *
-   * @param routename
+   * @param routenameOrMiddleware
    * @param middleware
    */
-  public patch(routename: string, ...middleware: MageMiddleware[]): void {
-    this.middlewareRegister.push({
-      methods: [HttpMethod.Patch],
-      routename,
-      middleware,
-    });
+  public patch(
+    routenameOrMiddleware: string | MageMiddleware,
+    ...middleware: MageMiddleware[]
+  ): void {
+    this.pushEntry(routenameOrMiddleware, [HttpMethod.Patch], ...middleware);
   }
 
   /**
-   * Adds middleware to the application that will be run for OPTIONS requests
-   * for the specified route.
+   * Adds middleware to the application that will be run for OPTIONS requests.
+   * If a routename is provided, the middleware will only run for that route.
    *
-   * @param routename
+   * @param routenameOrMiddleware
    * @param middleware
    */
-  public options(routename: string, ...middleware: MageMiddleware[]): void {
-    this.middlewareRegister.push({
-      methods: [HttpMethod.Options],
-      routename,
-      middleware,
-    });
+  public options(
+    routenameOrMiddleware: string | MageMiddleware,
+    ...middleware: MageMiddleware[]
+  ): void {
+    this.pushEntry(routenameOrMiddleware, [HttpMethod.Options], ...middleware);
   }
 
   /**
-   * Adds middleware to the application that will be run for HEAD requests
-   * for the specified route.
+   * Adds middleware to the application that will be run for HEAD requests.
+   * If a routename is provided, the middleware will only run for that route.
    *
-   * @param routename
+   * @param routenameOrMiddleware
    * @param middleware
    */
-  public head(routename: string, ...middleware: MageMiddleware[]): void {
-    this.middlewareRegister.push({
-      methods: [HttpMethod.Head],
+  public head(
+    routenameOrMiddleware: string | MageMiddleware,
+    ...middleware: MageMiddleware[]
+  ): void {
+    this.pushEntry(routenameOrMiddleware, [HttpMethod.Head], ...middleware);
+  }
+
+  private pushEntry(
+    routenameOrMiddleware: string | MageMiddleware,
+    methods?: HttpMethod[],
+    ...additionalMiddleware: MageMiddleware[]
+  ) {
+    const routename = typeof routenameOrMiddleware === "string"
+      ? routenameOrMiddleware
+      : undefined;
+
+    const middleware = typeof routenameOrMiddleware === "string"
+      ? additionalMiddleware
+      : [routenameOrMiddleware, ...additionalMiddleware];
+
+    this.entries.push({
       routename,
       middleware,
+      methods,
     });
   }
 }

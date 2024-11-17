@@ -2,13 +2,7 @@ import { MageApp, middleware, StatusCode } from "./exports.ts";
 
 const app = new MageApp();
 
-app.use(
-  middleware.useSecurityHeaders(),
-  middleware.useErrors(),
-  middleware.useNotFound(),
-);
-
-app.options(middleware.useAllow());
+app.use(middleware.useSecurityHeaders());
 
 app.get("/text", (context) => {
   context.text(StatusCode.OK, "Hello, World!");

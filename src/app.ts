@@ -2,6 +2,10 @@ import { MageContext } from "./context.ts";
 import { compose } from "./compose.ts";
 import { getAvailablePort } from "./ports.ts";
 import { MageMiddleware, MageRouter } from "./router.ts";
+import { StatusCode } from "./http.ts";
+import { useOptions } from "./middleware/options.ts";
+import { useNotFound } from "./middleware/not-found.ts";
+import { useMethodNotAllowed } from "./middleware/method-not-allowed.ts";
 
 /**
  * Options for running a Mage application
@@ -31,95 +35,119 @@ export class MageApp {
   }
 
   /**
-   * Adds middleware to the application that will be run for every method
-   * for the specified route.
+   * Adds middleware to the application that will be run for every method.
+   * If a routename is provided, the middleware will only run for that route.
    *
-   * @param routename
+   * @param routenameOrMiddleware
    * @param middleware
    */
-  public all(routename: string, ...middleware: MageMiddleware[]): void {
-    this.router.all(routename, ...middleware);
+  public all(
+    routenameOrMiddleware: string | MageMiddleware,
+    ...middleware: MageMiddleware[]
+  ): void {
+    this.router.all(routenameOrMiddleware, ...middleware);
   }
 
   /**
-   * Adds middleware to the application that will be run for GET requests
-   * for the specified route.
+   * Adds middleware to the application that will be run for GET requests.
+   * If a routename is provided, the middleware will only run for that route.
    *
-   * @param routename
+   * @param routenameOrMiddleware
    * @param middleware
    */
-  public get(routename: string, ...middleware: MageMiddleware[]): void {
-    this.router.get(routename, ...middleware);
+  public get(
+    routenameOrMiddleware: string | MageMiddleware,
+    ...middleware: MageMiddleware[]
+  ): void {
+    this.router.get(routenameOrMiddleware, ...middleware);
   }
 
   /**
-   * Adds middleware to the application that will be run for POST requests
-   * for the specified route.
+   * Adds middleware to the application that will be run for POST requests.
+   * If a routename is provided, the middleware will only run for that route.
    *
-   * @param routename
+   * @param routenameOrMiddleware
    * @param middleware
    */
-  public post(routename: string, ...middleware: MageMiddleware[]): void {
-    this.router.post(routename, ...middleware);
+  public post(
+    routenameOrMiddleware: string | MageMiddleware,
+    ...middleware: MageMiddleware[]
+  ): void {
+    this.router.post(routenameOrMiddleware, ...middleware);
   }
 
   /**
-   * Adds middleware to the application that will be run for PUT requests
-   * for the specified route.
+   * Adds middleware to the application that will be run for PUT requests.
+   * If a routename is provided, the middleware will only run for that route.
    *
-   * @param routename
+   * @param routenameOrMiddleware
    * @param middleware
    */
-  public put(routename: string, ...middleware: MageMiddleware[]): void {
-    this.router.put(routename, ...middleware);
+  public put(
+    routenameOrMiddleware: string | MageMiddleware,
+    ...middleware: MageMiddleware[]
+  ): void {
+    this.router.put(routenameOrMiddleware, ...middleware);
   }
 
   /**
-   * Adds middleware to the application that will be run for DELETE requests
-   * for the specified route.
+   * Adds middleware to the application that will be run for DELETE requests.
+   * If a routename is provided, the middleware will only run for that route.
    *
-   * @param routename
+   * @param routenameOrMiddleware
    * @param middleware
    */
-  public delete(routename: string, ...middleware: MageMiddleware[]): void {
-    this.router.delete(routename, ...middleware);
+  public delete(
+    routenameOrMiddleware: string | MageMiddleware,
+    ...middleware: MageMiddleware[]
+  ): void {
+    this.router.delete(routenameOrMiddleware, ...middleware);
   }
 
   /**
-   * Adds middleware to the application that will be run for PATCH requests
-   * for the specified route.
+   * Adds middleware to the application that will be run for PATCH requests.
+   * If a routename is provided, the middleware will only run for that route.
    *
-   * @param routename
+   * @param routenameOrMiddleware
    * @param middleware
    */
-  public patch(routename: string, ...middleware: MageMiddleware[]): void {
-    this.router.patch(routename, ...middleware);
+  public patch(
+    routenameOrMiddleware: string | MageMiddleware,
+    ...middleware: MageMiddleware[]
+  ): void {
+    this.router.patch(routenameOrMiddleware, ...middleware);
   }
 
   /**
-   * Adds middleware to the application that will be run for OPTIONS requests
-   * for the specified route.
+   * Adds middleware to the application that will be run for OPTIONS requests.
+   * If a routename is provided, the middleware will only run for that route.
    *
-   * @param routename
+   * @param routenameOrMiddleware
    * @param middleware
    */
-  public options(routename: string, ...middleware: MageMiddleware[]): void {
-    this.router.options(routename, ...middleware);
+  public options(
+    routenameOrMiddleware: string | MageMiddleware,
+    ...middleware: MageMiddleware[]
+  ): void {
+    this.router.options(routenameOrMiddleware, ...middleware);
   }
 
   /**
-   * Adds middleware to the application that will be run for HEAD requests
-   * for the specified route.
+   * Adds middleware to the application that will be run for HEAD requests.
+   * If a routename is provided, the middleware will only run for that route.
    *
-   * @param routename
+   * @param routenameOrMiddleware
    * @param middleware
    */
-  public head(routename: string, ...middleware: MageMiddleware[]): void {
-    this.router.head(routename, ...middleware);
+  public head(
+    routenameOrMiddleware: string | MageMiddleware,
+    ...middleware: MageMiddleware[]
+  ): void {
+    this.router.head(routenameOrMiddleware, ...middleware);
   }
 
   /**
-   * Runs the Mage application.
+   * Run the Mage application and start listening for incoming requests.
    *
    * @param options
    * @returns
@@ -132,9 +160,33 @@ export class MageApp {
     return Deno.serve(serveOptions, async (_req) => {
       const context: MageContext = new MageContext(_req, this.router);
 
-      const middleware = this.router.match(context);
+      const matchResult = this.router.match(context);
 
-      await compose(middleware)(context);
+      const middleware = [
+        useOptions({
+          getAllowedMethods: () => this.router.getAvailableMethods(context),
+        }),
+        ...matchResult.middleware,
+      ];
+
+      if (!matchResult.matchedRoutename) {
+        middleware.push(useNotFound());
+      }
+
+      if (!matchResult.matchedMethod) {
+        middleware.push(
+          useMethodNotAllowed({
+            getAllowedMethods: () => this.router.getAvailableMethods(context),
+          }),
+        );
+      }
+
+      try {
+        await compose(middleware)(context);
+      } catch (error) {
+        console.error(error);
+        context.empty(StatusCode.InternalServerError);
+      }
 
       return context.response;
     });
