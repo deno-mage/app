@@ -42,7 +42,7 @@ app.run({
 
 ## Middleware
 
-APIs are composed of stacked middleware. A simple middlware looks like this:
+APIs are composed of stacked middleware. A simple middleware looks like this:
 
 ```tsx
 app.get("/", async (context, next) => {
