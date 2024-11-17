@@ -1,8 +1,10 @@
 {
   "tasks": {
     "dev": "deno run --allow-net --allow-env --watch example-app.tsx",
-    "test": "deno test --allow-net --clean --reporter=dot",
-    "lint": "deno lint"
+    "test": "deno test --allow-net --clean --coverage --reporter=dot",
+    "lint": "deno lint",
+    "format": "deno fmt",
+    "check": "deno check ."
   },
   "imports": {
     "@std/expect": "jsr:@std/expect@^1.0.8",
