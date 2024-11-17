@@ -22,7 +22,7 @@ app.get("/json", (context) => {
 });
 
 app.get("/render", async (context) => {
-  await context.render(
+  await context.html(
     StatusCode.OK,
     <html lang="en">
       <body>
@@ -42,7 +42,7 @@ app.run({
 
 ## Middleware
 
-APIs are composed of stacked middleware. A simple middlware looks like this:
+APIs are composed of stacked middleware. A simple middleware looks like this:
 
 ```tsx
 app.get("/", async (context, next) => {
@@ -65,13 +65,13 @@ app.get("/", (context) => {
 
 A collection of prebuilt middleware is available to use.
 
-|                         |                                                         |
-| ----------------------- | ------------------------------------------------------- |
-| `useCors()`             | Configure CORS request handling                         |
-| `useMethodNotAllowed()` | Responds with 405, ignores preflight (OPTIONS) requests |
-| `useNotFound()`         | Responds with 404, ignores preflight (OPTIONS) requests |
-| `useOptions()`          | Responds to preflight (OPTIONS) requests                |
-| `useSecurityHeaders()`  | Adds recommended security headers to the response       |
+|                       |                                                         |
+| --------------------- | ------------------------------------------------------- |
+| `useCors`             | Configure CORS request handling                         |
+| `useMethodNotAllowed` | Responds with 405, ignores preflight (OPTIONS) requests |
+| `useNotFound`         | Responds with 404, ignores preflight (OPTIONS) requests |
+| `useOptions`          | Responds to preflight (OPTIONS) requests                |
+| `useSecurityHeaders`  | Adds recommended security headers to the response       |
 
 ## Context
 
