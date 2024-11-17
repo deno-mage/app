@@ -7,7 +7,7 @@ type JSON = { [key: string]: JSONValues } | JSONValues[];
 
 export class MageContext {
   public url: URL;
-  public matchedPathname: string | undefined;
+  public matchedRoutename: string | undefined;
   public response = new Response();
 
   public constructor(public request: Request, private router: MageRouter) {

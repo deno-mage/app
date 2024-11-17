@@ -29,7 +29,7 @@ beforeAll(() => {
   });
 
   server.app.head("/", (context) => {
-    context.text(StatusCode.OK, "");
+    context.text(StatusCode.OK, "head");
   });
 
   server.app.options("/", (context) => {

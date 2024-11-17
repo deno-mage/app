@@ -19,7 +19,7 @@ afterAll(async () => {
   await server.stop();
 });
 
-it("should return result of GET without body when HEAD requested", async () => {
+it("should apply GET headers but no body", async () => {
   const response = await fetch(server.url("/"), {
     method: "HEAD",
   });

@@ -8,6 +8,8 @@ app.use(
   middleware.useNotFound(),
 );
 
+app.options(middleware.useAllow());
+
 app.get("/text", (context) => {
   context.text(StatusCode.OK, "Hello, World!");
 });

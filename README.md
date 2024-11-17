@@ -106,12 +106,12 @@ context.response.headers.delete("Content-Type", "text/plain");
 ```
 
 You can determine if a request has been matched to a route by checking
-`matchedPathname` on the context.
+`matchedRoutename` on the context.
 
 ```tsx
 app.get("/books/:id", (context) => {
-  if (context.matchedPathname) {
-    console.log(`Matched: ${context.matchedPathname}`);
+  if (context.matchedRoutename) {
+    console.log(`Matched: ${context.matchedRoutename}`);
     // Matched: /books/:id
   }
 });

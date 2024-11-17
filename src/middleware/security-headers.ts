@@ -1,5 +1,11 @@
 import { MageMiddleware } from "../router.ts";
 
+/**
+ * Adds security headers to the response to help protect against common web
+ * vulnerabilities.
+ *
+ * @returns MageMiddleware
+ */
 export const useSecurityHeaders = (): MageMiddleware => {
   return async (context, next) => {
     context.response.headers.set(

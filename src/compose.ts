@@ -1,12 +1,17 @@
 import { MageContext } from "./context.ts";
 import { MageMiddleware } from "./router.ts";
 
+/**
+ * Compose middleware, running each in sequence.
+ *
+ * @param middleware
+ * @returns
+ */
 export const compose = (middleware: MageMiddleware[]) => {
   return async function (context: MageContext): Promise<void> {
     let lastIndex = -1;
 
     async function dispatch(i: number): Promise<void> {
-      // prevent calling next() multiple times in a single middleware
       if (i <= lastIndex) {
         throw new Error("next() called multiple times");
       }

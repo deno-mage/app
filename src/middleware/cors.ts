@@ -10,6 +10,12 @@ interface CorsOptions {
   maxAge?: number;
 }
 
+/**
+ * Middleware that handles Cross-Origin Resource Sharing (CORS) requests.
+ *
+ * @param options
+ * @returns
+ */
 export const useCors = (options: CorsOptions): MageMiddleware => {
   return async (context, next) => {
     const origin = context.request.headers.get("Origin");
