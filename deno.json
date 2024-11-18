@@ -1,4 +1,7 @@
 {
+  "name": "@mage/server",
+  "version": "0.1.0",
+  "exports": "./mod.ts",
   "tasks": {
     "dev": "deno run --allow-net --allow-env --watch example-app.tsx",
     "test": "deno test --allow-net --clean --coverage",
@@ -16,6 +19,5 @@
   "compilerOptions": {
     "jsx": "react-jsx",
     "jsxImportSource": "react"
-  },
-  "exports": "./exports.ts"
+  }
 }

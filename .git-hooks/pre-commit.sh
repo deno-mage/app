@@ -1,6 +1,5 @@
 #!/bin/sh
 
-deno fmt
-deno lint --fix
-git add -u
-
+deno task format --check
+deno task lint
+deno task check

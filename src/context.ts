@@ -1,6 +1,6 @@
 import { renderToReadableStream } from "../.npm/react-dom/server.ts";
 import { RedirectType, StatusCode, statusTextMap } from "./http.ts";
-import { MageRouter } from "./router.ts";
+import type { MageRouter } from "./router.ts";
 
 /**
  * Serializable JSON value

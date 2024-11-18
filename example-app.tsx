@@ -1,4 +1,4 @@
-import { MageApp, StatusCode, useSecurityHeaders } from "./exports.ts";
+import { MageApp, StatusCode, useSecurityHeaders } from "./mod.ts";
 
 const app = new MageApp();
 

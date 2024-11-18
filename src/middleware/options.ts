@@ -1,5 +1,5 @@
 import { StatusCode } from "../http.ts";
-import { MageMiddleware } from "../router.ts";
+import type { MageMiddleware } from "../router.ts";
 
 /**
  * Options for the useOptionsAllow middleware.

@@ -1,4 +1,4 @@
-import { MageMiddleware } from "../router.ts";
+import type { MageMiddleware } from "../router.ts";
 
 /**
  * Adds security headers to the response to help protect against common web
