@@ -1,6 +1,7 @@
 {
   "name": "@mage/server",
   "version": "0.1.0",
+  "license": "MIT",
   "exports": "./mod.ts",
   "tasks": {
     "dev": "deno run --allow-net --allow-env --watch example-app.tsx",
@@ -13,6 +14,8 @@
   "imports": {
     "@std/expect": "jsr:@std/expect@^1.0.8",
     "@std/testing": "jsr:@std/testing@^1.0.5",
+    "@types/react": "npm:@types/react@18.3.12",
+    "@types/react-dom": "npm:@types/react-dom@18.3.1",
     "react": "npm:react@^18.3.1",
     "react-dom": "npm:react-dom@^18.3.1"
   },

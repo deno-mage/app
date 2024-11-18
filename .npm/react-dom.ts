@@ -1,2 +1,2 @@
-// @deno-types="npm:@types/react-dom"
+// @deno-types="@types/react-dom"
 export * from "react-dom";

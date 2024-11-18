@@ -1,2 +1,4 @@
-// @deno-types="npm:@types/react"
-export default "react";
+// @deno-types="@types/react"
+import React from "react";
+
+export default React;

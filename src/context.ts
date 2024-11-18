@@ -1,3 +1,4 @@
+import type React from "../.npm/react.ts";
 import { renderToReadableStream } from "../.npm/react-dom/server.ts";
 import { RedirectType, StatusCode, statusTextMap } from "./http.ts";
 import type { MageRouter } from "./router.ts";
@@ -67,7 +68,7 @@ export class MageContext {
    * @param status
    * @param body
    */
-  public async render(status: StatusCode, body: JSX.Element) {
+  public async render(status: StatusCode, body: React.ReactNode) {
     this.response = new Response(await renderToReadableStream(body), {
       status: status,
       statusText: statusTextMap[status],
