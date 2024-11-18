@@ -9,7 +9,6 @@ beforeAll(() => {
   server = new MageTestServer();
 
   server.app.options(
-    "/",
     useOptions({
       getAllowedMethods: () => ["DELETE", "GET", "HEAD"],
     }),

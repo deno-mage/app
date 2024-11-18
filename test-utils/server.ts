@@ -6,9 +6,9 @@ export class MageTestServer {
   public app: MageApp = new MageApp();
   private server: Deno.HttpServer<Deno.NetAddr> | undefined;
 
-  start() {
+  start(port?: number) {
     this.server = this.app.run({
-      port: Math.floor(Math.random() * 1000) + TEST_PORT_FLOOR,
+      port: port ?? Math.floor(Math.random() * 1000) + TEST_PORT_FLOOR,
     });
   }
 
