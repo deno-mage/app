@@ -1,12 +1,12 @@
 import { MageContext } from "./context.ts";
 import { compose } from "./compose.ts";
 import { getAvailablePort } from "./ports.ts";
-import { MageMiddleware, MageRouter } from "./router.ts";
-import { StatusCode } from "./http.ts";
+import { MageRouter } from "./router.ts";
+import type { MageMiddleware } from "./router.ts";
+import { StatusCode, StatusText } from "./http.ts";
 import { useOptions } from "./middleware/options.ts";
 import { useNotFound } from "./middleware/not-found.ts";
 import { useMethodNotAllowed } from "./middleware/method-not-allowed.ts";
-import { StatusText } from "../exports.ts";
 
 /**
  * Options for running a Mage application
@@ -160,7 +160,7 @@ export class MageApp {
    * @param options
    * @returns
    */
-  public run(options: RunOptions) {
+  public run(options: RunOptions): Deno.HttpServer<Deno.NetAddr> {
     const serveOptions: Deno.ServeTcpOptions = {
       port: getAvailablePort(options.port),
       onListen: options.onListen,

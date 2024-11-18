@@ -1,5 +1,5 @@
-import { MageContext } from "./context.ts";
-import { MageMiddleware } from "./router.ts";
+import type { MageContext } from "./context.ts";
+import type { MageMiddleware } from "./router.ts";
 
 /**
  * Compose middleware, running each in sequence.

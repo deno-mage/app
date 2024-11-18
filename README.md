@@ -2,12 +2,18 @@
 
 Simple, composable APIs and web apps for Deno.
 
+## Installation
+
+```sh
+deno add jsr:@mage/server
+```
+
 ## Getting started
 
 An example app:
 
 ```tsx
-import { MageApp, StatusCode, useSecurityHeaders } from "./exports.ts";
+import { MageApp, StatusCode, useSecurityHeaders } from "@mage/server";
 
 const app = new MageApp();
 

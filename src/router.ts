@@ -1,4 +1,4 @@
-import { MageContext } from "./context.ts";
+import type { MageContext } from "./context.ts";
 import { HttpMethod } from "./http.ts";
 
 /**

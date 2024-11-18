@@ -1,6 +1,5 @@
-import { MageMiddleware } from "../router.ts";
-import { HttpMethod } from "../../exports.ts";
-import { StatusCode } from "../http.ts";
+import type { MageMiddleware } from "../router.ts";
+import { HttpMethod, StatusCode } from "../http.ts";
 
 interface CorsOptions {
   origins?: "*" | string[];
