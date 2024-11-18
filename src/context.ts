@@ -1,5 +1,5 @@
-import type React from "../.npm/react.ts";
-import { renderToReadableStream } from "../.npm/react-dom/server.ts";
+import type { VNode } from "preact";
+import { renderToStringAsync } from "preact-render-to-string";
 import { RedirectType, StatusCode, statusTextMap } from "./http.ts";
 import type { MageRouter } from "./router.ts";
 
@@ -68,8 +68,9 @@ export class MageContext {
    * @param status
    * @param body
    */
-  public async render(status: StatusCode, body: React.ReactNode) {
-    this.response = new Response(await renderToReadableStream(body), {
+  public async render(status: StatusCode, body: VNode) {
+    const html = await renderToStringAsync(body);
+    this.response = new Response(`<!DOCTYPE html>${html}`, {
       status: status,
       statusText: statusTextMap[status],
       headers: this.response.headers,

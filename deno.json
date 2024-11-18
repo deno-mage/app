@@ -14,13 +14,11 @@
   "imports": {
     "@std/expect": "jsr:@std/expect@^1.0.8",
     "@std/testing": "jsr:@std/testing@^1.0.5",
-    "@types/react": "npm:@types/react@18.3.12",
-    "@types/react-dom": "npm:@types/react-dom@18.3.1",
-    "react": "npm:react@^18.3.1",
-    "react-dom": "npm:react-dom@^18.3.1"
+    "preact": "npm:preact@10.24.3",
+    "preact-render-to-string": "npm:preact-render-to-string@6.5.11"
   },
   "compilerOptions": {
     "jsx": "react-jsx",
-    "jsxImportSource": "react"
+    "jsxImportSource": "preact"
   }
 }

@@ -26,6 +26,6 @@ app.get("/render", async (context) => {
 app.run({
   port: 8000,
   onListen({ hostname, port }) {
-    console.log(`Listening on ${hostname}:${port}`);
+    console.log(`Listening on http://${hostname}:${port}`);
   },
 });

@@ -1,6 +1,7 @@
 # Mage
 
-Simple, composable APIs and web apps for Deno.
+Build web applications with [Deno](https://deno.com) and
+[Preact](https://preactjs.com).
 
 ## Installation
 
@@ -41,7 +42,7 @@ app.get("/render", async (context) => {
 app.run({
   port: 8000,
   onListen({ hostname, port }) {
-    console.log(`Listening on ${hostname}:${port}`);
+    console.log(`Listening on http://${hostname}:${port}`);
   },
 });
 ```
@@ -81,28 +82,63 @@ A collection of prebuilt middleware is available to use.
 
 ## Context
 
-The context object is passed to each middleware and contains details about the
-request and response.
+A context object is passed to each middleware.
+
+### Url
+
+The URL is parsed and placed on the context.
 
 ```tsx
-app.post("/", async (context) => {
-  console.log(context.url);
-  console.log(context.request.method
-  console.log(context.request.headers.get("Content-Type"));
-  console.log(await context.request.text());
-});
+context.url.pathname
+context.url.searchParams
+...
 ```
 
-Additionally it contains utility functions to respond to the request.
+### Request
+
+The request object is available on the context.
 
 ```tsx
-// Text response
+context.request.method
+context.request.headers.get("Content-Type")
+await context.request.text()
+...
+```
+
+### Response
+
+The response object is available on the context.
+
+```tsx
+context.response.headers.set("Content-Type", "text/plain");
+context.response.headers.delete("Content-Type", "text/plain");
+```
+
+### Response utilities
+
+A number of utility methods are available to configure the response content.
+
+#### `context.text(...)`
+
+Respond with text.
+
+```tsx
 context.text(StatusCode.OK, "Hello, World!");
+```
 
-// JSON response
+#### `context.json(...)`
+
+Respond with JSON.
+
+```tsx
 context.json(StatusCode.OK, { message: "Hello, World!" });
+```
 
-// Render JSX to HTML response
+#### `context.render(...)`
+
+Render JSX to HTML using [Preact](https://preactjs.com).
+
+```tsx
 await context.render(
   StatusCode.OK,
   <html lang="en">
@@ -111,19 +147,24 @@ await context.render(
     </body>
   </html>,
 );
-
-// Empty response
-context.empty(StatusCode.NoContent);
-
-// Redirect
-context.redirect(RedirectType.Permanent, "/new-location");
 ```
 
-You can also configure headers for the response:
+#### `context.empty(...)`
+
+Respond with an empty response, useful for response like `204 No Content`.
 
 ```tsx
-context.response.headers.set("Content-Type", "text/plain");
-context.response.headers.delete("Content-Type", "text/plain");
+// Empty response
+context.empty(StatusCode.NoContent);
+```
+
+#### `context.redirect(...)`
+
+Redirect the request to another location.
+
+```tsx
+// Redirect
+context.redirect(RedirectType.Permanent, "/new-location");
 ```
 
 ## Routing
