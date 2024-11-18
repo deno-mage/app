@@ -8,10 +8,21 @@ Build web applications with [Deno](https://deno.com) and
 ## Installation
 
 ```sh
-deno add jsr:@mage/server
+deno add jsr:@mage/server npm:preact
 ```
 
 ## Getting started
+
+Minimum compiler options:
+
+```json
+{
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact"
+  }
+}
+```
 
 An example app:
 
