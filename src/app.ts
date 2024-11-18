@@ -160,7 +160,7 @@ export class MageApp {
    * @param options
    * @returns
    */
-  public run(options: RunOptions) {
+  public run(options: RunOptions): Deno.HttpServer<Deno.NetAddr> {
     const serveOptions: Deno.ServeTcpOptions = {
       port: getAvailablePort(options.port),
       onListen: options.onListen,

@@ -26,7 +26,7 @@ export class MageContext {
    * The response object that will be sent at the end of the request/response
    * cycle.
    */
-  public response = new Response();
+  public response: Response = new Response();
 
   public constructor(public request: Request, private router: MageRouter) {
     this.url = new URL(request.url);
