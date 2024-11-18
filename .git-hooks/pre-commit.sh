@@ -1,13 +1,7 @@
 #!/bin/sh
 
-execute_task() {
-  deno task $1
-  if [ $? -ne 0 ]; then
-    echo "Task $1 failed"
-    exit 1
-  fi
-}
+denon task format
+denon task lint
+denon task check
 
-execute_task format --check
-execute_task lint
-execute_task check
+git add -u

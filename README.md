@@ -42,13 +42,13 @@ app.get("/json", (context) => {
 });
 
 app.get("/render", async (context) => {
-  await context.html(
+  await context.render(
     StatusCode.OK,
     <html lang="en">
       <body>
         <h1>Hello, World!</h1>
       </body>
-    </html>,
+    </html>
   );
 });
 
@@ -158,7 +158,7 @@ await context.render(
     <body>
       <h1>Hello, World!</h1>
     </body>
-  </html>,
+  </html>
 );
 ```
 
@@ -231,7 +231,7 @@ app.get(
   },
   (context) => {
     context.text(StatusCode.OK, "Three!");
-  },
+  }
   // ... etc
 );
 ```
