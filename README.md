@@ -13,7 +13,7 @@ deno add jsr:@mage/server npm:preact
 
 ## Getting started
 
-Minimum compiler options:
+Minimum TypeScript compiler options:
 
 ```json
 {
