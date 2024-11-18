@@ -1,7 +1,7 @@
 {
   "tasks": {
     "dev": "deno run --allow-net --allow-env --watch example-app.tsx",
-    "test": "deno test --allow-net --clean --coverage --reporter=dot",
+    "test": "deno test --allow-net --clean --coverage",
     "coverage": "deno coverage",
     "lint": "deno lint",
     "format": "deno fmt",

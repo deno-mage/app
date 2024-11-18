@@ -17,16 +17,16 @@ interface CorsOptions {
  * @param options
  * @returns
  */
-export const useCors = (options: CorsOptions): MageMiddleware => {
+export const useCors = (options: CorsOptions | undefined): MageMiddleware => {
   return async (context, next) => {
     const origin = context.request.headers.get("Origin");
 
-    const allowedOrigins = [options.origins ?? "*"].flat();
-    const allowedMethods = [options.methods ?? []].flat();
-    const allowedHeaders = [options.headers ?? []].flat();
-    const exposeHeaders = [options.exposeHeaders ?? []].flat();
-    const allowCredentials = options.credentials;
-    const allowedMaxAge = options.maxAge;
+    const allowedOrigins = [options?.origins ?? "*"].flat();
+    const allowedMethods = [options?.methods ?? []].flat();
+    const allowedHeaders = [options?.headers ?? []].flat();
+    const exposeHeaders = [options?.exposeHeaders ?? []].flat();
+    const allowCredentials = options?.credentials;
+    const allowedMaxAge = options?.maxAge;
 
     if (allowedOrigins.length > 0) {
       if (allowedOrigins.includes("*")) {
@@ -71,18 +71,14 @@ export const useCors = (options: CorsOptions): MageMiddleware => {
       );
     }
 
-    if (context.request.method === HttpMethod.Options) {
-      // don't continue with the middleware chain if handling preflight request,
-      // just return an empty response with the appropriate headers
-      context.empty(StatusCode.NoContent);
-
-      return;
+    if (context.request.method !== HttpMethod.Options) {
+      // don't set full CORS headers if the request is not a preflight request
+      context.response.headers.delete("Access-Control-Allow-Methods");
+      context.response.headers.delete("Access-Control-Allow-Headers");
+      context.response.headers.delete("Access-Control-Max-Age");
     }
 
-    // don't set full CORS headers if the request is not a preflight request
-    context.response.headers.delete("Access-Control-Allow-Methods");
-    context.response.headers.delete("Access-Control-Allow-Headers");
-    context.response.headers.delete("Access-Control-Allow-Max-Age");
+    context.empty(StatusCode.NoContent);
 
     await next();
   };
