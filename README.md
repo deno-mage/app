@@ -1,11 +1,9 @@
-<div aria-hidden="true" style="font-size: 48px; font-weight: bold; text-align: center">
-  <div>Mage Server</div>
-  <div>🧙‍♂️</div>
-</div>
+# Mage Server
 
-<div aria-hidden="true" style="font-size: 24px; text-align: center">
-  Build web applications with <a href="https://deno.com">Deno</a> and <a href="https://preactjs.com">Preact</a>
-</div>
+# 🧙‍♂️
+
+Build web applications with [Deno](https://deno.com) and
+[Preact](https://preactjs.com).
 
 ## Installation
 
