@@ -116,10 +116,9 @@ export class MageContext {
    * @param location
    */
   public redirect(redirectType: RedirectType, location: URL | string) {
-    const status =
-      redirectType === RedirectType.Permanent
-        ? StatusCode.PermanentRedirect
-        : StatusCode.TemporaryRedirect;
+    const status = redirectType === RedirectType.Permanent
+      ? StatusCode.PermanentRedirect
+      : StatusCode.TemporaryRedirect;
 
     this._response = new Response(null, {
       status,

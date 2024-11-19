@@ -77,9 +77,11 @@ describe("headers", () => {
     });
 
     expect(response.headers.getSetCookie()).toEqual([
-      `set-cookie=123; Max-Age=60; Expires=${new Date(
-        "2024-01-01"
-      ).toUTCString()}; Path=/; Domain=example.com; Secure; HttpOnly; SameSite=Strict;`,
+      `set-cookie=123; Max-Age=60; Expires=${
+        new Date(
+          "2024-01-01",
+        ).toUTCString()
+      }; Path=/; Domain=example.com; Secure; HttpOnly; SameSite=Strict;`,
     ]);
   });
 });
