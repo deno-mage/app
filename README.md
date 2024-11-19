@@ -48,7 +48,7 @@ app.get("/render", async (context) => {
       <body>
         <h1>Hello, World!</h1>
       </body>
-    </html>
+    </html>,
   );
 });
 
@@ -158,7 +158,7 @@ await context.render(
     <body>
       <h1>Hello, World!</h1>
     </body>
-  </html>
+  </html>,
 );
 ```
 
@@ -231,7 +231,7 @@ app.get(
   },
   (context) => {
     context.text(StatusCode.OK, "Three!");
-  }
+  },
   // ... etc
 );
 ```

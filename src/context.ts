@@ -1,7 +1,6 @@
 import type { VNode } from "preact";
 import { renderToStringAsync } from "preact-render-to-string";
 import { RedirectType, StatusCode, statusTextMap } from "./http.ts";
-import type { MageRouter } from "./router.ts";
 
 /**
  * Serializable JSON value
@@ -18,19 +17,35 @@ type JSON = { [key: string]: JSONValues } | JSONValues[];
  * request/response cycle and is used to interact with the request and response.
  */
 export class MageContext {
+  private _url: URL;
+  private _response: Response = new Response();
+  private _request: Request;
+
   /**
    * The URL of the request
    */
-  public url: URL;
+  public get url(): URL {
+    return this._url;
+  }
 
   /**
    * The response object that will be sent at the end of the request/response
    * cycle.
    */
-  public response: Response = new Response();
+  public get response(): Response {
+    return this._response;
+  }
 
-  public constructor(public request: Request, private router: MageRouter) {
-    this.url = new URL(request.url);
+  /**
+   * The request object for the current request
+   */
+  public get request(): Request {
+    return this._request;
+  }
+
+  public constructor(request: Request) {
+    this._url = new URL(request.url);
+    this._request = request;
   }
 
   /**
@@ -39,13 +54,13 @@ export class MageContext {
    * @param body
    */
   public text(status: StatusCode, body: string) {
-    this.response = new Response(body, {
+    this._response = new Response(body, {
       status: status,
       statusText: statusTextMap[status],
-      headers: this.response.headers,
+      headers: this._response.headers,
     });
 
-    this.response.headers.set("Content-Type", "text/plain; charset=utf-8");
+    this._response.headers.set("Content-Type", "text/plain; charset=utf-8");
   }
 
   /**
@@ -54,13 +69,13 @@ export class MageContext {
    * @param body
    */
   public json(status: StatusCode, body: JSON) {
-    this.response = new Response(JSON.stringify(body), {
+    this._response = new Response(JSON.stringify(body), {
       status: status,
       statusText: statusTextMap[status],
-      headers: this.response.headers,
+      headers: this._response.headers,
     });
 
-    this.response.headers.set("Content-Type", "application/json");
+    this._response.headers.set("Content-Type", "application/json");
   }
 
   /**
@@ -70,13 +85,13 @@ export class MageContext {
    */
   public async render(status: StatusCode, body: VNode) {
     const html = await renderToStringAsync(body);
-    this.response = new Response(`<!DOCTYPE html>${html}`, {
+    this._response = new Response(`<!DOCTYPE html>${html}`, {
       status: status,
       statusText: statusTextMap[status],
-      headers: this.response.headers,
+      headers: this._response.headers,
     });
 
-    this.response.headers.set("Content-Type", "text/html; charset=utf-8");
+    this._response.headers.set("Content-Type", "text/html; charset=utf-8");
   }
 
   /**
@@ -84,10 +99,10 @@ export class MageContext {
    * @param status
    */
   public empty(status: StatusCode) {
-    this.response = new Response(null, {
+    this._response = new Response(null, {
       status: status,
       statusText: statusTextMap[status],
-      headers: this.response.headers,
+      headers: this._response.headers,
     });
   }
 
@@ -101,12 +116,12 @@ export class MageContext {
       ? StatusCode.PermanentRedirect
       : StatusCode.TemporaryRedirect;
 
-    this.response = new Response(null, {
+    this._response = new Response(null, {
       status,
       statusText: statusTextMap[status],
-      headers: this.response.headers,
+      headers: this._response.headers,
     });
 
-    this.response.headers.set("Location", location.toString());
+    this._response.headers.set("Location", location.toString());
   }
 }

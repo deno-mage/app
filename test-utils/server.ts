@@ -2,12 +2,22 @@ import { MageApp } from "../mod.ts";
 
 const TEST_PORT_FLOOR = 60000;
 
+/**
+ * A test server for running Mage apps in a test environment
+ */
 export class MageTestServer {
-  public app: MageApp = new MageApp();
-  private server: Deno.HttpServer<Deno.NetAddr> | undefined;
+  private _app: MageApp = new MageApp();
+  private _server: Deno.HttpServer<Deno.NetAddr> | undefined;
+
+  /**
+   * The test server's app instance
+   */
+  public get app() {
+    return this._app;
+  }
 
   start(port?: number) {
-    this.server = this.app.run({
+    this._server = this.app.run({
       port: port ?? Math.floor(Math.random() * 1000) + TEST_PORT_FLOOR,
     });
   }
@@ -15,11 +25,11 @@ export class MageTestServer {
   url(path: string) {
     return new URL(
       path,
-      `http://${this.server?.addr.hostname}:${this.server?.addr.port}`,
+      `http://${this._server?.addr.hostname}:${this._server?.addr.port}`,
     );
   }
 
   async stop() {
-    await this.server?.shutdown();
+    await this._server?.shutdown();
   }
 }

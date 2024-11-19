@@ -1,7 +1,5 @@
 #!/bin/sh
 
-denon task format
-denon task lint
-denon task check
-
-git add -u
+deno task format --check
+deno task lint
+deno task check
