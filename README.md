@@ -131,23 +131,17 @@ context.response.headers.delete("Content-Type", "text/plain");
 
 A number of utility methods are available to configure the response content.
 
-`context.text(...)`
-
 Respond with text.
 
 ```tsx
 context.text(StatusCode.OK, "Hello, World!");
 ```
 
-`context.json(...)`
-
 Respond with JSON.
 
 ```tsx
 context.json(StatusCode.OK, { message: "Hello, World!" });
 ```
-
-`context.render(...)`
 
 Render JSX to HTML using [Preact](https://preactjs.com).
 
@@ -162,15 +156,11 @@ await context.render(
 );
 ```
 
-`context.empty(...)`
-
 Respond with an empty response, useful for response like `204 No Content`.
 
 ```tsx
 context.empty(StatusCode.NoContent);
 ```
-
-`context.redirect(...)`
 
 Redirect the request to another location.
 
