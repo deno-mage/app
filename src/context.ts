@@ -130,6 +130,29 @@ export class MageContext {
   }
 
   /**
+   * Rewrites the request to the provided location
+   *
+   * NOTE: This is not optimal for local redirects, as it will make a new request
+   * to the provided location. This is useful for proxying requests to another
+   * server.
+   *
+   * @param location
+   */
+  public async rewrite(location: URL | string) {
+    const url = location.toString();
+
+    if (url.startsWith("/")) {
+      this._url.pathname = url;
+    } else {
+      this._url = new URL(`${this._url.pathname}${this._url.search}`, url);
+    }
+
+    this._response = await fetch(this._url, {
+      ...this._request,
+    });
+  }
+
+  /**
    * Create cookie string to put in the `Set-Cookie` header
    *
    * @param name

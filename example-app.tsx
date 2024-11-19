@@ -23,6 +23,16 @@ app.get("/render", async (context) => {
   );
 });
 
+app.get("/rewrite", async (context) => {
+  await context.rewrite("/target");
+});
+
+app.get("/target", (context) => {
+  context.json(StatusCode.OK, {
+    message: context.url.searchParams.get("message"),
+  });
+});
+
 app.run({
   port: 8000,
   onListen({ hostname, port }) {
