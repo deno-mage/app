@@ -132,17 +132,23 @@ context.response.headers.delete("Content-Type", "text/plain");
 
 A number of utility methods are available to configure the response content.
 
+#### `text`
+
 Respond with text.
 
 ```tsx
 context.text(StatusCode.OK, "Hello, World!");
 ```
 
+#### `json`
+
 Respond with JSON.
 
 ```tsx
 context.json(StatusCode.OK, { message: "Hello, World!" });
 ```
+
+#### `render`
 
 Render JSX to HTML using [Preact](https://preactjs.com).
 
@@ -157,16 +163,34 @@ await context.render(
 );
 ```
 
+#### `empty`
+
 Respond with an empty response, useful for response like `204 No Content`.
 
 ```tsx
 context.empty(StatusCode.NoContent);
 ```
 
-Redirect the request to another location.
+#### `redirect`
+
+Redirect the request to another location. This works for local and external
+URLs.
 
 ```tsx
 context.redirect(RedirectType.Permanent, "/new-location");
+```
+
+#### `rewrite`
+
+You can rewrite requests to another location.
+
+**NOTE: This is not optimal for local redirects, as it will make a new request
+to the provided location. This is useful for proxying requests to another
+server.**
+
+```tsx
+await context.rewrite("/new-location");
+await context.rewrite("https://example.com");
 ```
 
 ### Cookies
