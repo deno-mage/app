@@ -42,7 +42,7 @@ app.get("/json", (context) => {
 });
 
 app.get("/render", async (context) => {
-  await context.html(
+  await context.render(
     StatusCode.OK,
     <html lang="en">
       <body>

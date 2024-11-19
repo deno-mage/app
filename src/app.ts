@@ -31,7 +31,7 @@ interface RunOptions {
  * MageApp is the main class for creating and running Mage applications.
  */
 export class MageApp {
-  private router = new MageRouter();
+  private _router = new MageRouter();
 
   /**
    * Adds middleware to the application that will be run for every request.
@@ -39,7 +39,7 @@ export class MageApp {
    * @param middleware
    */
   public use(...middleware: MageMiddleware[]): void {
-    this.router.use(...middleware);
+    this._router.use(...middleware);
   }
 
   /**
@@ -53,7 +53,7 @@ export class MageApp {
     routenameOrMiddleware: string | MageMiddleware,
     ...middleware: MageMiddleware[]
   ): void {
-    this.router.all(routenameOrMiddleware, ...middleware);
+    this._router.all(routenameOrMiddleware, ...middleware);
   }
 
   /**
@@ -67,7 +67,7 @@ export class MageApp {
     routenameOrMiddleware: string | MageMiddleware,
     ...middleware: MageMiddleware[]
   ): void {
-    this.router.get(routenameOrMiddleware, ...middleware);
+    this._router.get(routenameOrMiddleware, ...middleware);
   }
 
   /**
@@ -81,7 +81,7 @@ export class MageApp {
     routenameOrMiddleware: string | MageMiddleware,
     ...middleware: MageMiddleware[]
   ): void {
-    this.router.post(routenameOrMiddleware, ...middleware);
+    this._router.post(routenameOrMiddleware, ...middleware);
   }
 
   /**
@@ -95,7 +95,7 @@ export class MageApp {
     routenameOrMiddleware: string | MageMiddleware,
     ...middleware: MageMiddleware[]
   ): void {
-    this.router.put(routenameOrMiddleware, ...middleware);
+    this._router.put(routenameOrMiddleware, ...middleware);
   }
 
   /**
@@ -109,7 +109,7 @@ export class MageApp {
     routenameOrMiddleware: string | MageMiddleware,
     ...middleware: MageMiddleware[]
   ): void {
-    this.router.delete(routenameOrMiddleware, ...middleware);
+    this._router.delete(routenameOrMiddleware, ...middleware);
   }
 
   /**
@@ -123,7 +123,7 @@ export class MageApp {
     routenameOrMiddleware: string | MageMiddleware,
     ...middleware: MageMiddleware[]
   ): void {
-    this.router.patch(routenameOrMiddleware, ...middleware);
+    this._router.patch(routenameOrMiddleware, ...middleware);
   }
 
   /**
@@ -137,7 +137,7 @@ export class MageApp {
     routenameOrMiddleware: string | MageMiddleware,
     ...middleware: MageMiddleware[]
   ): void {
-    this.router.options(routenameOrMiddleware, ...middleware);
+    this._router.options(routenameOrMiddleware, ...middleware);
   }
 
   /**
@@ -151,7 +151,7 @@ export class MageApp {
     routenameOrMiddleware: string | MageMiddleware,
     ...middleware: MageMiddleware[]
   ): void {
-    this.router.head(routenameOrMiddleware, ...middleware);
+    this._router.head(routenameOrMiddleware, ...middleware);
   }
 
   /**
@@ -166,14 +166,14 @@ export class MageApp {
       onListen: options.onListen,
     };
 
-    return Deno.serve(serveOptions, async (_req) => {
-      const context: MageContext = new MageContext(_req, this.router);
+    return Deno.serve(serveOptions, async (req) => {
+      const context: MageContext = new MageContext(req);
 
-      const matchResult = this.router.match(context);
+      const matchResult = this._router.match(context);
 
       const middleware = [
         useOptions({
-          getAllowedMethods: () => this.router.getAvailableMethods(context),
+          getAllowedMethods: () => this._router.getAvailableMethods(context),
         }),
         ...matchResult.middleware,
       ];
@@ -185,7 +185,7 @@ export class MageApp {
       if (!matchResult.matchedMethod) {
         middleware.push(
           useMethodNotAllowed({
-            getAllowedMethods: () => this.router.getAvailableMethods(context),
+            getAllowedMethods: () => this._router.getAvailableMethods(context),
           }),
         );
       }

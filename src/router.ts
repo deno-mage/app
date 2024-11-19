@@ -47,7 +47,7 @@ interface MatchResult {
  * application.
  */
 export class MageRouter {
-  private entries: RouterEntry[] = [];
+  private _entries: RouterEntry[] = [];
 
   /**
    * Match middleware for a given context.
@@ -59,7 +59,7 @@ export class MageRouter {
     let matchedRoutename = false;
     let matchedMethod = false;
 
-    const middleware = this.entries
+    const middleware = this._entries
       .filter((entry) => {
         if (entry.routename && entry.routename !== context.url.pathname) {
           return false;
@@ -95,7 +95,7 @@ export class MageRouter {
    * @returns
    */
   public getAvailableMethods(context: MageContext): string[] {
-    const methods = this.entries
+    const methods = this._entries
       .filter((entry) => entry.routename === context.url.pathname)
       .flatMap((entry) => entry.methods ?? []);
 
@@ -110,7 +110,7 @@ export class MageRouter {
    * @param middleware
    */
   public use(...middleware: MageMiddleware[]) {
-    this.entries.push({
+    this._entries.push({
       middleware,
     });
   }
@@ -256,7 +256,7 @@ export class MageRouter {
       ? additionalMiddleware
       : [routenameOrMiddleware, ...additionalMiddleware];
 
-    this.entries.push({
+    this._entries.push({
       routename,
       middleware,
       methods,
