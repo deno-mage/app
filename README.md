@@ -169,6 +169,16 @@ Redirect the request to another location.
 context.redirect(RedirectType.Permanent, "/new-location");
 ```
 
+### Cookies
+
+Cookies can be set and read from the context.
+
+```tsx
+context.cookies.set("name", "value");
+context.cookies.get("name");
+context.cookies.delete("name");
+```
+
 ## Routing
 
 You can register middleware to execute on every route and method via the
