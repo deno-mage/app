@@ -171,11 +171,16 @@ context.redirect(RedirectType.Permanent, "/new-location");
 
 ### Cookies
 
-Cookies can be set and read from the context.
+You can read cookies from the request.
+
+```tsx
+context.cookies.get("name");
+```
+
+You can set and delete cookies on the response.
 
 ```tsx
 context.cookies.set("name", "value");
-context.cookies.get("name");
 context.cookies.delete("name");
 ```
 
