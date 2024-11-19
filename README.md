@@ -5,7 +5,7 @@
 <div align="center">
   Build web applications with <a href="https://deno.com">Deno</a> and <a href="https://preactjs.com">Preact</a>
 </div>
-                                                                        
+
 ## Installation
 
 ```sh
