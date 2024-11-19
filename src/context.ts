@@ -1,6 +1,8 @@
 import type { VNode } from "preact";
 import { renderToStringAsync } from "preact-render-to-string";
 import { RedirectType, StatusCode, statusTextMap } from "./http.ts";
+import { Cookies } from "./cookies.ts";
+import type { CookieOptions } from "./cookies.ts";
 
 /**
  * Serializable JSON value
@@ -18,9 +20,9 @@ type JSON = { [key: string]: JSONValues } | JSONValues[];
  */
 export class MageContext {
   private _url: URL;
-  private _response: Response = new Response();
+  private _response: Response;
   private _request: Request;
-
+  private _cookies: Cookies;
   /**
    * The URL of the request
    */
@@ -45,7 +47,9 @@ export class MageContext {
 
   public constructor(request: Request) {
     this._url = new URL(request.url);
+    this._response = new Response();
     this._request = request;
+    this._cookies = new Cookies(this);
   }
 
   /**
@@ -112,9 +116,10 @@ export class MageContext {
    * @param location
    */
   public redirect(redirectType: RedirectType, location: URL | string) {
-    const status = redirectType === RedirectType.Permanent
-      ? StatusCode.PermanentRedirect
-      : StatusCode.TemporaryRedirect;
+    const status =
+      redirectType === RedirectType.Permanent
+        ? StatusCode.PermanentRedirect
+        : StatusCode.TemporaryRedirect;
 
     this._response = new Response(null, {
       status,
@@ -123,5 +128,32 @@ export class MageContext {
     });
 
     this._response.headers.set("Location", location.toString());
+  }
+
+  /**
+   * Create cookie string to put in the `Set-Cookie` header
+   *
+   * @param name
+   * @param value
+   * @param options
+   */
+  public setCookie(name: string, value: string, options: CookieOptions = {}) {
+    this._cookies.setCookie(name, value, options);
+  }
+
+  /**
+   * Remove cookie from the client
+   */
+  public deleteCookie(name: string) {
+    this._cookies.deleteCookie(name);
+  }
+
+  /**
+   * Get the cookie value from the request
+   *
+   * @param name
+   */
+  public getCookie(name: string): string | null {
+    return this._cookies.get(name);
   }
 }
