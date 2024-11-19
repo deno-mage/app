@@ -1,6 +1,6 @@
 <h1 align="center">Mage Server</h1>
 <div align="center">
-  <img src="https://github.com/user-attachments/assets/d360330f-9f03-4a27-b59e-508df650316d"/>
+  <img src="https://github.com/user-attachments/assets/558a5409-0a48-4ef7-a119-c3c4b251dba8"/>
 </div>
 <div align="center">
   Build web applications with <a href="https://deno.com">Deno</a> and <a href="https://preactjs.com">Preact</a>
