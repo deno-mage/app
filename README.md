@@ -1,10 +1,11 @@
-# Mage Server
-
-# 🧙‍♂️
-
-Build web applications with [Deno](https://deno.com) and
-[Preact](https://preactjs.com).
-
+<h1 align="center">Mage Server</h1>
+<div align="center">
+  <img src="https://github.com/user-attachments/assets/d360330f-9f03-4a27-b59e-508df650316d"/>
+</div>
+<div align="center">
+  Build web applications with <a href="https://deno.com">Deno</a> and <a href="https://preactjs.com">Preact</a>
+</div>
+                                                                        
 ## Installation
 
 ```sh
