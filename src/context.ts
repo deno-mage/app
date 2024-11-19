@@ -144,11 +144,14 @@ export class MageContext {
     if (url.startsWith("/")) {
       this._url.pathname = url;
     } else {
-      this._url = new URL(`${this._url.pathname}${this._url.search}`, url);
+      const pathname = new URL(url).pathname;
+      this._url = new URL(`${pathname}${this._url.search}`, url);
     }
 
     this._response = await fetch(this._url, {
-      ...this._request,
+      method: this._request.method,
+      headers: this._request.headers,
+      body: this._request.body,
     });
   }
 
