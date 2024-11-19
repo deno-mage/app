@@ -3,6 +3,7 @@ export { MageApp } from "./src/app.ts";
 export { MageContext } from "./src/context.ts";
 export type { MageMiddleware } from "./src/router.ts";
 export { HttpMethod, StatusCode, StatusText } from "./src/http.ts";
+export type { CookieOptions } from "./src/cookies.ts";
 
 //middleware
 export { useCors } from "./src/middleware/cors.ts";
