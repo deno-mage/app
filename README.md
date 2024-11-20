@@ -184,9 +184,8 @@ context.redirect(RedirectType.Permanent, "/new-location");
 You can rewrite requests to another location. This works for local and external
 URLs.
 
-**NOTE: This is not optimal for local redirects, as it will make a new request
-to the provided location. This is useful for proxying requests to another
-server.**
+**NOTE: This is not optimal for local rewrites, as it will make a new request to
+the provided location. This is useful for proxying requests to another server.**
 
 ```tsx
 await context.rewrite("/new-location");

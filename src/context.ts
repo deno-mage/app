@@ -132,7 +132,7 @@ export class MageContext {
   /**
    * Rewrites the request to the provided location
    *
-   * NOTE: This is not optimal for local redirects, as it will make a new request
+   * NOTE: This is not optimal for local rewrites, as it will make a new request
    * to the provided location. This is useful for proxying requests to another
    * server.
    *
