@@ -25,7 +25,7 @@ afterAll(async () => {
 });
 
 describe("responses - redirect", () => {
-  it("should return remp redirect response", async () => {
+  it("should return temp redirect response", async () => {
     const response = await fetch(server.url("/temp"), {
       method: "GET",
       redirect: "manual",

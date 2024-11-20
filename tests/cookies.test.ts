@@ -34,6 +34,12 @@ beforeAll(() => {
     });
   });
 
+  server.app.get("/get-null", (context) => {
+    const cookie = context.getCookie("null-cookie");
+
+    context.text(StatusCode.OK, cookie!);
+  });
+
   server.start();
 });
 
@@ -83,5 +89,24 @@ describe("headers", () => {
         ).toUTCString()
       }; Path=/; Domain=example.com; Secure; HttpOnly; SameSite=Strict`,
     ]);
+  });
+
+  it("should get null if cookie is not set (no cookies)", async () => {
+    const response = await fetch(server.url("/get-null"), {
+      method: "GET",
+    });
+
+    expect(await response.text()).toBe("");
+  });
+
+  it("should get null if cookie is not set (some cookies)", async () => {
+    const response = await fetch(server.url("/get-null"), {
+      method: "GET",
+      headers: {
+        Cookie: "not-null-cookie=123",
+      },
+    });
+
+    expect(await response.text()).toBe("");
   });
 });
