@@ -21,20 +21,32 @@ function matchRoutename(
   const routeParts = routename.split("/");
   const pathParts = pathname.split("/");
 
-  // early exit if the  number of parts do not match
-  if (routeParts.length !== pathParts.length) {
-    return { match: false };
-  }
-
   const params: { [key: string]: string } = {};
 
   for (let i = 0; i < routeParts.length; i++) {
+    if (routeParts[i] === "*") {
+      return { match: true, params };
+    }
+
     if (routeParts[i].startsWith(":")) {
       const paramName = routeParts[i].substring(1);
       params[paramName] = pathParts[i];
     } else if (routeParts[i] !== pathParts[i]) {
       return { match: false };
     }
+  }
+
+  // Check for wildcard at the end of the route
+  if (
+    routeParts.length < pathParts.length &&
+    routeParts[routeParts.length - 1] === "*"
+  ) {
+    return { match: true, params };
+  }
+
+  // Ensure all parts are matched
+  if (routeParts.length !== pathParts.length) {
+    return { match: false };
   }
 
   return { match: true, params };

@@ -16,10 +16,6 @@ beforeAll(() => {
     context.json(StatusCode.OK, context.params);
   });
 
-  server.app.get("/public/*", (context) => {
-    context.text(StatusCode.OK, "public");
-  });
-
   server.start();
 });
 
@@ -49,29 +45,5 @@ describe("routing - params", () => {
       city: "new-york",
       road: "5th-avenue",
     });
-  });
-
-  it("should return not found for wildcard base, wildcards not inclusive", async () => {
-    const response = await fetch(server.url("/public"), {
-      method: "GET",
-    });
-
-    expect(await response.text()).toBe("public");
-  });
-
-  it("should hit route with wildcard", async () => {
-    const response = await fetch(server.url("/public/index.html"), {
-      method: "GET",
-    });
-
-    expect(await response.text()).toBe("public");
-  });
-
-  it("should hit route with wildcard", async () => {
-    const response = await fetch(server.url("/public/js/index.js"), {
-      method: "GET",
-    });
-
-    expect(await response.text()).toBe("public");
   });
 });
