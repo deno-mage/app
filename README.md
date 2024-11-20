@@ -173,7 +173,7 @@ context.empty(StatusCode.NoContent);
 
 #### `redirect`
 
-Redirect the request to another location. 
+Redirect the request to another location.
 
 ```tsx
 context.redirect(RedirectType.Permanent, "/new-location");
