@@ -52,36 +52,37 @@ export class Cookies {
    * @param options
    */
   public setCookie(name: string, value: string, options: CookieOptions = {}) {
-    let cookie = `${name}=${value};`;
+    const parts = [`${name}=${value}`];
 
     if (options.maxAge) {
-      cookie += ` Max-Age=${options.maxAge};`;
+      parts.push(`Max-Age=${options.maxAge}`);
     }
 
     if (options.expires) {
-      cookie += ` Expires=${options.expires.toUTCString()};`;
+      parts.push(`Expires=${options.expires.toUTCString()}`);
     }
 
     if (options.path) {
-      cookie += ` Path=${options.path};`;
+      parts.push(`Path=${options.path}`);
     }
 
     if (options.domain) {
-      cookie += ` Domain=${options.domain};`;
+      parts.push(`Domain=${options.domain}`);
     }
 
     if (options.secure) {
-      cookie += ` Secure;`;
+      parts.push(`Secure`);
     }
 
     if (options.httpOnly) {
-      cookie += ` HttpOnly;`;
+      parts.push(`HttpOnly`);
     }
 
     if (options.sameSite) {
-      cookie += ` SameSite=${options.sameSite};`;
+      parts.push(`SameSite=${options.sameSite}`);
     }
 
+    const cookie = parts.join("; ");
     this._context.response.headers.append("Set-Cookie", cookie);
   }
 

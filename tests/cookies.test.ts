@@ -64,7 +64,7 @@ describe("headers", () => {
       method: "GET",
     });
 
-    expect(response.headers.getSetCookie()).toEqual(["set-cookie=123;"]);
+    expect(response.headers.getSetCookie()).toEqual(["set-cookie=123"]);
   });
 
   it("should delete cookie", async () => {
@@ -87,7 +87,7 @@ describe("headers", () => {
         new Date(
           "2024-01-01",
         ).toUTCString()
-      }; Path=/; Domain=example.com; Secure; HttpOnly; SameSite=Strict;`,
+      }; Path=/; Domain=example.com; Secure; HttpOnly; SameSite=Strict`,
     ]);
   });
 
