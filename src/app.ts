@@ -167,13 +167,20 @@ export class MageApp {
     };
 
     return Deno.serve(serveOptions, async (req) => {
-      const context: MageContext = new MageContext(req);
+      const url = new URL(req.url);
+      const matchResult = this._router.match(url, req.method);
 
-      const matchResult = this._router.match(context);
+      const context: MageContext = new MageContext(
+        req,
+        url,
+        matchResult.params,
+      );
+
+      const getAllowedMethods = () => this._router.getAvailableMethods(url);
 
       const middleware = [
         useOptions({
-          getAllowedMethods: () => this._router.getAvailableMethods(context),
+          getAllowedMethods,
         }),
         ...matchResult.middleware,
       ];
@@ -185,7 +192,7 @@ export class MageApp {
       if (!matchResult.matchedMethod) {
         middleware.push(
           useMethodNotAllowed({
-            getAllowedMethods: () => this._router.getAvailableMethods(context),
+            getAllowedMethods,
           }),
         );
       }

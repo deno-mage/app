@@ -23,11 +23,20 @@ export class MageContext {
   private _response: Response;
   private _request: Request;
   private _cookies: Cookies;
+  private _params: { [key: string]: string };
+
   /**
    * The URL of the request
    */
   public get url(): URL {
     return this._url;
+  }
+
+  /**
+   * The URL parameters of the request matched by the router
+   */
+  public get params(): { [key: string]: string } {
+    return this._params;
   }
 
   /**
@@ -45,10 +54,15 @@ export class MageContext {
     return this._request;
   }
 
-  public constructor(request: Request) {
-    this._url = new URL(request.url);
-    this._response = new Response();
+  public constructor(
+    request: Request,
+    url: URL,
+    params: { [key: string]: string },
+  ) {
     this._request = request;
+    this._url = url;
+    this._params = params;
+    this._response = new Response();
     this._cookies = new Cookies(this);
   }
 
