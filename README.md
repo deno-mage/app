@@ -173,8 +173,7 @@ context.empty(StatusCode.NoContent);
 
 #### `redirect`
 
-Redirect the request to another location. This works for local and external
-URLs.
+Redirect the request to another location.
 
 ```tsx
 context.redirect(RedirectType.Permanent, "/new-location");
@@ -182,7 +181,8 @@ context.redirect(RedirectType.Permanent, "/new-location");
 
 #### `rewrite`
 
-You can rewrite requests to another location.
+You can rewrite requests to another location. This works for local and external
+URLs.
 
 **NOTE: This is not optimal for local redirects, as it will make a new request
 to the provided location. This is useful for proxying requests to another
