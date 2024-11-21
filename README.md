@@ -248,7 +248,7 @@ context.params.id; // 1
 context.params.postId; // 2
 ```
 
-### Wildcards
+### Wildcards
 
 Wildcards are parsed from the URL and placed on the context.
 
