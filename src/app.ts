@@ -174,6 +174,7 @@ export class MageApp {
         req,
         url,
         matchResult.params,
+        matchResult.wildcard,
       );
 
       const getAllowedMethods = () => this._router.getAvailableMethods(url);

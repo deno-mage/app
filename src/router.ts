@@ -4,6 +4,7 @@ import { HttpMethod } from "./http.ts";
 interface MatchRoutenameResultMatch {
   match: true;
   params: { [key: string]: string };
+  wildcard?: string;
 }
 
 interface MatchRoutenameResultNoMatch {
@@ -25,7 +26,9 @@ function matchRoutename(
 
   for (let i = 0; i < routeParts.length; i++) {
     if (routeParts[i] === "*") {
-      return { match: true, params };
+      const wildcard = pathParts.slice(i).join("/");
+
+      return { match: true, params, wildcard };
     }
 
     if (routeParts[i].startsWith(":")) {
@@ -41,7 +44,9 @@ function matchRoutename(
     routeParts.length < pathParts.length &&
     routeParts[routeParts.length - 1] === "*"
   ) {
-    return { match: true, params };
+    const wildcard = pathParts.slice(routeParts.length - 1).join("/");
+
+    return { match: true, params, wildcard };
   }
 
   // Ensure all parts are matched
@@ -92,6 +97,7 @@ interface MatchResult {
   matchedRoutename: boolean;
   matchedMethod: boolean;
   params: { [key: string]: string };
+  wildcard?: string;
 }
 
 /**
@@ -112,6 +118,7 @@ export class MageRouter {
     let matchedRoutename = false;
     let matchedMethod = false;
     let params: { [key: string]: string } = {};
+    let wildcard: string | undefined;
 
     const middleware = this._entries
       .filter((entry) => {
@@ -123,6 +130,7 @@ export class MageRouter {
           }
 
           params = result.params;
+          wildcard = result.wildcard;
           matchedRoutename = true;
         }
 
@@ -143,6 +151,7 @@ export class MageRouter {
       matchedRoutename,
       matchedMethod,
       params,
+      wildcard,
     };
   }
 

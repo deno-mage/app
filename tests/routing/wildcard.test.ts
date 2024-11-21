@@ -13,11 +13,14 @@ beforeAll(() => {
   });
 
   server.app.get("/public/*", (context) => {
-    context.text(StatusCode.OK, "wildcard");
+    context.json(StatusCode.OK, { wildcard: context.wildcard });
   });
 
   server.app.get("/:param/*", (context) => {
-    context.json(StatusCode.OK, context.params);
+    context.json(StatusCode.OK, {
+      params: context.params,
+      wildcard: context.wildcard,
+    });
   });
 
   server.start();
@@ -33,15 +36,15 @@ describe("routing - wildcard", () => {
       method: "GET",
     });
 
-    expect(await response.text()).toBe("wildcard");
+    expect(await response.json()).toEqual({ wildcard: "" });
   });
 
-  it("should hit route with wildcard", async () => {
+  it("should hit route with wildcard and place wildcard on context", async () => {
     const response = await fetch(server.url("/public/wildcard"), {
       method: "GET",
     });
 
-    expect(await response.text()).toBe("wildcard");
+    expect(await response.json()).toEqual({ wildcard: "wildcard" });
   });
 
   it("should hit route with wildcard with multiple paths", async () => {
@@ -49,7 +52,7 @@ describe("routing - wildcard", () => {
       method: "GET",
     });
 
-    expect(await response.text()).toBe("wildcard");
+    expect(await response.json()).toEqual({ wildcard: "js/index.js" });
   });
 
   it("should hit specific path if registered first over wildcard", async () => {
@@ -65,6 +68,9 @@ describe("routing - wildcard", () => {
       method: "GET",
     });
 
-    expect(await response.json()).toEqual({ param: "param" });
+    expect(await response.json()).toEqual({
+      params: { param: "param" },
+      wildcard: "wildcard",
+    });
   });
 });

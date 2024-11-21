@@ -82,6 +82,36 @@ app.get("/", (context) => {
 });
 ```
 
+You can register middleware to execute on every route and method via the
+`app.use` method. This is useful for middleware that should run on every
+request.
+
+```tsx
+app.use(async (context, next) => {
+  console.log("Request received");
+
+  await next();
+});
+```
+
+You can configure multiple middleware at a time:
+
+```tsx
+app.get(
+  "/",
+  (context) => {
+    context.text(StatusCode.OK, "One!");
+  },
+  (context) => {
+    context.text(StatusCode.OK, "Two!");
+  },
+  (context) => {
+    context.text(StatusCode.OK, "Three!");
+  },
+  // ... etc
+);
+```
+
 ### Available middleware
 
 A collection of prebuilt middleware is available to use.
@@ -209,17 +239,7 @@ context.cookies.delete("name");
 
 ## Routing
 
-You can register middleware to execute on every route and method via the
-`app.use` method. This is useful for middleware that should run on every
-request.
-
-```tsx
-app.use(async (context, next) => {
-  console.log("Request received");
-
-  await next();
-});
-```
+### HTTP methods
 
 Routes can be registered for each HTTP method against a route:
 
@@ -247,20 +267,73 @@ app.options((context) => {
 });
 ```
 
-You can configure multiple middleware at a time:
+### Paths
+
+Paths can be simple:
 
 ```tsx
-app.get(
-  "/",
-  (context) => {
-    context.text(StatusCode.OK, "One!");
-  },
-  (context) => {
-    context.text(StatusCode.OK, "Two!");
-  },
-  (context) => {
-    context.text(StatusCode.OK, "Three!");
-  },
-  // ... etc
-);
+app.get("/one", (context) => {
+  context.text(StatusCode.OK, "Simple path");
+});
+
+app.get("/one/two", (context) => {
+  context.text(StatusCode.OK, "Simple path");
+});
+
+app.get("/one/two/three", (context) => {
+  context.text(StatusCode.OK, "Simple path");
+});
+```
+
+### Parameters
+
+Paths can contain parameters that will be passed to the context as strings:
+
+```tsx
+app.get("/user/:id", (context) => {
+  context.text(StatusCode.OK, `User ID: ${context.params.id}`);
+});
+
+app.get("/user/:id/post/:postId", (context) => {
+  context.text(
+    StatusCode.OK,
+    `User ID: ${context.params.id}, Post ID: ${context.params.postId}`,
+  );
+});
+```
+
+### Wildcards
+
+Paths can contain wildcards that will match any path. Wildcards must be at the
+end of the path.
+
+```tsx
+app.get("/public/*", (context) => {
+  context.text(StatusCode.OK, "Wildcard path");
+});
+```
+
+The path portion captured by the wildcard is available on the context:
+
+```tsx
+app.get("/public/*", (context) => {
+  context.text(StatusCode.OK, `Wildcard path: ${context.wildcard}`);
+});
+```
+
+Wildcards are inclusive of the path its placed on. This means that the wildcard
+will match any path that starts with the wildcard path.
+
+```tsx
+app.get("/public/*", (context) => {
+  context.text(StatusCode.OK, "Wildcard path");
+});
+
+/**
+ *  matches:
+ *
+ *  /public
+ *  /public/one
+ *  /public/one/two
+ */
 ```

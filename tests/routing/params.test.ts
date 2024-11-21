@@ -16,6 +16,10 @@ beforeAll(() => {
     context.json(StatusCode.OK, context.params);
   });
 
+  server.app.get("/user/:id/post/:postId", (context) => {
+    context.json(StatusCode.OK, context.params);
+  });
+
   server.start();
 });
 
@@ -44,6 +48,17 @@ describe("routing - params", () => {
       country: "usa",
       city: "new-york",
       road: "5th-avenue",
+    });
+  });
+
+  it("should hit route with multiple detached params", async () => {
+    const response = await fetch(server.url("/user/1/post/2"), {
+      method: "GET",
+    });
+
+    expect(await response.json()).toEqual({
+      id: "1",
+      postId: "2",
     });
   });
 });
