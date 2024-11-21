@@ -61,6 +61,12 @@ app.run({
 });
 ```
 
+Run the app:
+
+```
+deno run --allow-net --allow-env --allow-read main.tsx
+```
+
 ## Middleware
 
 APIs are composed of stacked middleware. A simple middleware looks like this:
@@ -123,6 +129,7 @@ A collection of prebuilt middleware is available to use.
 | `useNotFound`         | Responds with 404, ignores preflight (OPTIONS) requests |
 | `useOptions`          | Responds to preflight (OPTIONS) requests                |
 | `useSecurityHeaders`  | Adds recommended security headers to the response       |
+| `serveFile`           | Serve a file from the file system                       |
 
 ## Context
 

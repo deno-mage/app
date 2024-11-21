@@ -1,4 +1,5 @@
 import { MageApp, StatusCode, useSecurityHeaders } from "./mod.ts";
+import { useServeFile } from "./src/middleware/serve-file.ts";
 
 const app = new MageApp();
 
@@ -32,6 +33,8 @@ app.get("/target", (context) => {
     message: context.url.searchParams.get("message"),
   });
 });
+
+app.get("/public/*", useServeFile({ directory: "./public" }));
 
 app.run({
   port: 8000,

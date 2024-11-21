@@ -1,5 +1,6 @@
 import type { VNode } from "preact";
 import { renderToStringAsync } from "preact-render-to-string";
+import { serveFile } from "@std/http";
 import { RedirectType, StatusCode, statusTextMap } from "./http.ts";
 import { Cookies } from "./cookies.ts";
 import type { CookieOptions } from "./cookies.ts";
@@ -191,5 +192,27 @@ export class MageContext {
    */
   public getCookie(name: string): string | null {
     return this._cookies.get(name);
+  }
+
+  /**
+   * Serve a file.
+   *
+   * @param file
+   * @param fileInfo
+   */
+  public async serveFile(filepath: string, fileInfo?: Deno.FileInfo) {
+    // `serveFile` will set the response headers, so we need to save the current
+    // headers before calling it to preserve any headers that were set before
+    const currentHeader = this._response.headers;
+
+    this._response = await serveFile(this._request, filepath, { fileInfo });
+
+    // Preserve the headers that were set before calling `serveFile` but only if
+    // they are not already set in the response
+    for (const [key, value] of currentHeader.entries()) {
+      if (!this._response.headers.has(key)) {
+        this._response.headers.set(key, value);
+      }
+    }
   }
 }
