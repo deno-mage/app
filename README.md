@@ -287,7 +287,8 @@ app.get("/one/two/three", (context) => {
 
 ### Parameters
 
-Paths can contain parameters that will be passed to the context as strings:
+Paths can contain parameters that will be available on `context.params.<name>`
+as strings.:
 
 ```tsx
 app.get("/user/:id", (context) => {
@@ -313,7 +314,7 @@ app.get("/public/*", (context) => {
 });
 ```
 
-The path portion captured by the wildcard is available on the context:
+The path portion captured by the wildcard is available on `context.wildcard`.
 
 ```tsx
 app.get("/public/*", (context) => {
