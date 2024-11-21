@@ -237,6 +237,27 @@ context.cookies.set("name", "value");
 context.cookies.delete("name");
 ```
 
+### Parameters
+
+Parameters are parsed from the URL and placed on the context.
+
+```tsx
+// /user/:id/post/:postId -> /user/1/post/2
+
+context.params.id; // 1
+context.params.postId; // 2
+```
+
+### Wildcards
+
+Wildcards are parsed from the URL and placed on the context.
+
+```tsx
+// /public/* -> /public/one/two/three
+
+context.wildcard; // one/two/three
+```
+
 ## Routing
 
 ### HTTP methods
