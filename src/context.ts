@@ -5,16 +5,6 @@ import { Cookies } from "./cookies.ts";
 import type { CookieOptions } from "./cookies.ts";
 
 /**
- * Serializable JSON value
- */
-type JSONValues = string | number | boolean | null | JSONValues[];
-
-/**
- * Serializable JSON object
- */
-type JSON = { [key: string]: JSONValues } | JSONValues[];
-
-/**
  * Context object that is passed to each middleware. It persists throughout the
  * request/response cycle and is used to interact with the request and response.
  */
@@ -23,11 +13,21 @@ export class MageContext {
   private _response: Response;
   private _request: Request;
   private _cookies: Cookies;
+  private _params: { [key: string]: string };
+  private _wildcard?: string;
+
   /**
    * The URL of the request
    */
   public get url(): URL {
     return this._url;
+  }
+
+  /**
+   * The URL parameters of the request matched by the router
+   */
+  public get params(): { [key: string]: string } {
+    return this._params;
   }
 
   /**
@@ -45,11 +45,22 @@ export class MageContext {
     return this._request;
   }
 
-  public constructor(request: Request) {
-    this._url = new URL(request.url);
-    this._response = new Response();
+  public get wildcard(): string | undefined {
+    return this._wildcard;
+  }
+
+  public constructor(
+    request: Request,
+    url: URL,
+    params: { [key: string]: string },
+    wildcard?: string,
+  ) {
     this._request = request;
+    this._url = url;
+    this._params = params;
+    this._response = new Response();
     this._cookies = new Cookies(this);
+    this._wildcard = wildcard;
   }
 
   /**
@@ -72,7 +83,7 @@ export class MageContext {
    * @param status
    * @param body
    */
-  public json(status: StatusCode, body: JSON) {
+  public json(status: StatusCode, body: { [key: string]: unknown }) {
     this._response = new Response(JSON.stringify(body), {
       status: status,
       statusText: statusTextMap[status],

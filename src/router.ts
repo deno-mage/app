@@ -1,6 +1,62 @@
 import type { MageContext } from "./context.ts";
 import { HttpMethod } from "./http.ts";
 
+interface MatchRoutenameResultMatch {
+  match: true;
+  params: { [key: string]: string };
+  wildcard?: string;
+}
+
+interface MatchRoutenameResultNoMatch {
+  match: false;
+}
+
+type MatchRoutenameResult =
+  | MatchRoutenameResultMatch
+  | MatchRoutenameResultNoMatch;
+
+function matchRoutename(
+  routename: string,
+  pathname: string,
+): MatchRoutenameResult {
+  const routeParts = routename.split("/");
+  const pathParts = pathname.split("/");
+
+  const params: { [key: string]: string } = {};
+
+  for (let i = 0; i < routeParts.length; i++) {
+    if (routeParts[i] === "*") {
+      const wildcard = pathParts.slice(i).join("/");
+
+      return { match: true, params, wildcard };
+    }
+
+    if (routeParts[i].startsWith(":")) {
+      const paramName = routeParts[i].substring(1);
+      params[paramName] = pathParts[i];
+    } else if (routeParts[i] !== pathParts[i]) {
+      return { match: false };
+    }
+  }
+
+  // Check for wildcard at the end of the route
+  if (
+    routeParts.length < pathParts.length &&
+    routeParts[routeParts.length - 1] === "*"
+  ) {
+    const wildcard = pathParts.slice(routeParts.length - 1).join("/");
+
+    return { match: true, params, wildcard };
+  }
+
+  // Ensure all parts are matched
+  if (routeParts.length !== pathParts.length) {
+    return { match: false };
+  }
+
+  return { match: true, params };
+}
+
 /**
  * Middleware function signature for Mage applications.
  */
@@ -40,6 +96,8 @@ interface MatchResult {
   middleware: MageMiddleware[];
   matchedRoutename: boolean;
   matchedMethod: boolean;
+  params: { [key: string]: string };
+  wildcard?: string;
 }
 
 /**
@@ -50,26 +108,33 @@ export class MageRouter {
   private _entries: RouterEntry[] = [];
 
   /**
-   * Match middleware for a given context.
+   * Match middleware for a given request and extract parameters.
    *
-   * @param context
+   * @param url
+   * @param method
    * @returns
    */
-  public match(context: MageContext): MatchResult {
+  public match(url: URL, method: string): MatchResult {
     let matchedRoutename = false;
     let matchedMethod = false;
+    let params: { [key: string]: string } = {};
+    let wildcard: string | undefined;
 
     const middleware = this._entries
       .filter((entry) => {
-        if (entry.routename && entry.routename !== context.url.pathname) {
-          return false;
-        }
-
         if (entry.routename) {
+          const result = matchRoutename(entry.routename, url.pathname);
+
+          if (!result.match) {
+            return false;
+          }
+
+          params = result.params;
+          wildcard = result.wildcard;
           matchedRoutename = true;
         }
 
-        if (entry.methods && !entry.methods.includes(context.request.method)) {
+        if (entry.methods && !entry.methods.includes(method)) {
           return false;
         }
 
@@ -85,6 +150,8 @@ export class MageRouter {
       middleware,
       matchedRoutename,
       matchedMethod,
+      params,
+      wildcard,
     };
   }
 
@@ -94,9 +161,9 @@ export class MageRouter {
    * @param pathname
    * @returns
    */
-  public getAvailableMethods(context: MageContext): string[] {
+  public getAvailableMethods(url: URL): string[] {
     const methods = this._entries
-      .filter((entry) => entry.routename === context.url.pathname)
+      .filter((entry) => entry.routename === url.pathname)
       .flatMap((entry) => entry.methods ?? []);
 
     return methods;
