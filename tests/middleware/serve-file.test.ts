@@ -60,10 +60,23 @@ describe("middleware - serve file", () => {
     });
 
     expect(response.status).toBe(StatusCode.OK);
-    expect(await response.json()).toEqual({ message: "Hello, World!" });
+    expect(await response.text()).toEqual(
+      await Deno.readTextFile(resolve(Deno.cwd(), "public/hello.json")),
+    );
     expect(response.headers.get("content-type")).toEqual(
       "application/json; charset=UTF-8",
     );
+  });
+
+  it("should return file when it exists (image)", async () => {
+    const response = await fetch(server.url("/public/image.png"), {
+      method: "GET",
+    });
+
+    expect(response.status).toBe(StatusCode.OK);
+    const data = await Deno.readFile(resolve(Deno.cwd(), "./public/image.png"));
+    expect(await response.arrayBuffer()).toEqual(data.buffer);
+    expect(response.headers.get("content-type")).toEqual("image/png");
   });
 
   it("should return file when it exists (html)", async () => {
@@ -73,19 +86,7 @@ describe("middleware - serve file", () => {
 
     expect(response.status).toBe(StatusCode.OK);
     expect(await response.text()).toEqual(
-      `<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <title>Hello, World!</title>
-  </head>
-  <body>
-    <div id="root">
-      <h1>Hello, World!</h1>
-    </div>
-  </body>
-</html>
-`,
+      await Deno.readTextFile(resolve(Deno.cwd(), "public/index.html")),
     );
     expect(response.headers.get("content-type")).toEqual(
       "text/html; charset=UTF-8",
@@ -99,19 +100,7 @@ describe("middleware - serve file", () => {
 
     expect(response.status).toBe(StatusCode.OK);
     expect(await response.text()).toEqual(
-      `<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <title>Hello, World!</title>
-  </head>
-  <body>
-    <div id="root">
-      <h1>Hello, World!</h1>
-    </div>
-  </body>
-</html>
-`,
+      await Deno.readTextFile(resolve(Deno.cwd(), "public/index.html")),
     );
     expect(response.headers.get("content-type")).toEqual(
       "text/html; charset=UTF-8",
