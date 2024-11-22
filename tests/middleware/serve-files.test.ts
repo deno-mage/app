@@ -134,30 +134,12 @@ describe("middleware - serve file", () => {
     });
   }
 
-  it("should still attempt to serve file if not wildcard and serving index.html by default enabled", async () => {
+  it("should return internal server error if not configured on wildcard path", async () => {
     const response = await fetch(server.url("/no-wildcard"), {
       method: "GET",
     });
 
-    expect(response.status).toBe(StatusCode.OK);
-
-    expect(await response.text()).toEqual(
-      `<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <title>Hello, World!</title>
-  </head>
-  <body>
-    <div id="root">
-      <h1>Hello, World!</h1>
-    </div>
-  </body>
-</html>
-`,
-    );
-    expect(response.headers.get("content-type")).toEqual(
-      "text/html; charset=UTF-8",
-    );
+    expect(response.status).toBe(StatusCode.InternalServerError);
+    expect(await response.text()).toEqual(StatusText.InternalServerError);
   });
 });
