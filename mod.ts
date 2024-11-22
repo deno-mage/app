@@ -1,11 +1,3 @@
-/**
- * This module is the entry point for the Mage Server framework. It
- * exports all the core functionality of the framework as well as the
- * middleware.
- *
- * @module
- */
-
 // core
 export { MageApp } from "./src/app.ts";
 export { MageContext } from "./src/context.ts";
