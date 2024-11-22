@@ -1,5 +1,6 @@
 import type { VNode } from "preact";
 import { renderToStringAsync } from "preact-render-to-string";
+import { serveFile } from "@std/http";
 import { RedirectType, StatusCode, statusTextMap } from "./http.ts";
 import { Cookies } from "./cookies.ts";
 import type { CookieOptions } from "./cookies.ts";
@@ -75,7 +76,7 @@ export class MageContext {
       headers: this._response.headers,
     });
 
-    this._response.headers.set("Content-Type", "text/plain; charset=utf-8");
+    this._response.headers.set("Content-Type", "text/plain; charset=UTF-8");
   }
 
   /**
@@ -90,7 +91,10 @@ export class MageContext {
       headers: this._response.headers,
     });
 
-    this._response.headers.set("Content-Type", "application/json");
+    this._response.headers.set(
+      "Content-Type",
+      "application/json; charset=UTF-8",
+    );
   }
 
   /**
@@ -106,7 +110,7 @@ export class MageContext {
       headers: this._response.headers,
     });
 
-    this._response.headers.set("Content-Type", "text/html; charset=utf-8");
+    this._response.headers.set("Content-Type", "text/html; charset=UTF-8");
   }
 
   /**
@@ -191,5 +195,28 @@ export class MageContext {
    */
   public getCookie(name: string): string | null {
     return this._cookies.get(name);
+  }
+
+  /**
+   * Serve a file.
+   *
+   * @param file
+   */
+  public async serveFile(filepath: string) {
+    const fileInfo = await Deno.stat(filepath);
+
+    // `serveFile` will set the response headers, so we need to save the current
+    // headers before calling it to preserve any headers that were set before
+    const currentHeader = this._response.headers;
+
+    this._response = await serveFile(this._request, filepath, { fileInfo });
+
+    // Preserve the headers that were set before calling `serveFile` but only if
+    // they are not already set in the response
+    for (const [key, value] of currentHeader.entries()) {
+      if (!this._response.headers.has(key)) {
+        this._response.headers.set(key, value);
+      }
+    }
   }
 }

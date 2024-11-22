@@ -26,7 +26,9 @@ describe("responses - json", () => {
     });
 
     expect(response.status).toBe(StatusCode.OK);
-    expect(response.headers.get("content-type")).toBe("application/json");
+    expect(response.headers.get("content-type")).toBe(
+      "application/json; charset=UTF-8",
+    );
     expect(await response.json()).toEqual({ message: "Hello, World!" });
   });
 });

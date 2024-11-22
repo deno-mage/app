@@ -1,11 +1,11 @@
 {
   "name": "@mage/server",
-  "version": "0.7.3",
+  "version": "0.8.0",
   "license": "MIT",
   "exports": "./mod.ts",
   "tasks": {
-    "dev": "deno run --allow-net --allow-env --watch example-app.tsx",
-    "test": "deno test --allow-net --clean --coverage",
+    "dev": "deno run --allow-net --allow-env --allow-read --watch example-app.tsx",
+    "test": "deno test --allow-net --allow-env --allow-read --clean --coverage",
     "coverage": "deno coverage",
     "lint": "deno lint",
     "format": "deno fmt",
@@ -13,6 +13,9 @@
   },
   "imports": {
     "@std/expect": "jsr:@std/expect@^1.0.8",
+    "@std/fs": "jsr:@std/fs@^1.0.5",
+    "@std/http": "jsr:@std/http@^1.0.10",
+    "@std/path": "jsr:@std/path@^1.0.8",
     "@std/testing": "jsr:@std/testing@^1.0.5",
     "preact": "npm:preact@10.24.3",
     "preact-render-to-string": "npm:preact-render-to-string@6.5.11"

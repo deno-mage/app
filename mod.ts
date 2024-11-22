@@ -11,3 +11,4 @@ export { useMethodNotAllowed } from "./src/middleware/method-not-allowed.ts";
 export { useNotFound } from "./src/middleware/not-found.ts";
 export { useOptions } from "./src/middleware/options.ts";
 export { useSecurityHeaders } from "./src/middleware/security-headers.ts";
+export { useServeFiles } from "./src/middleware/serve-files.ts";

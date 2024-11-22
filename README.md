@@ -61,6 +61,12 @@ app.run({
 });
 ```
 
+Run the app:
+
+```
+deno run --allow-net --allow-env --allow-read main.tsx
+```
+
 ## Middleware
 
 APIs are composed of stacked middleware. A simple middleware looks like this:
@@ -116,13 +122,14 @@ app.get(
 
 A collection of prebuilt middleware is available to use.
 
-|                       |                                                         |
-| --------------------- | ------------------------------------------------------- |
-| `useCors`             | Configure CORS request handling                         |
-| `useMethodNotAllowed` | Responds with 405, ignores preflight (OPTIONS) requests |
-| `useNotFound`         | Responds with 404, ignores preflight (OPTIONS) requests |
-| `useOptions`          | Responds to preflight (OPTIONS) requests                |
-| `useSecurityHeaders`  | Adds recommended security headers to the response       |
+|                       |                                                               |
+| --------------------- | ------------------------------------------------------------- |
+| `useCors`             | Configure CORS request handling                               |
+| `useMethodNotAllowed` | Responds with 405, ignores preflight (OPTIONS) requests       |
+| `useNotFound`         | Responds with 404, ignores preflight (OPTIONS) requests       |
+| `useOptions`          | Responds to preflight (OPTIONS) requests                      |
+| `useSecurityHeaders`  | Adds recommended security headers to the response             |
+| `serveFiles`          | Serve files from a durectory based on the wildcard on context |
 
 ## Context
 
