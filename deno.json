@@ -5,7 +5,7 @@
   "exports": "./mod.ts",
   "tasks": {
     "dev": "deno run --allow-net --allow-env --allow-read --watch example-app.tsx",
-    "test": "deno test --allow-net --clean --coverage",
+    "test": "deno test --allow-net --allow-env --allow-read --clean --coverage",
     "coverage": "deno coverage",
     "lint": "deno lint",
     "format": "deno fmt",

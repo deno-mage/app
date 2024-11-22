@@ -122,14 +122,14 @@ app.get(
 
 A collection of prebuilt middleware is available to use.
 
-|                       |                                                         |
-| --------------------- | ------------------------------------------------------- |
-| `useCors`             | Configure CORS request handling                         |
-| `useMethodNotAllowed` | Responds with 405, ignores preflight (OPTIONS) requests |
-| `useNotFound`         | Responds with 404, ignores preflight (OPTIONS) requests |
-| `useOptions`          | Responds to preflight (OPTIONS) requests                |
-| `useSecurityHeaders`  | Adds recommended security headers to the response       |
-| `serveFile`           | Serve a file from the file system                       |
+|                       |                                                               |
+| --------------------- | ------------------------------------------------------------- |
+| `useCors`             | Configure CORS request handling                               |
+| `useMethodNotAllowed` | Responds with 405, ignores preflight (OPTIONS) requests       |
+| `useNotFound`         | Responds with 404, ignores preflight (OPTIONS) requests       |
+| `useOptions`          | Responds to preflight (OPTIONS) requests                      |
+| `useSecurityHeaders`  | Adds recommended security headers to the response             |
+| `serveFiles`          | Serve files from a durectory based on the wildcard on context |
 
 ## Context
 

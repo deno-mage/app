@@ -39,16 +39,6 @@ function matchRoutename(
     }
   }
 
-  // Check for wildcard at the end of the route
-  if (
-    routeParts.length < pathParts.length &&
-    routeParts[routeParts.length - 1] === "*"
-  ) {
-    const wildcard = pathParts.slice(routeParts.length - 1).join("/");
-
-    return { match: true, params, wildcard };
-  }
-
   // Ensure all parts are matched
   if (routeParts.length !== pathParts.length) {
     return { match: false };

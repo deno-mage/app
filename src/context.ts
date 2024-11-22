@@ -76,7 +76,7 @@ export class MageContext {
       headers: this._response.headers,
     });
 
-    this._response.headers.set("Content-Type", "text/plain; charset=utf-8");
+    this._response.headers.set("Content-Type", "text/plain; charset=UTF-8");
   }
 
   /**
@@ -91,7 +91,10 @@ export class MageContext {
       headers: this._response.headers,
     });
 
-    this._response.headers.set("Content-Type", "application/json");
+    this._response.headers.set(
+      "Content-Type",
+      "application/json; charset=UTF-8",
+    );
   }
 
   /**
@@ -107,7 +110,7 @@ export class MageContext {
       headers: this._response.headers,
     });
 
-    this._response.headers.set("Content-Type", "text/html; charset=utf-8");
+    this._response.headers.set("Content-Type", "text/html; charset=UTF-8");
   }
 
   /**
@@ -198,9 +201,10 @@ export class MageContext {
    * Serve a file.
    *
    * @param file
-   * @param fileInfo
    */
-  public async serveFile(filepath: string, fileInfo?: Deno.FileInfo) {
+  public async serveFile(filepath: string) {
+    const fileInfo = await Deno.stat(filepath);
+
     // `serveFile` will set the response headers, so we need to save the current
     // headers before calling it to preserve any headers that were set before
     const currentHeader = this._response.headers;

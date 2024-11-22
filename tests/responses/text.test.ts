@@ -27,7 +27,7 @@ describe("responses - text", () => {
 
     expect(response.status).toBe(StatusCode.OK);
     expect(response.headers.get("content-type")).toBe(
-      "text/plain; charset=utf-8",
+      "text/plain; charset=UTF-8",
     );
     expect(await response.text()).toBe("Hello, World!");
   });
