@@ -28,7 +28,12 @@ Minimum TypeScript compiler options:
 An example app:
 
 ```tsx
-import { MageApp, StatusCode, useSecurityHeaders } from "@mage/server";
+import {
+  MageApp,
+  StatusCode,
+  useSecurityHeaders,
+  useServeFiles,
+} from "@mage/server";
 
 const app = new MageApp();
 
@@ -52,6 +57,8 @@ app.get("/render", async (context) => {
     </html>,
   );
 });
+
+app.get("/public/*", useServeFiles({ directory: "./public" }));
 
 app.run({
   port: 8000,
@@ -129,7 +136,7 @@ A collection of prebuilt middleware is available to use.
 | `useNotFound`         | Responds with 404, ignores preflight (OPTIONS) requests       |
 | `useOptions`          | Responds to preflight (OPTIONS) requests                      |
 | `useSecurityHeaders`  | Adds recommended security headers to the response             |
-| `serveFiles`          | Serve files from a durectory based on the wildcard on context |
+| `useServeFiles`       | Serve files from a durectory based on the wildcard on context |
 
 ## Context
 
@@ -228,6 +235,16 @@ the provided location. This is useful for proxying requests to another server.**
 await context.rewrite("/new-location");
 await context.rewrite("https://example.com");
 ```
+
+#### `serveFile`
+
+Serve a file from the file system.
+
+```tsx
+await context.serveFile("path/to/file");
+```
+
+#### 
 
 ### Cookies
 
