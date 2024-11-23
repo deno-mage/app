@@ -1,4 +1,4 @@
-import type { VNode } from "preact";
+import type { JSX } from "preact";
 import { renderToStringAsync } from "preact-render-to-string";
 import { serveFile } from "@std/http";
 import { RedirectType, StatusCode, statusTextMap } from "./http.ts";
@@ -102,7 +102,7 @@ export class MageContext {
    * @param status
    * @param body
    */
-  public async render(status: StatusCode, body: VNode) {
+  public async render(status: StatusCode, body: JSX.Element) {
     const html = await renderToStringAsync(body);
     this._response = new Response(`<!DOCTYPE html>${html}`, {
       status: status,
