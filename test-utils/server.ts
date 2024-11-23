@@ -17,9 +17,12 @@ export class MageTestServer {
   }
 
   start(port?: number) {
-    this._server = this.app.run({
-      port: port ?? Math.floor(Math.random() * 1000) + TEST_PORT_FLOOR,
-    });
+    this._server = Deno.serve(
+      {
+        port: port ?? Math.floor(Math.random() * 1000) + TEST_PORT_FLOOR,
+      },
+      this._app.build(),
+    );
   }
 
   url(path: string) {

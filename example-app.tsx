@@ -36,9 +36,4 @@ app.get("/target", (context) => {
 
 app.get("/public/*", useServeFiles({ directory: "./public" }));
 
-app.run({
-  port: 8000,
-  onListen({ hostname, port }) {
-    console.log(`Listening on http://${hostname}:${port}`);
-  },
-});
+Deno.serve(app.build());
