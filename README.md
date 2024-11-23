@@ -28,37 +28,13 @@ Minimum TypeScript compiler options:
 An example app:
 
 ```tsx
-import {
-  MageApp,
-  StatusCode,
-  useSecurityHeaders,
-  useServeFiles,
-} from "@mage/server";
+import { MageApp, StatusCode } from "@mage/server";
 
 const app = new MageApp();
 
-app.use(useSecurityHeaders());
-
-app.get("/text", (context) => {
+app.get("/", (context) => {
   context.text(StatusCode.OK, "Hello, World!");
 });
-
-app.get("/json", (context) => {
-  context.json(StatusCode.OK, { message: "Hello, World!" });
-});
-
-app.get("/render", async (context) => {
-  await context.render(
-    StatusCode.OK,
-    <html lang="en">
-      <body>
-        <h1>Hello, World!</h1>
-      </body>
-    </html>,
-  );
-});
-
-app.get("/public/*", useServeFiles({ directory: "./public" }));
 
 app.run({
   port: 8000,
@@ -71,7 +47,7 @@ app.run({
 Run the app:
 
 ```
-deno run --allow-net --allow-env --allow-read main.tsx
+deno run --allow-all main.tsx
 ```
 
 ## Middleware
