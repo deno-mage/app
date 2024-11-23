@@ -36,12 +36,7 @@ app.get("/", (context) => {
   context.text(StatusCode.OK, "Hello, World!");
 });
 
-app.run({
-  port: 8000,
-  onListen({ hostname, port }) {
-    console.log(`Listening on http://${hostname}:${port}`);
-  },
-});
+Deno.serve(app.build());
 ```
 
 Run the app:
@@ -358,4 +353,12 @@ app.get("/public/*", (context) => {
  *  /public/one
  *  /public/one/two
  */
+```
+
+## Running your app
+
+To run your app, you can use the `Deno.serve` function:
+
+```tsx
+Deno.serve(app.build());
 ```

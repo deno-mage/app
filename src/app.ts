@@ -1,31 +1,11 @@
 import { MageContext } from "./context.ts";
 import { compose } from "./compose.ts";
-import { getAvailablePort } from "./ports.ts";
 import { MageRouter } from "./router.ts";
 import type { MageMiddleware } from "./router.ts";
 import { StatusCode, StatusText } from "./http.ts";
 import { useOptions } from "./middleware/options.ts";
 import { useNotFound } from "./middleware/not-found.ts";
 import { useMethodNotAllowed } from "./middleware/method-not-allowed.ts";
-
-/**
- * Options for running a Mage application
- */
-interface RunOptions {
-  /**
-   * The port to run the application on. If this port is not available, the
-   * application will attempt to run on the next available port until one is
-   * found.
-   */
-  port: number;
-  /**
-   * A callback that is called when the application starts listening for
-   * incoming requests.
-   *
-   * @param localAddr
-   */
-  onListen?: (localAddr: Deno.NetAddr) => void;
-}
 
 /**
  * MageApp is the main class for creating and running Mage applications.
@@ -155,18 +135,13 @@ export class MageApp {
   }
 
   /**
-   * Run the Mage application and start listening for incoming requests.
+   * Build the handler to pass to Deno.serve().
    *
    * @param options
    * @returns
    */
-  public run(options: RunOptions): Deno.HttpServer<Deno.NetAddr> {
-    const serveOptions: Deno.ServeTcpOptions = {
-      port: getAvailablePort(options.port),
-      onListen: options.onListen,
-    };
-
-    return Deno.serve(serveOptions, async (req) => {
+  public build(): Deno.ServeHandler {
+    return async (req: Request) => {
       const url = new URL(req.url);
       const matchResult = this._router.match(url, req.method);
 
@@ -209,6 +184,6 @@ export class MageApp {
       }
 
       return context.response;
-    });
+    };
   }
 }
