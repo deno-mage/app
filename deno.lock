@@ -23,9 +23,8 @@
     "npm:@types/react-dom@18.3.1": "18.3.1",
     "npm:@types/react@*": "18.0.25",
     "npm:@types/react@18.3.12": "18.3.12",
-    "npm:preact-render-to-string@6.5.11": "6.5.11_preact@10.24.3",
-    "npm:preact@*": "10.24.3",
-    "npm:preact@10.24.3": "10.24.3",
+    "npm:preact-render-to-string@^6.5.11": "6.5.11_preact@10.25.0",
+    "npm:preact@^10.25.0": "10.25.0",
     "npm:react-dom@^18.3.1": "18.3.1_react@18.3.1",
     "npm:react@^18.3.1": "18.3.1"
   },
@@ -155,14 +154,14 @@
         "js-tokens"
       ]
     },
-    "preact-render-to-string@6.5.11_preact@10.24.3": {
+    "preact-render-to-string@6.5.11_preact@10.25.0": {
       "integrity": "sha512-ubnauqoGczeGISiOh6RjX0/cdaF8v/oDXIjO85XALCQjwQP+SB4RDXXtvZ6yTYSjG+PC1QRP2AhPgCEsM2EvUw==",
       "dependencies": [
         "preact"
       ]
     },
-    "preact@10.24.3": {
-      "integrity": "sha512-Z2dPnBnMUfyQfSQ+GBdsGa16hz35YmLmtTLhM169uW944hYL6xzTYkJjC07j+Wosz733pMWx0fgON3JNw1jJQA=="
+    "preact@10.25.0": {
+      "integrity": "sha512-6bYnzlLxXV3OSpUxLdaxBmE7PMOu0aR3pG6lryK/0jmvcDFPlcXGQAt5DpK3RITWiDrfYZRI0druyaK/S9kYLg=="
     },
     "react-dom@18.3.1_react@18.3.1": {
       "integrity": "sha512-5m4nQKp+rZRb09LNH59GM4BxTh9251/ylbKIbpe7TpGxfJ+9kv6BLkLBXIjjspbgbnIBNqlI23tRnTWT0snUIw==",
@@ -192,8 +191,8 @@
       "jsr:@std/http@^1.0.10",
       "jsr:@std/path@^1.0.8",
       "jsr:@std/testing@^1.0.5",
-      "npm:preact-render-to-string@6.5.11",
-      "npm:preact@10.24.3"
+      "npm:preact-render-to-string@^6.5.11",
+      "npm:preact@^10.25.0"
     ]
   }
 }
