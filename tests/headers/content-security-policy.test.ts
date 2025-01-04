@@ -11,7 +11,7 @@ beforeAll(() => {
   server.app.get("/", (context) => {
     contentSecurityPolicy(context, {
       directives: {
-        defaultSrc: ["'self'"],
+        defaultSrc: "'self'",
         scriptSrc: ["'self'", "https://example.com"],
       },
     });
@@ -22,7 +22,7 @@ beforeAll(() => {
   server.app.get("/upgrade-insecure-requests/true", (context) => {
     contentSecurityPolicy(context, {
       directives: {
-        defaultSrc: ["'self'"],
+        defaultSrc: "'self'",
         upgradeInsecureRequests: true,
       },
     });
@@ -33,7 +33,7 @@ beforeAll(() => {
   server.app.get("/upgrade-insecure-requests/false", (context) => {
     contentSecurityPolicy(context, {
       directives: {
-        defaultSrc: ["'self'"],
+        defaultSrc: "'self'",
         upgradeInsecureRequests: false,
       },
     });
