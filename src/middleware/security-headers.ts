@@ -10,17 +10,19 @@ import { contentSecurityPolicy } from "../headers/content-security-policy.ts";
 export const useSecurityHeaders = (): MageMiddleware => {
   return async (context, next) => {
     contentSecurityPolicy(context, {
-      "default-src": "'self'",
-      "base-uri": "'self'",
-      "font-src": ["'self'", "https:", "data:"],
-      "form-action": "'self'",
-      "frame-ancestors": "'self'",
-      "img-src": ["'self'", "data:"],
-      "object-src": "'none'",
-      "script-src": "'self'",
-      "script-src-attr": "'none'",
-      "style-src": ["'self'", "https:", "'unsafe-inline'"],
-      "upgrade-insecure-requests": "",
+      directives: {
+        defaultSrc: ["'self'"],
+        baseUri: ["'self'"],
+        fontSrc: ["'self'", "https:", "data:"],
+        formAction: ["'self'"],
+        frameAncestors: ["'self'"],
+        imgSrc: ["'self'", "data:"],
+        objectSrc: ["'none'"],
+        scriptSrc: ["'self'"],
+        scriptSrcAttr: ["'none'"],
+        styleSrc: ["'self'", "https:", "'unsafe-inline'"],
+        upgradeInsecureRequests: true,
+      },
     });
 
     context.response.headers.set("Cross-Origin-Opener-Policy", "same-origin");

@@ -215,8 +215,6 @@ Serve a file from the file system.
 await context.serveFile("path/to/file");
 ```
 
-#### 
-
 ### Cookies
 
 You can read cookies from the request.
@@ -361,4 +359,31 @@ To run your app, you can use the `Deno.serve` function:
 
 ```tsx
 Deno.serve(app.build());
+```
+
+## Header utilities
+
+Some utility methods are available to configure common complex response headers.
+
+### `cacheControl`
+
+Set the `Cache-Control` header.
+
+```tsx
+cacheControl(context, {
+  maxAge: 60,
+});
+```
+
+### `contentSecurityPolicy`
+
+Set the `Content-Security-Policy` header.
+
+```tsx
+contentSecurityPolicy(context, {
+  directives: {
+    defaultSrc: "'self'",
+    scriptSrc: ["'self'", "https://example.com"],
+  },
+});
 ```
