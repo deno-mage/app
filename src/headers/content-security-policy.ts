@@ -76,13 +76,18 @@ export const contentSecurityPolicy = (
       ];
 
       if (typeof value === "boolean") {
-        return `${directive}`;
+        if (value) {
+          return `${directive}`;
+        }
+
+        return "";
       }
 
       const directiveValue = Array.isArray(value) ? value.join(" ") : value;
 
       return `${directive} ${directiveValue}`;
     })
+    .filter(Boolean)
     .join(";");
 
   context.response.headers.set("Content-Security-Policy", header);

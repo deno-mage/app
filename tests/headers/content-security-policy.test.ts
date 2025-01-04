@@ -19,6 +19,28 @@ beforeAll(() => {
     context.text(StatusCode.OK, "Hello, World!");
   });
 
+  server.app.get("/upgrade-insecure-requests/true", (context) => {
+    contentSecurityPolicy(context, {
+      directives: {
+        defaultSrc: ["'self'"],
+        upgradeInsecureRequests: true,
+      },
+    });
+
+    context.text(StatusCode.OK, "Hello, World!");
+  });
+
+  server.app.get("/upgrade-insecure-requests/false", (context) => {
+    contentSecurityPolicy(context, {
+      directives: {
+        defaultSrc: ["'self'"],
+        upgradeInsecureRequests: false,
+      },
+    });
+
+    context.text(StatusCode.OK, "Hello, World!");
+  });
+
   server.start();
 });
 
@@ -37,6 +59,38 @@ describe("headers - content-security-policy", () => {
 
     expect(response.headers.get("Content-Security-Policy")).toEqual(
       "default-src 'self';script-src 'self' https://example.com",
+    );
+  });
+
+  it("should set security headers with upgrade-insecure-requests", async () => {
+    const response = await fetch(
+      server.url("/upgrade-insecure-requests/true"),
+      {
+        method: "GET",
+      },
+    );
+
+    // drain response to ensure no memory leak
+    await response.text();
+
+    expect(response.headers.get("Content-Security-Policy")).toEqual(
+      "default-src 'self';upgrade-insecure-requests",
+    );
+  });
+
+  it("should not set security headers with upgrade-insecure-requests", async () => {
+    const response = await fetch(
+      server.url("/upgrade-insecure-requests/false"),
+      {
+        method: "GET",
+      },
+    );
+
+    // drain response to ensure no memory leak
+    await response.text();
+
+    expect(response.headers.get("Content-Security-Policy")).toEqual(
+      "default-src 'self'",
     );
   });
 });
