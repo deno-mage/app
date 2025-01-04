@@ -64,23 +64,59 @@ export const cacheControl = (
   context: MageContext,
   options: CacheControlOptions,
 ): void => {
-  const value = [
-    `max-age=${options.maxAge}`,
-    `s-maxage=${options.sMaxAge}`,
-    options.noCache ? "no-cache" : "",
-    options.noStore ? "no-store" : "",
-    options.noTransform ? "no-transform" : "",
-    options.mustRevalidate ? "must-revalidate" : "",
-    options.proxyRevalidate ? "proxy-revalidate" : "",
-    options.mustUnderstand ? "must-understand" : "",
-    options.private ? "private" : "",
-    options.public ? "public" : "",
-    options.immutable ? "immutable" : "",
-    `stale-while-revalidate=${options.staleWhileRevalidate}`,
-    `stale-if-error=${options.staleIfError}`,
-  ]
-    .filter(Boolean)
-    .join(", ");
+  const values = [];
 
-  context.response.headers.set("Cache-Control", value);
+  if (options.maxAge) {
+    values.push(`max-age=${options.maxAge}`);
+  }
+
+  if (options.sMaxAge) {
+    values.push(`s-maxage=${options.sMaxAge}`);
+  }
+
+  if (options.noCache) {
+    values.push("no-cache");
+  }
+
+  if (options.noStore) {
+    values.push("no-store");
+  }
+
+  if (options.noTransform) {
+    values.push("no-transform");
+  }
+
+  if (options.mustRevalidate) {
+    values.push("must-revalidate");
+  }
+
+  if (options.proxyRevalidate) {
+    values.push("proxy-revalidate");
+  }
+
+  if (options.mustUnderstand) {
+    values.push("must-understand");
+  }
+
+  if (options.private) {
+    values.push("private");
+  }
+
+  if (options.public) {
+    values.push("public");
+  }
+
+  if (options.immutable) {
+    values.push("immutable");
+  }
+
+  if (options.staleWhileRevalidate) {
+    values.push(`stale-while-revalidate=${options.staleWhileRevalidate}`);
+  }
+
+  if (options.staleIfError) {
+    values.push(`stale-if-error=${options.staleIfError}`);
+  }
+
+  context.response.headers.set("Cache-Control", values.join(", "));
 };
