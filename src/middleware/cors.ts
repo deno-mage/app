@@ -1,12 +1,36 @@
 import type { MageMiddleware } from "../router.ts";
 import { HttpMethod, StatusCode } from "../http.ts";
 
+/**
+ * Options for the useCors middleware.
+ */
 interface CorsOptions {
+  /**
+   * The origins that are allowed to make requests. This can be a single
+   * origin or an array of origins. If set to "*", all origins are allowed.
+   */
   origins?: "*" | string[];
+  /**
+   * The methods that are allowed for the requested pathname.
+   */
   methods?: "*" | HttpMethod[];
+  /**
+   * The headers that are allowed for the requested pathname.
+   */
   headers?: string[];
+  /**
+   * The headers that are exposed to the browser.
+   */
   exposeHeaders?: string[];
+  /**
+   * Indicates whether the request can include user credentials like
+   * cookies, HTTP authentication or client-side certificates.
+   */
   credentials?: boolean;
+  /**
+   * The amount of seconds the results of a preflight request can be cached
+   * in a preflight result cache.
+   */
   maxAge?: number;
 }
 
