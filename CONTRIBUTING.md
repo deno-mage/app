@@ -71,7 +71,7 @@ git commit -m "docs: update documentation"
 ...
 ```
 
-### Releasing
+### Releasing
 
 Releases are automatically created when a pull request is merged if the version
 in [deno.json](./deno.json) is updated. The version should be updated following
