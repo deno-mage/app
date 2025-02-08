@@ -12,8 +12,8 @@ beforeAll(() => {
   targetServer.app.post("/target", async (context) => {
     context.json(StatusCode.OK, {
       source: "target server",
-      header: context.request.headers.get("x-test"),
-      search: context.url.searchParams.get("search"),
+      header: context.request.header("x-test"),
+      search: context.request.searchParam("search"),
       body: await context.request.json(),
     });
   });
@@ -33,8 +33,8 @@ beforeAll(() => {
   server.app.post("/target", async (context) => {
     context.json(StatusCode.OK, {
       source: "local server",
-      header: context.request.headers.get("x-test"),
-      search: context.url.searchParams.get("search"),
+      header: context.request.header("x-test"),
+      search: context.request.searchParam("search"),
       body: await context.request.json(),
     });
   });

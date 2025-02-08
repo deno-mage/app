@@ -99,7 +99,7 @@ export class Cookies {
    * @param name
    */
   public get(name: string): string | null {
-    const cookies = this._context.request.headers.get("Cookie");
+    const cookies = this._context.request.header("Cookie");
 
     if (!cookies) {
       return null;

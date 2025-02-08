@@ -123,13 +123,19 @@ context.url.searchParams
 ...
 ```
 
-### Request
+### MageRequest
 
-The request object is available on the context.
+The request object is available on the context as a `MageRequest` that provides
+memoized access to the body.
+
+This is useful because the body of a request can only be read once. If you rea
+the body of a request, and then try to read it again, you will get an er r. This
+class memoizes the body of the request so that you can read it ultiple times by
+middlewar
 
 ```tsx
 context.request.method
-context.request.headers.get("Content-Type")
+context.request.header("Content-Type")
 await context.request.text()
 ...
 ```

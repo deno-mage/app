@@ -4,25 +4,18 @@ import { serveFile } from "@std/http";
 import { RedirectType, StatusCode, statusTextMap } from "./http.ts";
 import { Cookies } from "./cookies.ts";
 import type { CookieOptions } from "./cookies.ts";
+import { MageRequest } from "./mage-request.ts";
 
 /**
  * Context object that is passed to each middleware. It persists throughout the
  * request/response cycle and is used to interact with the request and response.
  */
 export class MageContext {
-  private _url: URL;
   private _response: Response;
-  private _request: Request;
+  private _request: MageRequest;
   private _cookies: Cookies;
   private _params: { [key: string]: string };
   private _wildcard?: string;
-
-  /**
-   * The URL of the request
-   */
-  public get url(): URL {
-    return this._url;
-  }
 
   /**
    * The URL parameters of the request matched by the router
@@ -42,7 +35,7 @@ export class MageContext {
   /**
    * The request object for the current request
    */
-  public get request(): Request {
+  public get request(): MageRequest {
     return this._request;
   }
 
@@ -52,12 +45,10 @@ export class MageContext {
 
   public constructor(
     request: Request,
-    url: URL,
     params: { [key: string]: string },
     wildcard?: string,
   ) {
-    this._request = request;
-    this._url = url;
+    this._request = new MageRequest(request);
     this._params = params;
     this._response = new Response();
     this._cookies = new Cookies(this);
@@ -154,20 +145,28 @@ export class MageContext {
    * @param location
    */
   public async rewrite(location: URL | string) {
-    const url = location.toString();
+    let url: URL;
 
-    if (url.startsWith("/")) {
-      this._url.pathname = url;
+    if (location.toString().startsWith("/")) {
+      url = new URL(
+        `${location.toString()}${this._request.url.search}`,
+        this._request.url.origin,
+      );
     } else {
-      const pathname = new URL(url).pathname;
-      this._url = new URL(`${pathname}${this._url.search}`, url);
+      const pathname = new URL(location).pathname;
+      url = new URL(`${pathname}${this._request.url.search}`, location);
     }
 
-    this._response = await fetch(this._url, {
-      method: this._request.method,
-      headers: this._request.headers,
-      body: this._request.body,
-    });
+    try {
+      console.log(`fetching ${url}`);
+      this._response = await fetch(url, {
+        method: this._request.method,
+        headers: this._request.raw.headers,
+        body: this._request.raw.body,
+      });
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   /**
@@ -209,7 +208,7 @@ export class MageContext {
     // headers before calling it to preserve any headers that were set before
     const currentHeader = this._response.headers;
 
-    this._response = await serveFile(this._request, filepath, { fileInfo });
+    this._response = await serveFile(this._request.raw, filepath, { fileInfo });
 
     // Preserve the headers that were set before calling `serveFile` but only if
     // they are not already set in the response

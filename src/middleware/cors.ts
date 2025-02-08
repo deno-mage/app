@@ -42,7 +42,7 @@ interface CorsOptions {
  */
 export const useCors = (options: CorsOptions | undefined): MageMiddleware => {
   return async (context, next) => {
-    const origin = context.request.headers.get("Origin");
+    const origin = context.request.header("Origin");
 
     const allowedOrigins = [options?.origins ?? "*"].flat();
     const allowedMethods = [options?.methods ?? []].flat();

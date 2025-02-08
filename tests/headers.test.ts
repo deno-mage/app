@@ -9,7 +9,7 @@ beforeAll(() => {
   server = new MageTestServer();
 
   server.app.get("/get", (context) => {
-    context.text(StatusCode.OK, context.request.headers.get("X-Test")!);
+    context.text(StatusCode.OK, context.request.header("X-Test")!);
   });
 
   server.app.get("/set", (context) => {
