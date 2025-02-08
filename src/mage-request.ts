@@ -64,11 +64,11 @@ export class MageRequest {
   public constructor(request: Request) {
     this._raw = request;
 
-    this.arrayBuffer = memoize(request.arrayBuffer);
-    this.blob = memoize(request.blob);
-    this.formData = memoize(request.formData);
-    this.json = memoize(request.json);
-    this.text = memoize(request.text);
+    this.arrayBuffer = memoize(this._raw.arrayBuffer.bind(request));
+    this.blob = memoize(this._raw.blob.bind(request));
+    this.formData = memoize(this._raw.formData.bind(request));
+    this.json = memoize(this._raw.json.bind(request));
+    this.text = memoize(this._raw.text.bind(request));
   }
 
   /**

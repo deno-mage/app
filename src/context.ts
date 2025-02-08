@@ -145,6 +145,21 @@ export class MageContext {
    * @param location
    */
   public async rewrite(location: URL | string) {
+    // const url = location.toString();
+
+    // if (url.startsWith("/")) {
+    //   this._url.pathname = url;
+    // } else {
+    //   const pathname = new URL(url).pathname;
+    //   this._url = new URL(`${pathname}${this._url.search}`, url);
+    // }
+
+    // this._response = await fetch(this._url, {
+    //   method: this._request.method,
+    //   headers: this._request.headers,
+    //   body: this._request.body,
+    // });
+
     let url: URL;
 
     if (location.toString().startsWith("/")) {
@@ -157,16 +172,11 @@ export class MageContext {
       url = new URL(`${pathname}${this._request.url.search}`, location);
     }
 
-    try {
-      console.log(`fetching ${url}`);
-      this._response = await fetch(url, {
-        method: this._request.method,
-        headers: this._request.raw.headers,
-        body: this._request.raw.body,
-      });
-    } catch (error) {
-      console.error(error);
-    }
+    this._response = await fetch(url, {
+      method: this._request.method,
+      headers: this._request.raw.headers,
+      body: this._request.raw.body,
+    });
   }
 
   /**

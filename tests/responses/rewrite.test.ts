@@ -36,6 +36,7 @@ beforeAll(() => {
       header: context.request.header("x-test"),
       search: context.request.searchParam("search"),
       body: await context.request.json(),
+      body2: await context.request.json(),
     });
   });
 
@@ -63,6 +64,7 @@ describe("responses - rewrite", () => {
       header: "test",
       search: "local",
       body: { hello: "world" },
+      body2: { hello: "world" },
     });
   });
 

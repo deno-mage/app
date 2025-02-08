@@ -4,8 +4,8 @@
   "license": "MIT",
   "exports": "./mod.ts",
   "tasks": {
-    "dev": "deno run --allow-net --allow-env --allow-read --watch example-app.tsx",
-    "test": "deno test --allow-net --allow-env --allow-read --clean --coverage",
+    "dev": "deno run --allow-all --watch example-app.tsx",
+    "test": "deno test --allow-all --clean --coverage",
     "coverage": "deno coverage",
     "lint": "deno lint",
     "format": "deno fmt",
