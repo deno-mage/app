@@ -32,6 +32,13 @@ export class MageTestServer {
     );
   }
 
+  wsUrl(path: string) {
+    return new URL(
+      path,
+      `ws://${this._server?.addr.hostname}:${this._server?.addr.port}`,
+    );
+  }
+
   async stop() {
     await this._server?.shutdown();
   }

@@ -7,6 +7,7 @@ import type { CookieOptions } from "./cookies.ts";
 import { MageRequest } from "./mage-request.ts";
 import type { ValidateSource } from "./middleware/validate.ts";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
+import { StatusText } from "../mod.ts";
 
 /**
  * Context object that is passed to each middleware. It persists throughout the
@@ -152,21 +153,6 @@ export class MageContext {
    * @param location
    */
   public async rewrite(location: URL | string) {
-    // const url = location.toString();
-
-    // if (url.startsWith("/")) {
-    //   this._url.pathname = url;
-    // } else {
-    //   const pathname = new URL(url).pathname;
-    //   this._url = new URL(`${pathname}${this._url.search}`, url);
-    // }
-
-    // this._response = await fetch(this._url, {
-    //   method: this._request.method,
-    //   headers: this._request.headers,
-    //   body: this._request.body,
-    // });
-
     let url: URL;
 
     if (location.toString().startsWith("/")) {
@@ -234,6 +220,23 @@ export class MageContext {
         this._response.headers.set(key, value);
       }
     }
+  }
+
+  /**
+   * Establish a WebSocket connection. If the request is not a WebSocket request
+   * it will send a 501 Not Implemented response and no WebSocket will be created.
+   */
+  public webSocket(handleSocket: (socket: WebSocket) => void) {
+    if (this.request.header("upgrade") !== "websocket") {
+      this.text(StatusCode.NotImplemented, StatusText.NotImplemented);
+      return;
+    }
+
+    const { socket, response } = Deno.upgradeWebSocket(this._request.raw);
+
+    this._response = response;
+
+    handleSocket(socket);
   }
 
   /**

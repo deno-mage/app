@@ -273,6 +273,24 @@ will be placed on `context`. You can access it using:
 context.valid("json", schema);
 ```
 
+### Web sockets
+
+You can upgrade a request to a web socket connection. If the request is not a
+WebSocket request it will send a 501 Not Implemented response and no WebSocket
+will be created.
+
+```tsx
+app.get("/ws", async (context) => {
+  context.webSocket((socket) => {
+    socket.onmessage = (event) => {
+      if (event.data === "ping") {
+        socket.send("pong");
+      }
+    };
+  });
+});
+```
+
 ## Routing
 
 ### HTTP methods
