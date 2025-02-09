@@ -1,6 +1,7 @@
 {
   "version": "4",
   "specifiers": {
+    "jsr:@standard-schema/spec@1": "1.0.0",
     "jsr:@std/assert@^1.0.10": "1.0.11",
     "jsr:@std/assert@^1.0.11": "1.0.11",
     "jsr:@std/async@^1.0.9": "1.0.10",
@@ -24,9 +25,13 @@
     "jsr:@std/streams@^1.0.9": "1.0.9",
     "jsr:@std/testing@^1.0.8": "1.0.9",
     "npm:preact-render-to-string@^6.5.13": "6.5.13_preact@10.25.4",
-    "npm:preact@^10.25.4": "10.25.4"
+    "npm:preact@^10.25.4": "10.25.4",
+    "npm:zod@^3.24.1": "3.24.1"
   },
   "jsr": {
+    "@standard-schema/spec@1.0.0": {
+      "integrity": "4f20bbcf34e92b92f8c01589b958abc7c87385fa9a96170cecdc643d4d5737c0"
+    },
     "@std/assert@1.0.10": {
       "integrity": "59b5cbac5bd55459a19045d95cc7c2ff787b4f8527c0dd195078ff6f9481fbb3",
       "dependencies": [
@@ -145,10 +150,14 @@
     },
     "preact@10.25.4": {
       "integrity": "sha512-jLdZDb+Q+odkHJ+MpW/9U5cODzqnB+fy2EiHSZES7ldV5LK7yjlVzTp7R8Xy6W6y75kfK8iWYtFVH7lvjwrCMA=="
+    },
+    "zod@3.24.1": {
+      "integrity": "sha512-muH7gBL9sI1nciMZV67X5fTKKBLtwpZ5VBp1vsOQzj1MhrBZ4wlVCm3gedKZWLp0Oyel8sIGfeiz54Su+OVT+A=="
     }
   },
   "workspace": {
     "dependencies": [
+      "jsr:@standard-schema/spec@1",
       "jsr:@std/cache@~0.1.3",
       "jsr:@std/expect@^1.0.13",
       "jsr:@std/fs@^1.0.11",
@@ -156,7 +165,8 @@
       "jsr:@std/path@^1.0.8",
       "jsr:@std/testing@^1.0.8",
       "npm:preact-render-to-string@^6.5.13",
-      "npm:preact@^10.25.4"
+      "npm:preact@^10.25.4",
+      "npm:zod@^3.24.1"
     ]
   }
 }
