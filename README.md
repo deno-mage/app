@@ -108,20 +108,11 @@ A collection of prebuilt middleware is available to use.
 | `useOptions`          | Responds to preflight (OPTIONS) requests                      |
 | `useSecurityHeaders`  | Adds recommended security headers to the response             |
 | `useServeFiles`       | Serve files from a durectory based on the wildcard on context |
+| `useValidate`         | Validate request body based on a schema                       |
 
 ## Context
 
 A context object is passed to each middleware.
-
-### Url
-
-The URL is parsed and placed on the context.
-
-```tsx
-context.url.pathname
-context.url.searchParams
-...
-```
 
 ### MageRequest
 
@@ -135,6 +126,7 @@ middlewar
 
 ```tsx
 context.request.method
+context.request.url
 context.request.header("Content-Type")
 await context.request.text()
 ...
@@ -255,6 +247,30 @@ Wildcards are parsed from the URL and placed on the context.
 // /public/* -> /public/one/two/three
 
 context.wildcard; // one/two/three
+```
+
+### Validation
+
+You can validate the request based on a schema using the `useValidate()`
+middleware based on a [Standard Schema](https://jsr.io/@standard-schema/spec)
+schema.
+
+You can define where the validator should source the data from.
+
+- `json` - The request body
+- `form` - The request form data
+- `params` - The route params
+- `search-params` - The URL search parameters
+
+```tsx
+app.use(useValidate("json", schema));
+```
+
+When this middleware is used, the request body will be validated and the result
+will be placed on `context`. You can access it using:
+
+```tsx
+context.valid("json", schema);
 ```
 
 ## Routing

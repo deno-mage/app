@@ -21,10 +21,10 @@ interface UseValidateOptions {
  * The source parameter is used to determine where the request data
  * should be validated from. The source can be one of the following:
  *
- * - "body" - The request body
- * - "query" - The request query string
+ * - "json" - The request body as JSON
+ * - "form" - The requests form data
  * - "params" - The route parameters
- * - "search-params" - The request search parameters
+ * - "search-params" - The URL search parameters
  *
  * @param source - The source of the request data to validate
  * @param schema - The schema to validate the request against
