@@ -63,6 +63,17 @@ beforeAll(() => {
     },
   );
 
+  server.app.post(
+    "/invalid",
+    useValidate(
+      "invalid" as unknown as "json" | "form" | "params" | "search-params",
+      shopSchema,
+    ),
+    () => {
+      // This route should not be reached
+    },
+  );
+
   server.start();
 });
 
@@ -242,6 +253,17 @@ describe("middleware - use validate", () => {
           received: "string",
         },
       ]);
+    });
+  });
+
+  describe("invalid source", () => {
+    it("should return 500", async () => {
+      const response = await fetch(server.url("/invalid"), {
+        method: "POST",
+      });
+
+      expect(response.status).toBe(StatusCode.InternalServerError);
+      expect(await response.text()).toBe(StatusText.InternalServerError);
     });
   });
 });
