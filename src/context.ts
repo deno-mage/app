@@ -5,6 +5,8 @@ import { RedirectType, StatusCode, statusTextMap } from "./http.ts";
 import { Cookies } from "./cookies.ts";
 import type { CookieOptions } from "./cookies.ts";
 import { MageRequest } from "./mage-request.ts";
+import type { ValidateSource } from "./middleware/validate.ts";
+import type { StandardSchemaV1 } from "@standard-schema/spec";
 
 /**
  * Context object that is passed to each middleware. It persists throughout the
@@ -16,6 +18,7 @@ export class MageContext {
   private _cookies: Cookies;
   private _params: { [key: string]: string };
   private _wildcard?: string;
+  private _validationResults: Map<ValidateSource, Map<unknown, unknown>>;
 
   /**
    * The URL parameters of the request matched by the router
@@ -53,6 +56,7 @@ export class MageContext {
     this._response = new Response();
     this._cookies = new Cookies(this);
     this._wildcard = wildcard;
+    this._validationResults = new Map<ValidateSource, Map<unknown, unknown>>();
   }
 
   /**
@@ -75,7 +79,10 @@ export class MageContext {
    * @param status
    * @param body
    */
-  public json(status: StatusCode, body: { [key: string]: unknown }) {
+  public json(
+    status: StatusCode,
+    body: { [key: string]: unknown } | readonly unknown[],
+  ) {
     this._response = new Response(JSON.stringify(body), {
       status: status,
       statusText: statusTextMap[status],
@@ -227,5 +234,37 @@ export class MageContext {
         this._response.headers.set(key, value);
       }
     }
+  }
+
+  /**
+   * Get the result of `useValidate()` middleware for the specified source. if
+   * the source is not found, it will return `undefined`.
+   *
+   * @param source
+   */
+  public valid<TResult = unknown>(
+    source: ValidateSource,
+    schema: StandardSchemaV1,
+  ): TResult {
+    return this._validationResults.get(source)?.get(schema) as TResult;
+  }
+
+  /**
+   * Set the validation result of `useValidate()` middleware for the specified source.
+   *
+   * @param source
+   * @param schema
+   * @param result
+   */
+  public setValidationResult(
+    source: ValidateSource,
+    schema: StandardSchemaV1,
+    result: unknown,
+  ) {
+    if (!this._validationResults.has(source)) {
+      this._validationResults.set(source, new Map());
+    }
+
+    this._validationResults.get(source)?.set(schema, result);
   }
 }
