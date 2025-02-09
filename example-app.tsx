@@ -30,7 +30,7 @@ app.get("/rewrite", async (context) => {
 
 app.get("/target", (context) => {
   context.json(StatusCode.OK, {
-    message: context.url.searchParams.get("message"),
+    message: context.request.searchParam("message"),
   });
 });
 

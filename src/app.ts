@@ -147,7 +147,6 @@ export class MageApp {
 
       const context: MageContext = new MageContext(
         req,
-        url,
         matchResult.params,
         matchResult.wildcard,
       );
