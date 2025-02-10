@@ -17,6 +17,7 @@ app.get("/render", async (context) => {
     <html lang="en">
       <body>
         <h1>Hello, World!</h1>
+        <img src={context.asset("/public/image.png")} />
       </body>
     </html>,
   );

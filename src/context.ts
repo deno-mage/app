@@ -9,17 +9,32 @@ import type { ValidateSource } from "./middleware/validate.ts";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import { StatusText } from "../mod.ts";
 
+interface MageContextArgs {
+  request: Request;
+  params: { [key: string]: string };
+  wildcard?: string;
+  buildId: string;
+}
+
 /**
  * Context object that is passed to each middleware. It persists throughout the
  * request/response cycle and is used to interact with the request and response.
  */
 export class MageContext {
+  private _buildId: string;
   private _response: Response;
   private _request: MageRequest;
   private _cookies: Cookies;
   private _params: { [key: string]: string };
   private _wildcard?: string;
   private _validationResults: Map<ValidateSource, Map<unknown, unknown>>;
+
+  /**
+   * The unique identifier for the build
+   */
+  public get buildId(): string {
+    return this._buildId;
+  }
 
   /**
    * The URL parameters of the request matched by the router
@@ -47,16 +62,13 @@ export class MageContext {
     return this._wildcard;
   }
 
-  public constructor(
-    request: Request,
-    params: { [key: string]: string },
-    wildcard?: string,
-  ) {
-    this._request = new MageRequest(request);
-    this._params = params;
+  public constructor(args: MageContextArgs) {
+    this._buildId = args.buildId;
+    this._request = new MageRequest(args.request);
+    this._params = args.params;
     this._response = new Response();
     this._cookies = new Cookies(this);
-    this._wildcard = wildcard;
+    this._wildcard = args.wildcard;
     this._validationResults = new Map<ValidateSource, Map<unknown, unknown>>();
   }
 
@@ -269,5 +281,12 @@ export class MageContext {
     }
 
     this._validationResults.get(source)?.set(schema, result);
+  }
+
+  /**
+   * Get asset URL for the provided path
+   */
+  public asset(path: string): string {
+    return `${path}.${this.buildId}`;
   }
 }
