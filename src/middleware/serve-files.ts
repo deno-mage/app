@@ -3,6 +3,7 @@ import { resolve } from "@std/path";
 import { HttpMethod, StatusCode, StatusText } from "../http.ts";
 import type { MageMiddleware } from "../router.ts";
 import { MageError } from "../errors.ts";
+import { cacheControl } from "../headers/cache-control.ts";
 
 /**
  * Options for the useServeFiles middleware.
@@ -25,6 +26,8 @@ interface UseServeFilesOptions {
  * without a wildcard, it will throw an error. This middleware only serves on
  * GET requests.
  *
+ * It the filepath contains the build id then it wil be stripped from the pathwhen seeking the file in the directory.
+ *
  * @returns MageMiddleware
  */
 export const useServeFiles = (
@@ -44,7 +47,17 @@ export const useServeFiles = (
 
     const serveIndex = options.serveIndex ?? true;
 
-    let filepath = resolve(options.directory, context.wildcard);
+    // Set long cache headers for static files that are cache busted with buildId
+    const cacheBustWithBuildId = context.wildcard.includes(context.buildId);
+    if (cacheBustWithBuildId) {
+      cacheControl(context, { public: true, maxAge: 31536000 });
+    }
+
+    // Resolve filepath and remove the buildId from the path if it exists
+    let filepath = resolve(options.directory, context.wildcard).replace(
+      `.${context.buildId}`,
+      "",
+    );
 
     // If the requested path is a directory, check if we should serve
     // index.html and update the filepath accordingly.
@@ -53,17 +66,17 @@ export const useServeFiles = (
       filepath = resolve(filepath, "index.html");
     }
 
-    // Check the file exists and escape early if it does not sending a 404.
+    // If the file exists serve it
     const fileExists = await exists(filepath, { isFile: true });
-    if (!fileExists) {
-      context.text(StatusCode.NotFound, StatusText.NotFound);
+
+    if (fileExists) {
+      await context.serveFile(filepath);
       await next();
       return;
     }
 
-    // Finally serve the file.
-    await context.serveFile(filepath);
-
+    // If the file does not exist, return a 404.
+    context.text(StatusCode.NotFound, StatusText.NotFound);
     await next();
   };
 };

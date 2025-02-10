@@ -12,6 +12,14 @@ import { useMethodNotAllowed } from "./middleware/method-not-allowed.ts";
  */
 export class MageApp {
   private _router = new MageRouter();
+  private _buildId = crypto.randomUUID();
+
+  /**
+   * The unique identifier for the build
+   */
+  public get buildId(): string {
+    return this._buildId;
+  }
 
   /**
    * Adds middleware to the application that will be run for every request.
@@ -141,15 +149,16 @@ export class MageApp {
    * @returns
    */
   public build(): Deno.ServeHandler {
-    return async (req: Request) => {
-      const url = new URL(req.url);
-      const matchResult = this._router.match(url, req.method);
+    return async (request: Request) => {
+      const url = new URL(request.url);
+      const matchResult = this._router.match(url, request.method);
 
-      const context: MageContext = new MageContext(
-        req,
-        matchResult.params,
-        matchResult.wildcard,
-      );
+      const context: MageContext = new MageContext({
+        buildId: this.buildId,
+        request,
+        params: matchResult.params,
+        wildcard: matchResult.wildcard,
+      });
 
       const getAllowedMethods = () => this._router.getAvailableMethods(url);
 

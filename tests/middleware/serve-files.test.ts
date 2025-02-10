@@ -142,4 +142,25 @@ describe("middleware - serve file", () => {
     expect(response.status).toBe(StatusCode.InternalServerError);
     expect(await response.text()).toEqual(StatusText.InternalServerError);
   });
+
+  describe("cache busting with build id", () => {
+    it("should return file when it exists with build id suffixed", async () => {
+      const response = await fetch(
+        server.url(`/public/image.png.${server.app.buildId}`),
+        {
+          method: "GET",
+        },
+      );
+
+      expect(response.status).toBe(StatusCode.OK);
+      const data = await Deno.readFile(
+        resolve(Deno.cwd(), "./public/image.png"),
+      );
+      expect(await response.arrayBuffer()).toEqual(data.buffer);
+      expect(response.headers.get("content-type")).toEqual("image/png");
+      expect(response.headers.get("cache-control")).toEqual(
+        "max-age=31536000, public",
+      );
+    });
+  });
 });
