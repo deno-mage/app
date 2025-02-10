@@ -291,6 +291,29 @@ app.get("/ws", async (context) => {
 });
 ```
 
+### Assets
+
+You can get a cache busted path for the asset via the `context.asse()` method.
+This will append the build id to the asset path. The `useServeFiles` middleware
+supports serving the files and stripping the build id from the path. Files that
+have been cache busted in this way will be served with a `Cache-Control` header
+set to `max-age=31536000` (1 year).
+
+```tsx
+app.get("/public/*", useServeFiles({ directory: "./public" }));
+
+app.get("/", async (context) => {
+  await context.render(
+    StatusCode.OK,
+    <html lang="en">
+      <body>
+        <img src={context.asset("/public/image.png")} />
+      </body>
+    </html>,
+  );
+});
+```
+
 ## Routing
 
 ### HTTP methods
