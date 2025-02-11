@@ -1,9 +1,8 @@
 import { exists } from "@std/fs";
 import { resolve } from "@std/path";
-import { HttpMethod, StatusCode, StatusText } from "../http.ts";
-import type { MageMiddleware } from "../router.ts";
-import { MageError } from "../errors.ts";
-import { cacheControl } from "../headers/cache-control.ts";
+import { HttpMethod, MageError, StatusCode, StatusText } from "@mage/app";
+import type { MageMiddleware } from "@mage/app";
+import { createCacheControlHeader } from "@mage/headers";
 
 /**
  * Options for the useServeFiles middleware.
@@ -50,7 +49,10 @@ export const useServeFiles = (
     // Set long cache headers for static files that are cache busted with buildId
     const cacheBustWithBuildId = context.wildcard.includes(context.buildId);
     if (cacheBustWithBuildId) {
-      cacheControl(context, { public: true, maxAge: 31536000 });
+      context.response.headers.set(
+        "Cache-Control",
+        createCacheControlHeader({ public: true, maxAge: 31536000 }),
+      );
     }
 
     // Resolve filepath and remove the buildId from the path if it exists

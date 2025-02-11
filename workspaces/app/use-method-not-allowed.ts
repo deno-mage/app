@@ -1,5 +1,5 @@
-import { HttpMethod, StatusCode, StatusText } from "../http.ts";
-import type { MageMiddleware } from "../router.ts";
+import { HttpMethod, StatusCode, StatusText } from "./http.ts";
+import type { MageMiddleware } from "./router.ts";
 
 /**
  * Options for the useMethodNotAllowed middleware.

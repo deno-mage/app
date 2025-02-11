@@ -1,5 +1,5 @@
-import { MageApp, StatusCode } from "./mod.ts";
-import { useServeFiles } from "./src/middleware/serve-files.ts";
+import { MageApp, StatusCode } from "@mage/app";
+import { useServeFiles } from "@mage/middlewares";
 
 const app = new MageApp();
 

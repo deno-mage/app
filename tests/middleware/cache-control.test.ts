@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
-import { cacheControl, StatusCode } from "../../mod.ts";
+import { StatusCode } from "@mage/app";
+import { useCacheControl } from "@mage/middlewares";
 import { MageTestServer } from "../../test-utils/server.ts";
 
 let server: MageTestServer;
@@ -8,8 +9,9 @@ let server: MageTestServer;
 beforeAll(() => {
   server = new MageTestServer();
 
-  server.app.get("/all", (context) => {
-    cacheControl(context, {
+  server.app.get(
+    "/all",
+    useCacheControl({
       immutable: true,
       maxAge: 60,
       mustRevalidate: true,
@@ -23,114 +25,141 @@ beforeAll(() => {
       sMaxAge: 60,
       staleIfError: 60,
       staleWhileRevalidate: 60,
-    });
+    }),
+    (context) => {
+      context.text(StatusCode.OK, "Hello, World!");
+    },
+  );
 
-    context.text(StatusCode.OK, "Hello, World!");
-  });
-
-  server.app.get("/immutable", (context) => {
-    cacheControl(context, {
+  server.app.get(
+    "/immutable",
+    useCacheControl({
       immutable: true,
-    });
+    }),
+    (context) => {
+      context.text(StatusCode.OK, "Hello, World!");
+    },
+  );
 
-    context.text(StatusCode.OK, "Hello, World!");
-  });
-
-  server.app.get("/max-age", (context) => {
-    cacheControl(context, {
+  server.app.get(
+    "/max-age",
+    useCacheControl({
       maxAge: 60,
-    });
+    }),
+    (context) => {
+      context.text(StatusCode.OK, "Hello, World!");
+    },
+  );
 
-    context.text(StatusCode.OK, "Hello, World!");
-  });
-
-  server.app.get("/must-revalidate", (context) => {
-    cacheControl(context, {
+  server.app.get(
+    "/must-revalidate",
+    useCacheControl({
       mustRevalidate: true,
-    });
+    }),
+    (context) => {
+      context.text(StatusCode.OK, "Hello, World!");
+    },
+  );
 
-    context.text(StatusCode.OK, "Hello, World!");
-  });
-
-  server.app.get("/must-understand", (context) => {
-    cacheControl(context, {
+  server.app.get(
+    "/must-understand",
+    useCacheControl({
       mustUnderstand: true,
-    });
+    }),
+    (context) => {
+      context.text(StatusCode.OK, "Hello, World!");
+    },
+  );
 
-    context.text(StatusCode.OK, "Hello, World!");
-  });
-
-  server.app.get("/no-cache", (context) => {
-    cacheControl(context, {
+  server.app.get(
+    "/no-cache",
+    useCacheControl({
       noCache: true,
-    });
+    }),
+    (context) => {
+      context.text(StatusCode.OK, "Hello, World!");
+    },
+  );
 
-    context.text(StatusCode.OK, "Hello, World!");
-  });
-
-  server.app.get("/no-store", (context) => {
-    cacheControl(context, {
+  server.app.get(
+    "/no-store",
+    useCacheControl({
       noStore: true,
-    });
+    }),
+    (context) => {
+      context.text(StatusCode.OK, "Hello, World!");
+    },
+  );
 
-    context.text(StatusCode.OK, "Hello, World!");
-  });
-
-  server.app.get("/no-transform", (context) => {
-    cacheControl(context, {
+  server.app.get(
+    "/no-transform",
+    useCacheControl({
       noTransform: true,
-    });
+    }),
+    (context) => {
+      context.text(StatusCode.OK, "Hello, World!");
+    },
+  );
 
-    context.text(StatusCode.OK, "Hello, World!");
-  });
-
-  server.app.get("/proxy-revalidate", (context) => {
-    cacheControl(context, {
+  server.app.get(
+    "/proxy-revalidate",
+    useCacheControl({
       proxyRevalidate: true,
-    });
+    }),
+    (context) => {
+      context.text(StatusCode.OK, "Hello, World!");
+    },
+  );
 
-    context.text(StatusCode.OK, "Hello, World!");
-  });
-
-  server.app.get("/public", (context) => {
-    cacheControl(context, {
+  server.app.get(
+    "/public",
+    useCacheControl({
       public: true,
-    });
+    }),
+    (context) => {
+      context.text(StatusCode.OK, "Hello, World!");
+    },
+  );
 
-    context.text(StatusCode.OK, "Hello, World!");
-  });
-
-  server.app.get("/private", (context) => {
-    cacheControl(context, {
+  server.app.get(
+    "/private",
+    useCacheControl({
       private: true,
-    });
+    }),
+    (context) => {
+      context.text(StatusCode.OK, "Hello, World!");
+    },
+  );
 
-    context.text(StatusCode.OK, "Hello, World!");
-  });
-
-  server.app.get("/s-max-age", (context) => {
-    cacheControl(context, {
+  server.app.get(
+    "/s-max-age",
+    useCacheControl({
       sMaxAge: 60,
-    });
+    }),
+    (context) => {
+      context.text(StatusCode.OK, "Hello, World!");
+    },
+  );
 
-    context.text(StatusCode.OK, "Hello, World!");
-  });
-
-  server.app.get("/stale-if-error", (context) => {
-    cacheControl(context, {
+  server.app.get(
+    "/stale-if-error",
+    useCacheControl({
       staleIfError: 60,
-    });
+    }),
+    (context) => {
+      context.text(StatusCode.OK, "Hello, World!");
+    },
+  );
 
-    context.text(StatusCode.OK, "Hello, World!");
-  });
-
-  server.app.get("/stale-while-revalidate", (context) => {
-    cacheControl(context, {
+  server.app.get(
+    "/stale-while-revalidate",
+    useCacheControl({
       staleWhileRevalidate: 60,
-    });
-
-    context.text(StatusCode.OK, "Hello, World!");
-  });
+    }),
+    (context) => {
+      context.text(StatusCode.OK, "Hello, World!");
+    },
+  );
 
   server.start();
 });

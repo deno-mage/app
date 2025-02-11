@@ -1,10 +1,10 @@
-import { StatusCode } from "../http.ts";
-import type { MageMiddleware } from "../router.ts";
+import { StatusCode } from "./http.ts";
+import type { MageMiddleware } from "./router.ts";
 
 /**
- * Options for the useOptionsAllow middleware.
+ * Options for the useOptions middleware.
  */
-interface OptionsOptions {
+interface UseOptionsOptions {
   /**
    * Function to return methods that are allowed for the requested
    * pathname.
@@ -19,7 +19,7 @@ interface OptionsOptions {
  *
  * @returns MageMiddleware
  */
-export const useOptions = (options: OptionsOptions): MageMiddleware => {
+export const useOptions = (options: UseOptionsOptions): MageMiddleware => {
   return async (context, next) => {
     context.empty(StatusCode.NoContent);
 

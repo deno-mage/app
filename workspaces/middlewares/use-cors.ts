@@ -1,10 +1,10 @@
-import type { MageMiddleware } from "../router.ts";
-import { HttpMethod, StatusCode } from "../http.ts";
+import { HttpMethod, StatusCode } from "@mage/app";
+import type { MageMiddleware } from "@mage/app";
 
 /**
- * Options for the useCors middleware.
+ * Options for the useCORS middleware.
  */
-interface CorsOptions {
+interface UseCORSOptions {
   /**
    * The origins that are allowed to make requests. This can be a single
    * origin or an array of origins. If set to "*", all origins are allowed.
@@ -38,9 +38,9 @@ interface CorsOptions {
  * Middleware that handles Cross-Origin Resource Sharing (CORS) requests.
  *
  * @param options
- * @returns
+ * @returns MageMiddleware
  */
-export const useCors = (options: CorsOptions | undefined): MageMiddleware => {
+export const useCORS = (options?: UseCORSOptions): MageMiddleware => {
   return async (context, next) => {
     const origin = context.request.header("Origin");
 

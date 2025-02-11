@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
-import { StatusCode, useSecurityHeaders } from "../../mod.ts";
+import { StatusCode } from "@mage/app";
+import { useSecurityHeaders } from "@mage/middlewares";
 import { MageTestServer } from "../../test-utils/server.ts";
 
 let server: MageTestServer;
