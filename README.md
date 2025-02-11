@@ -9,11 +9,8 @@
 ## Installation
 
 ```sh
-deno add jsr:@mage/server npm:preact@10.22.1
+deno add jsr:@mage/server npm:preact
 ```
-
-**NB: its important we're in sync with the version of Preact that we're using or
-Context API won't work.**
 
 ## Getting started
 

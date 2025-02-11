@@ -55,7 +55,7 @@ export const useServeFiles = (
 
     // Resolve filepath and remove the buildId from the path if it exists
     let filepath = resolve(options.directory, context.wildcard).replace(
-      `.${context.buildId}`,
+      `-${context.buildId}`,
       "",
     );
 
