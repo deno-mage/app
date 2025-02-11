@@ -69,7 +69,24 @@ export const contentSecurityPolicy = (
   context: MageContext,
   options: ContentSecurityPolicyOptions,
 ): void => {
-  const header = Object.entries(options.directives)
+  const defaultDirectives = {
+    defaultSrc: ["'self'"],
+    baseUri: ["'self'"],
+    fontSrc: ["'self'", "https:", "data:"],
+    formAction: ["'self'"],
+    frameAncestors: ["'self'"],
+    imgSrc: ["'self'", "data:"],
+    objectSrc: ["'none'"],
+    scriptSrc: ["'self'"],
+    scriptSrcAttr: ["'none'"],
+    styleSrc: ["'self'", "https:", "'unsafe-inline'"],
+    upgradeInsecureRequests: true,
+  };
+
+  const header = Object.entries({
+    ...defaultDirectives,
+    ...options.directives,
+  })
     .map(([key, value]) => {
       const directive = directiveKeyMap[
         key as keyof ContentSecurityPolicyOptions["directives"]

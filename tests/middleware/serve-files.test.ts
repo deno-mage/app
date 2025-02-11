@@ -146,7 +146,7 @@ describe("middleware - serve file", () => {
   describe("cache busting with build id", () => {
     it("should return file when it exists with build id suffixed", async () => {
       const response = await fetch(
-        server.url(`/public/image.png.${server.app.buildId}`),
+        server.url(`/public/image-${server.app.buildId}.png`),
         {
           method: "GET",
         },
