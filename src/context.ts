@@ -284,9 +284,21 @@ export class MageContext {
   }
 
   /**
-   * Get asset URL for the provided path
+   * Get asset URL for the provided path with the build id embedded in the url for cache busting
    */
   public asset(path: string): string {
-    return `${path}.${this.buildId}`;
+    const pathParts = path.split("/");
+
+    const filename = pathParts.pop();
+    if (filename?.includes(".")) {
+      const filenameParts = filename.split(".");
+      const extension = filenameParts.pop();
+      const basename = filenameParts.join(".");
+      pathParts.push(`${basename}-${this._buildId}.${extension}`);
+    } else {
+      pathParts.push(`${filename}-${this._buildId}`);
+    }
+
+    return pathParts.join("/");
   }
 }
