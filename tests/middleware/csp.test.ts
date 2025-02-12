@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
-import { contentSecurityPolicy, StatusCode } from "../../mod.ts";
+import { StatusCode } from "@mage/app";
+import { useCSP } from "@mage/middlewares";
 import { MageTestServer } from "../../test-utils/server.ts";
 
 let server: MageTestServer;
@@ -8,38 +9,44 @@ let server: MageTestServer;
 beforeAll(() => {
   server = new MageTestServer();
 
-  server.app.get("/", (context) => {
-    contentSecurityPolicy(context, {
+  server.app.get(
+    "/",
+    useCSP({
       directives: {
         defaultSrc: "'self'",
         scriptSrc: ["'self'", "https://example.com"],
       },
-    });
+    }),
+    (context) => {
+      context.text(StatusCode.OK, "Hello, World!");
+    },
+  );
 
-    context.text(StatusCode.OK, "Hello, World!");
-  });
-
-  server.app.get("/upgrade-insecure-requests/true", (context) => {
-    contentSecurityPolicy(context, {
+  server.app.get(
+    "/upgrade-insecure-requests/true",
+    useCSP({
       directives: {
         defaultSrc: "'self'",
         upgradeInsecureRequests: true,
       },
-    });
+    }),
+    (context) => {
+      context.text(StatusCode.OK, "Hello, World!");
+    },
+  );
 
-    context.text(StatusCode.OK, "Hello, World!");
-  });
-
-  server.app.get("/upgrade-insecure-requests/false", (context) => {
-    contentSecurityPolicy(context, {
+  server.app.get(
+    "/upgrade-insecure-requests/false",
+    useCSP({
       directives: {
         defaultSrc: "'self'",
         upgradeInsecureRequests: false,
       },
-    });
-
-    context.text(StatusCode.OK, "Hello, World!");
-  });
+    }),
+    (context) => {
+      context.text(StatusCode.OK, "Hello, World!");
+    },
+  );
 
   server.start();
 });
@@ -48,7 +55,7 @@ afterAll(async () => {
   await server.stop();
 });
 
-describe("headers - content-security-policy", () => {
+describe("headers - csp", () => {
   it("should set security headers", async () => {
     const response = await fetch(server.url("/"), {
       method: "GET",

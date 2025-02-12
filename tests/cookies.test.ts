@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
 import { MageTestServer } from "../test-utils/server.ts";
-import { StatusCode } from "../src/http.ts";
+import { StatusCode } from "@mage/app";
 
 let server: MageTestServer;
 

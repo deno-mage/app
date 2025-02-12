@@ -1,8 +1,8 @@
-import { StatusCode, StatusText } from "../http.ts";
-import type { MageMiddleware } from "../router.ts";
+import { StatusCode, StatusText } from "@mage/app";
+import type { MageMiddleware } from "@mage/app";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 
-export type ValidateSource = "json" | "form" | "params" | "search-params";
+type ValidationSource = "json" | "form" | "params" | "search-params";
 
 interface UseValidateOptions {
   /**
@@ -32,7 +32,7 @@ interface UseValidateOptions {
  * @returns MageMiddleware
  */
 export const useValidate = (
-  source: ValidateSource,
+  source: ValidationSource,
   schema: StandardSchemaV1,
   options?: UseValidateOptions,
 ): MageMiddleware => {

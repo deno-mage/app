@@ -1,13 +1,13 @@
 import type { JSX } from "preact";
 import { renderToStringAsync } from "preact-render-to-string";
 import { serveFile } from "@std/http";
-import { RedirectType, StatusCode, statusTextMap } from "./http.ts";
+import { RedirectType, StatusCode, StatusText, statusTextMap } from "./http.ts";
 import { Cookies } from "./cookies.ts";
 import type { CookieOptions } from "./cookies.ts";
 import { MageRequest } from "./mage-request.ts";
-import type { ValidateSource } from "./middleware/validate.ts";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
-import { StatusText } from "../mod.ts";
+
+type ValidationSource = "json" | "form" | "params" | "search-params";
 
 interface MageContextArgs {
   request: Request;
@@ -27,7 +27,7 @@ export class MageContext {
   private _cookies: Cookies;
   private _params: { [key: string]: string };
   private _wildcard?: string;
-  private _validationResults: Map<ValidateSource, Map<unknown, unknown>>;
+  private _validationResults: Map<ValidationSource, Map<unknown, unknown>>;
 
   /**
    * The unique identifier for the build
@@ -58,6 +58,9 @@ export class MageContext {
     return this._request;
   }
 
+  /**
+   * The wildcard path part matched by the router
+   */
   public get wildcard(): string | undefined {
     return this._wildcard;
   }
@@ -69,7 +72,10 @@ export class MageContext {
     this._response = new Response();
     this._cookies = new Cookies(this);
     this._wildcard = args.wildcard;
-    this._validationResults = new Map<ValidateSource, Map<unknown, unknown>>();
+    this._validationResults = new Map<
+      ValidationSource,
+      Map<unknown, unknown>
+    >();
   }
 
   /**
@@ -258,7 +264,7 @@ export class MageContext {
    * @param source
    */
   public valid<TResult = unknown>(
-    source: ValidateSource,
+    source: ValidationSource,
     schema: StandardSchemaV1,
   ): TResult {
     return this._validationResults.get(source)?.get(schema) as TResult;
@@ -272,7 +278,7 @@ export class MageContext {
    * @param result
    */
   public setValidationResult(
-    source: ValidateSource,
+    source: ValidationSource,
     schema: StandardSchemaV1,
     result: unknown,
   ) {
@@ -285,6 +291,8 @@ export class MageContext {
 
   /**
    * Get asset URL for the provided path with the build id embedded in the url for cache busting
+   *
+   * @param path
    */
   public asset(path: string): string {
     const pathParts = path.split("/");

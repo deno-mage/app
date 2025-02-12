@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
-import { StatusCode, useCors } from "../../../mod.ts";
+import { StatusCode } from "@mage/app";
+import { useCORS } from "@mage/middlewares";
 import { MageTestServer } from "../../../test-utils/server.ts";
 
 let server: MageTestServer;
@@ -10,25 +11,25 @@ beforeAll(() => {
 
   server.app.options(
     "/",
-    useCors({
+    useCORS({
       credentials: false,
     }),
   );
   server.app.get(
     "/",
-    useCors({
+    useCORS({
       credentials: false,
     }),
   );
   server.app.options(
     "/credentials",
-    useCors({
+    useCORS({
       credentials: true,
     }),
   );
   server.app.get(
     "/credentials",
-    useCors({
+    useCORS({
       credentials: true,
     }),
   );

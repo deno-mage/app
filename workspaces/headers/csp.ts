@@ -1,6 +1,4 @@
-import type { MageContext } from "../context.ts";
-
-interface ContentSecurityPolicyOptions {
+export interface CreateCSPHeaderOptions {
   /**
    * https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy#directives
    */
@@ -32,7 +30,7 @@ interface ContentSecurityPolicyOptions {
 }
 
 const directiveKeyMap: Record<
-  keyof ContentSecurityPolicyOptions["directives"],
+  keyof CreateCSPHeaderOptions["directives"],
   string
 > = {
   childSrc: "child-src",
@@ -61,14 +59,11 @@ const directiveKeyMap: Record<
 };
 
 /**
- * Apply a Content-Security-Policy header based on the provided options.
+ * Create Content-Security-Policy header value based on the provided options.
  *
  * @returns string
  */
-export const contentSecurityPolicy = (
-  context: MageContext,
-  options: ContentSecurityPolicyOptions,
-): void => {
+export const createCSPHeader = (options: CreateCSPHeaderOptions): string => {
   const defaultDirectives = {
     defaultSrc: ["'self'"],
     baseUri: ["'self'"],
@@ -88,9 +83,8 @@ export const contentSecurityPolicy = (
     ...options.directives,
   })
     .map(([key, value]) => {
-      const directive = directiveKeyMap[
-        key as keyof ContentSecurityPolicyOptions["directives"]
-      ];
+      const directive =
+        directiveKeyMap[key as keyof CreateCSPHeaderOptions["directives"]];
 
       if (typeof value === "boolean") {
         if (value) {
@@ -107,5 +101,5 @@ export const contentSecurityPolicy = (
     .filter(Boolean)
     .join(";");
 
-  context.response.headers.set("Content-Security-Policy", header);
+  return header;
 };

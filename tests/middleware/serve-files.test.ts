@@ -1,11 +1,7 @@
 import { afterAll, beforeAll, describe, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
-import {
-  HttpMethod,
-  StatusCode,
-  StatusText,
-  useServeFiles,
-} from "../../mod.ts";
+import { HttpMethod, StatusCode, StatusText } from "@mage/app";
+import { useServeFiles } from "@mage/middlewares";
 import { MageTestServer } from "../../test-utils/server.ts";
 import { resolve } from "@std/path";
 

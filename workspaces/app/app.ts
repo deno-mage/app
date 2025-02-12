@@ -3,9 +3,9 @@ import { compose } from "./compose.ts";
 import { MageRouter } from "./router.ts";
 import type { MageMiddleware } from "./router.ts";
 import { StatusCode, StatusText } from "./http.ts";
-import { useOptions } from "./middleware/options.ts";
-import { useNotFound } from "./middleware/not-found.ts";
-import { useMethodNotAllowed } from "./middleware/method-not-allowed.ts";
+import { useOptions } from "./use-options.ts";
+import { useNotFound } from "./use-not-found.ts";
+import { useMethodNotAllowed } from "./use-method-not-allowed.ts";
 
 /**
  * MageApp is the main class for creating and running Mage applications.

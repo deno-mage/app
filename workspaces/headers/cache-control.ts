@@ -1,6 +1,4 @@
-import type { MageContext } from "../context.ts";
-
-interface CacheControlOptions {
+export interface CreateCacheControlHeaderOptions {
   /**
    * The number of seconds the response can be cached until it is stale.
    */
@@ -56,14 +54,13 @@ interface CacheControlOptions {
 }
 
 /**
- * Apply a Cache-Control header based on the provided options.
+ * Create Cache-Control header value based on the provided options.
  *
  * @returns string
  */
-export const cacheControl = (
-  context: MageContext,
-  options: CacheControlOptions,
-): void => {
+export const createCacheControlHeader = (
+  options: CreateCacheControlHeaderOptions,
+): string => {
   const values = [];
 
   if (options.maxAge) {
@@ -118,5 +115,7 @@ export const cacheControl = (
     values.push(`stale-if-error=${options.staleIfError}`);
   }
 
-  context.response.headers.set("Cache-Control", values.join(", "));
+  const header = values.join(", ");
+
+  return header;
 };

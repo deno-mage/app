@@ -1,5 +1,5 @@
-import { HttpMethod, StatusCode, StatusText } from "../http.ts";
-import type { MageMiddleware } from "../router.ts";
+import { HttpMethod, StatusCode, StatusText } from "./http.ts";
+import type { MageMiddleware } from "./router.ts";
 
 /**
  * Responds with a 404 Not Found status code. This middleware

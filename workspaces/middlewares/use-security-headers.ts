@@ -1,5 +1,5 @@
-import type { MageMiddleware } from "../router.ts";
-import { contentSecurityPolicy } from "../headers/content-security-policy.ts";
+import type { MageMiddleware } from "@mage/app";
+import { createCSPHeader } from "@mage/headers";
 
 /**
  * Adds security headers to the response to help protect against common web
@@ -9,21 +9,24 @@ import { contentSecurityPolicy } from "../headers/content-security-policy.ts";
  */
 export const useSecurityHeaders = (): MageMiddleware => {
   return async (context, next) => {
-    contentSecurityPolicy(context, {
-      directives: {
-        defaultSrc: ["'self'"],
-        baseUri: ["'self'"],
-        fontSrc: ["'self'", "https:", "data:"],
-        formAction: ["'self'"],
-        frameAncestors: ["'self'"],
-        imgSrc: ["'self'", "data:"],
-        objectSrc: ["'none'"],
-        scriptSrc: ["'self'"],
-        scriptSrcAttr: ["'none'"],
-        styleSrc: ["'self'", "https:", "'unsafe-inline'"],
-        upgradeInsecureRequests: true,
-      },
-    });
+    context.response.headers.set(
+      "Content-Security-Policy",
+      createCSPHeader({
+        directives: {
+          defaultSrc: ["'self'"],
+          baseUri: ["'self'"],
+          fontSrc: ["'self'", "https:", "data:"],
+          formAction: ["'self'"],
+          frameAncestors: ["'self'"],
+          imgSrc: ["'self'", "data:"],
+          objectSrc: ["'none'"],
+          scriptSrc: ["'self'"],
+          scriptSrcAttr: ["'none'"],
+          styleSrc: ["'self'", "https:", "'unsafe-inline'"],
+          upgradeInsecureRequests: true,
+        },
+      }),
+    );
 
     context.response.headers.set("Cross-Origin-Opener-Policy", "same-origin");
     context.response.headers.set("Cross-Origin-Resource-Policy", "same-origin");
