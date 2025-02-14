@@ -1,5 +1,11 @@
+/**
+ * Informational status
+ */
 export type InfoStatus = 100 | 101 | 103;
 
+/**
+ * Success status
+ */
 export type SuccessStatus =
   | 200
   | 201
@@ -12,8 +18,14 @@ export type SuccessStatus =
   | 208
   | 226;
 
+/**
+ * Redirect status
+ */
 export type RedirectStatus = 301 | 302 | 303 | 307 | 308;
 
+/**
+ * Client error status
+ */
 export type ClientErrorStatus =
   | 400
   | 401
@@ -45,6 +57,9 @@ export type ClientErrorStatus =
   | 431
   | 451;
 
+/**
+ * Server error status
+ */
 export type ServerErrorStatus =
   | 500
   | 501
@@ -58,6 +73,9 @@ export type ServerErrorStatus =
   | 510
   | 511;
 
+/**
+ * All status
+ */
 export type Status =
   | InfoStatus
   | SuccessStatus
@@ -65,7 +83,14 @@ export type Status =
   | ClientErrorStatus
   | ServerErrorStatus;
 
+/**
+ * Contentful status
+ */
 export type ContentfulStatus = Exclude<Status, 101 | 204 | 205 | 304>;
+
+/**
+ * Contentless status
+ */
 export type ContentlessStatus = Exclude<Status, ContentfulStatus>;
 
 const statusTextMap = {
@@ -134,6 +159,11 @@ const statusTextMap = {
   511: "Network Authentication Required",
 };
 
+/**
+ * Get default status text for a status
+ * @param status The status
+ * @returns The status text
+ */
 export const statusText = (status: keyof typeof statusTextMap): string => {
   return statusTextMap[status];
 };
