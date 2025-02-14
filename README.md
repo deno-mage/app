@@ -6,11 +6,11 @@
   Build web applications with <a href="https://deno.com">Deno</a>
 </div>
 
-## Mage App
+## Mage
 
-`@mage/app` is a web application framework for Deno. It is designed to be
-familiar and easy to use. It is built on top of Deno's built-in HTTP server and
-provides a simple API for building web applications and APIs.
+Mage is a web application framework for Deno. It is designed to be familiar and
+easy to use. It is built on top of Deno's built-in HTTP server and provides a
+simple API for building web applications and APIs.
 
 ### Getting started
 
@@ -35,5 +35,5 @@ Deno.serve(app.handler);
 Run the app:
 
 ```
-deno run --allow-all main.tsx
+deno run --allow-all main.ts
 ```
