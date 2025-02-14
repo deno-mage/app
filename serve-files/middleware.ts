@@ -34,7 +34,7 @@ export const useServeFiles = (
 ): MageMiddleware => {
   return async (c, next) => {
     if (typeof c.req.wildcard !== "string") {
-      throw new MageError("No wildcard found in context.");
+      throw new MageError("No wildcard found in c.");
     }
 
     // Do not serve on non-GET requests.
@@ -51,13 +51,13 @@ export const useServeFiles = (
     if (cacheBustWithBuildId) {
       c.res.headers.set(
         "Cache-Control",
-        "public, max-age=31536000, immutable",
+        "max-age=31536000, public",
       );
     }
 
     // Resolve filepath and remove the buildId from the path if it exists
     let filepath = resolve(options.directory, c.req.wildcard).replace(
-      `-${c.buildId}`,
+      `${c.buildId}`,
       "",
     );
 

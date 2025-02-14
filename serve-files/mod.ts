@@ -1,1 +1,1 @@
-export { useServeFiles } from "./serve-files.ts";
+export { useServeFiles } from "./middleware.ts";

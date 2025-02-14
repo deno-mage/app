@@ -1,5 +1,5 @@
 import { memoize } from "@std/cache";
-import type { StandardSchemaV1 } from "@standard-schema/spec";
+import { MageError } from "./mage-error.ts";
 
 type ValidationSource = "json" | "form" | "params" | "search-params";
 
@@ -135,12 +135,15 @@ export class MageRequest {
    * Get a validation result, if it exists.
    *
    * @param source The source of the validation result
-   * @param schema The schema to validate the result against
    */
-  public valid(source: ValidationSource, schema: StandardSchemaV1) {
+  public valid<TResult>(source: ValidationSource): TResult {
     const result = this._validationResults.get(source);
 
-    return schema["~standard"].validate(result);
+    if (!result) {
+      throw new MageError(`No validation result found for ${source}`);
+    }
+
+    return result as TResult;
   }
 
   /**
@@ -150,7 +153,10 @@ export class MageRequest {
    * @param schema The schema to validate the result against
    * @param result The result of the validation
    */
-  public setValidationResult(source: ValidationSource, result: unknown) {
+  public setValidationResult<TResult>(
+    source: ValidationSource,
+    result: TResult,
+  ) {
     this._validationResults.set(source, result);
   }
 }

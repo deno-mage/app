@@ -29,6 +29,7 @@ export class MageContext {
   private _buildId: string;
   private _res: Response;
   private _req: MageRequest;
+  private _data: Map<string, unknown>;
 
   /**
    * The unique identifier for the build
@@ -47,7 +48,7 @@ export class MageContext {
   /**
    * The current response
    */
-  public set res(res) {
+  public set res(res: Response) {
     this._res = res;
   }
 
@@ -62,6 +63,7 @@ export class MageContext {
     this._buildId = args.buildId;
     this._req = args.req;
     this._res = new Response();
+    this._data = new Map<string, unknown>();
   }
 
   /**
@@ -101,13 +103,22 @@ export class MageContext {
   }
 
   /**
+   * Sends HTML response with the provided status code and body
+   */
+  public html(body: string, status?: ContentfulStatus) {
+    this.text(body, status);
+
+    this._res.headers.set("Content-Type", "text/html; charset=UTF-8");
+  }
+
+  /**
    * Sends an empty response with the provided status code
    *
    * @param status The status code of the response
    */
   public empty(status?: ContentlessStatus) {
     this._res = new Response(null, {
-      status,
+      status: status ?? 204,
       headers: this._res.headers,
     });
   }
@@ -120,14 +131,15 @@ export class MageContext {
   }
 
   /**
-   * Redirects the request to the provided location with the specified redirect
+   * Redirects the request to the provided location with the specified redirect.
+   * Default to 307 temporary redirect.
    *
    * @param location The location to redirect to
    * @param status The status code of the response
    */
   public redirect(location: URL | string, status?: RedirectStatus) {
     this._res = new Response(null, {
-      status,
+      status: status ?? 307,
       headers: this._res.headers,
     });
 
@@ -204,23 +216,21 @@ export class MageContext {
   }
 
   /**
-   * Get asset URL for the provided path with the build id embedded in the url for cache busting
+   * Get data stored via `set()` method
    *
-   * @param path
+   * @param key The key of the data to get
    */
-  public asset(path: string): string {
-    const pathParts = path.split("/");
+  public get<TData = unknown>(key: string): TData {
+    return this._data.get(key) as TData;
+  }
 
-    const filename = pathParts.pop();
-    if (filename?.includes(".")) {
-      const filenameParts = filename.split(".");
-      const extension = filenameParts.pop();
-      const basename = filenameParts.join(".");
-      pathParts.push(`${basename}-${this._buildId}.${extension}`);
-    } else {
-      pathParts.push(`${filename}-${this._buildId}`);
-    }
-
-    return pathParts.join("/");
+  /**
+   * Set data to be stored in the context for the duraction of the request
+   *
+   * @param key The key of the data to set
+   * @param value The value of the data to set
+   */
+  public set(key: string, value: unknown) {
+    this._data.set(key, value);
   }
 }

@@ -20,16 +20,16 @@ interface UseMethodNotAllowedOptions {
 export const useMethodNotAllowed = (
   options: UseMethodNotAllowedOptions,
 ): MageMiddleware => {
-  return async (context, next) => {
-    if (context.req.method === "OPTIONS") {
+  return async (c, next) => {
+    if (c.req.method === "OPTIONS") {
       // If the request is an OPTIONS request then don't respond with a 405
       await next();
       return;
     }
 
-    context.text("Method Not Allowed", 405);
+    c.text("Method Not Allowed", 405);
 
-    context.res.headers.set(
+    c.res.headers.set(
       "Allow",
       options.getAllowedMethods().join(", "),
     );

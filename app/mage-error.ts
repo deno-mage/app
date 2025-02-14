@@ -24,7 +24,7 @@ export class MageError extends Error {
   ) {
     super(message, options);
 
-    this.name = "MageHTTPError";
+    this.name = "MageError";
     this._status = status ?? 500;
   }
 }

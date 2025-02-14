@@ -8,7 +8,7 @@ import type { MageMiddleware } from "./router.ts";
  * @returns MageMiddleware
  */
 export const compose = (middleware: MageMiddleware[]) => {
-  return async function (context: MageContext): Promise<void> {
+  return async function (c: MageContext): Promise<void> {
     let lastIndex = -1;
 
     async function dispatch(i: number): Promise<void> {
@@ -24,7 +24,7 @@ export const compose = (middleware: MageMiddleware[]) => {
         return;
       }
 
-      await currentMiddleware(context, () => dispatch(i + 1));
+      await currentMiddleware(c, () => dispatch(i + 1));
     }
 
     await dispatch(0);

@@ -151,11 +151,21 @@ export class MageApp {
    * @param req The request to handle
    * @returns Response
    */
-  public async handler(req: Request) {
+  public handler: (req: Request) => Promise<Response> = this._handler.bind(
+    this,
+  );
+
+  /**
+   * Handle a request and return a response.
+   *
+   * @param req The request to handle
+   * @returns Response
+   */
+  private async _handler(req: Request) {
     const url = new URL(req.url);
     const matchResult = this._router.match(url, req.method);
 
-    const context: MageContext = new MageContext({
+    const c: MageContext = new MageContext({
       buildId: this.buildId,
       req: new MageRequest(req, {
         params: matchResult.params,
@@ -185,7 +195,7 @@ export class MageApp {
     }
 
     try {
-      await compose(middleware)(context);
+      await compose(middleware)(c);
     } catch (error) {
       console.error(error);
 
@@ -194,12 +204,12 @@ export class MageApp {
         status = error.status;
       }
 
-      context.text(
+      c.text(
         statusText(status),
         status,
       );
     }
 
-    return context.res;
+    return c.res;
   }
 }

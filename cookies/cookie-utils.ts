@@ -47,7 +47,7 @@ export const setCookie = (
   name: string,
   value: string,
   options: CookieOptions = {},
-) => {
+): void => {
   const parts = [`${name}=${value}`];
 
   if (options.maxAge) {
@@ -89,7 +89,7 @@ export const setCookie = (
  * @param context MageContext
  * @param name Name of the cookie
  */
-export const deleteCookie = (c: MageContext, name: string) => {
+export const deleteCookie = (c: MageContext, name: string): void => {
   c.res.headers.append("Set-Cookie", `${name}=; Max-Age=0`);
 };
 

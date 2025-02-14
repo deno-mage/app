@@ -20,10 +20,10 @@ interface UseOptionsOptions {
  * @returns MageMiddleware
  */
 export const useOptions = (options: UseOptionsOptions): MageMiddleware => {
-  return async (context, next) => {
-    context.empty();
+  return async (c, next) => {
+    c.empty();
 
-    context.res.headers.set(
+    c.res.headers.set(
       "Allow",
       options.getAllowedMethods().join(", "),
     );
