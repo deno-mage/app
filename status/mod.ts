@@ -1,3 +1,8 @@
+/**
+ * This module contains utility functions and types for working with HTTP statuses.
+ * @module
+ */
+
 export type {
   ClientErrorStatus,
   ContentfulStatus,
