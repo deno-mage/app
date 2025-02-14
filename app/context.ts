@@ -59,6 +59,11 @@ export class MageContext {
     return this._req;
   }
 
+  /**
+   * Construct a new MageContext object
+   *
+   * @param args The arguments for the MageContext class
+   */
   public constructor(args: MageContextArgs) {
     this._buildId = args.buildId;
     this._req = args.req;
