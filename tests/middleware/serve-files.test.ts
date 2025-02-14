@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
-import { HttpMethod, StatusCode, StatusText } from "@mage/app";
-import { useServeFiles } from "@mage/middlewares";
+import { HttpMethod, StatusCode, StatusText } from "../../app/mod.ts";
+import { useServeFiles } from "../../middlewares/mod.ts";
 import { MageTestServer } from "../../test-utils/server.ts";
 import { resolve } from "@std/path";
 
@@ -12,12 +12,12 @@ beforeAll(() => {
 
   server.app.get(
     "/no-wildcard",
-    useServeFiles({ directory: resolve(Deno.cwd(), "public") }),
+    useServeFiles({ directory: resolve(Deno.cwd(), "test-utils/files") }),
   );
 
   server.app.get(
     "/public/*",
-    useServeFiles({ directory: resolve(Deno.cwd(), "public") }),
+    useServeFiles({ directory: resolve(Deno.cwd(), "test-utils/files") }),
   );
 
   server.app.get(
@@ -30,7 +30,7 @@ beforeAll(() => {
 
   server.app.all(
     "/all/*",
-    useServeFiles({ directory: resolve(Deno.cwd(), "public") }),
+    useServeFiles({ directory: resolve(Deno.cwd(), "test-utils/files") }),
   );
 
   server.start();
@@ -57,7 +57,9 @@ describe("middleware - serve file", () => {
 
     expect(response.status).toBe(StatusCode.OK);
     expect(await response.text()).toEqual(
-      await Deno.readTextFile(resolve(Deno.cwd(), "public/hello.json")),
+      await Deno.readTextFile(
+        resolve(Deno.cwd(), "test-utils/files/hello.json"),
+      ),
     );
     expect(response.headers.get("content-type")).toEqual(
       "application/json; charset=UTF-8",
@@ -70,7 +72,9 @@ describe("middleware - serve file", () => {
     });
 
     expect(response.status).toBe(StatusCode.OK);
-    const data = await Deno.readFile(resolve(Deno.cwd(), "./public/image.png"));
+    const data = await Deno.readFile(
+      resolve(Deno.cwd(), "./test-utils/files/image.png"),
+    );
     expect(await response.arrayBuffer()).toEqual(data.buffer);
     expect(response.headers.get("content-type")).toEqual("image/png");
   });
@@ -80,10 +84,11 @@ describe("middleware - serve file", () => {
       method: "GET",
     });
 
-    expect(response.status).toBe(StatusCode.OK);
-    expect(await response.text()).toEqual(
-      await Deno.readTextFile(resolve(Deno.cwd(), "public/index.html")),
+    const data = await Deno.readTextFile(
+      resolve(Deno.cwd(), "test-utils/files/index.html"),
     );
+    expect(response.status).toBe(StatusCode.OK);
+    expect(await response.text()).toEqual(data);
     expect(response.headers.get("content-type")).toEqual(
       "text/html; charset=UTF-8",
     );

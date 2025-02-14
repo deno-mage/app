@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
-import { StatusCode, StatusText } from "@mage/app";
-import { useValidate } from "@mage/middlewares";
+import { StatusCode, StatusText } from "../../app/mod.ts";
+import { useValidate } from "../../middlewares/mod.ts";
 import { MageTestServer } from "../../test-utils/server.ts";
 import { z } from "zod";
 

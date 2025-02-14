@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
-import { StatusCode } from "@mage/app";
+import { StatusCode } from "../app/mod.ts";
 import { MageTestServer } from "../test-utils/server.ts";
 
 let server: MageTestServer;
@@ -9,22 +9,22 @@ beforeAll(() => {
   server = new MageTestServer();
 
   server.app.get("/get", (context) => {
-    context.text(StatusCode.OK, context.request.header("X-Test")!);
+    context.text(StatusCode.OK, context.req.header("X-Test")!);
   });
 
   server.app.get("/set", (context) => {
-    context.response.headers.set("X-Test", "test");
+    context.res.headers.set("X-Test", "test");
     context.text(StatusCode.OK, "set");
   });
 
   server.app.get(
     "/delete",
     async (context, next) => {
-      context.response.headers.set("X-Test", "test");
+      context.res.headers.set("X-Test", "test");
       await next();
     },
     (context) => {
-      context.response.headers.delete("X-Test");
+      context.res.headers.delete("X-Test");
       context.text(StatusCode.OK, "unset");
     },
   );

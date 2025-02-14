@@ -3,17 +3,37 @@
   <h1 align="center">Mage</h1>
 </p>
 <div align="center">
-  Build web applications with <a href="https://deno.com">Deno</a> and <a href="https://preactjs.com">Preact</a>
+  Build web applications with <a href="https://deno.com">Deno</a>
 </div>
 
-## Documentation
+## Mage App
 
-[Read Mage documentation here](https://deno-mage.com)
+`@mage/app` is a web application framework for Deno. It is designed to be
+familiar and easy to use. It is built on top of Deno's built-in HTTP server and
+provides a simple API for building web applications and APIs.
 
-## Packages
+### Getting started
 
-| Package                                               | Description                    | README                                       |
-| ----------------------------------------------------- | ------------------------------ | -------------------------------------------- |
-| [@mage/app](https://jsr.io/@mage/app)                 | Build Mage apps                | [README](./workspaces/app/README.md)         |
-| [@mage/headers](https://jsr.io/@mage/headers)         | HTTP header utilities for Mage | [README](./workspaces/headers/README.md)     |
-| [@mage/middlewares](https://jsr.io/@mage/middlewares) | Middleware for Mage            | [README](./workspaces/middlewares/README.md) |
+```sh
+deno add jsr:@mage/app
+```
+
+An example app:
+
+```tsx
+import { MageApp } from "@mage/app";
+
+const app = new MageApp();
+
+app.get("/", async (c) => {
+  c.text("Hello, world!");
+});
+
+Deno.serve(app.handler);
+```
+
+Run the app:
+
+```
+deno run --allow-all main.tsx
+```

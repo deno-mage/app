@@ -1,42 +1,30 @@
-import { MageApp, StatusCode } from "@mage/app";
-import { useServeFiles } from "@mage/middlewares";
+import { MageApp } from "./app/mod.ts";
+import { useServeFiles } from "./serve-files/mod.ts";
 
 const app = new MageApp();
 
-app.get("/text", (context) => {
-  context.text(StatusCode.OK, "Hello, World!");
+app.get("/text", (c) => {
+  c.text("Hello, World!");
 });
 
-app.get("/json", (context) => {
-  context.json(StatusCode.OK, { message: "Hello, World!" });
+app.get("/json", (c) => {
+  c.json({ message: "Hello, World!" });
 });
 
-app.get("/render", async (context) => {
-  await context.render(
-    StatusCode.OK,
-    <html lang="en">
-      <body>
-        <h1>Hello, World!</h1>
-        <img src={context.asset("/public/image.png")} />
-      </body>
-    </html>,
-  );
+app.get("/rewrite", async (c) => {
+  await c.rewrite("/target");
 });
 
-app.get("/rewrite", async (context) => {
-  await context.rewrite("/target");
-});
-
-app.get("/target", (context) => {
-  context.json(StatusCode.OK, {
-    message: context.request.searchParam("message"),
+app.get("/target", (c) => {
+  c.json({
+    message: c.req.searchParam("message"),
   });
 });
 
 app.get("/public/*", useServeFiles({ directory: "./public" }));
 
-app.get("/websocket", (context) => {
-  context.webSocket((socket) => {
+app.get("/websocket", (c) => {
+  c.webSocket((socket) => {
     socket.onmessage = (event) => {
       if (event.data === "ping") {
         socket.send("pong");
@@ -49,34 +37,4 @@ app.get("/websocket", (context) => {
   });
 });
 
-app.get("/websocket-client", async (context) => {
-  await context.render(
-    StatusCode.OK,
-    <html lang="en">
-      <body>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-            const socket = new WebSocket("ws://localhost:8000/websocket");
-
-            socket.onopen = () => {
-              console.log("WebSocket connection established");
-              socket.send("ping");
-            };
-
-            socket.onmessage = (event) => {
-              console.log(event.data);
-            };
-
-            socket.onclose = () => {
-              console.log("WebSocket connection closed");
-            };
-          `,
-          }}
-        />
-      </body>
-    </html>,
-  );
-});
-
-Deno.serve(app.build());
+Deno.serve(app.handler);
