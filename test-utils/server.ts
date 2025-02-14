@@ -1,4 +1,4 @@
-import { MageApp } from "@mage/app";
+import { MageApp } from "../app/mod.ts";
 
 const TEST_PORT_FLOOR = 60000;
 
@@ -21,7 +21,7 @@ export class MageTestServer {
       {
         port: port ?? Math.floor(Math.random() * 1000) + TEST_PORT_FLOOR,
       },
-      this._app.build(),
+      this._app.handler,
     );
   }
 
