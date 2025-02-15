@@ -11,23 +11,23 @@ export const useSecurityHeaders = (): MageMiddleware[] => {
   return [
     useCSP(),
     async (c, next) => {
-      c.res.headers.set("Cross-Origin-Opener-Policy", "same-origin");
-      c.res.headers.set(
+      c.header("Cross-Origin-Opener-Policy", "same-origin");
+      c.header(
         "Cross-Origin-Resource-Policy",
         "same-origin",
       );
-      c.res.headers.set("Origin-Agent-Cluster", "?1");
-      c.res.headers.set("Referrer-Policy", "no-referrer");
-      c.res.headers.set(
+      c.header("Origin-Agent-Cluster", "?1");
+      c.header("Referrer-Policy", "no-referrer");
+      c.header(
         "Strict-Transport-Security",
         "max-age=15552000; includeSubDomains",
       );
-      c.res.headers.set("X-Content-Type-Options", "nosniff");
-      c.res.headers.set("X-DNS-Prefetch-Control", "off");
-      c.res.headers.set("X-Download-Options", "noopen");
-      c.res.headers.set("X-Frame-Options", "SAMEORIGIN");
-      c.res.headers.set("X-Permitted-Cross-Domain-Policies", "none");
-      c.res.headers.set("X-XSS-Protection", "0");
+      c.header("X-Content-Type-Options", "nosniff");
+      c.header("X-DNS-Prefetch-Control", "off");
+      c.header("X-Download-Options", "noopen");
+      c.header("X-Frame-Options", "SAMEORIGIN");
+      c.header("X-Permitted-Cross-Domain-Policies", "none");
+      c.header("X-XSS-Protection", "0");
       c.res.headers.delete("X-Powered-By");
 
       await next();

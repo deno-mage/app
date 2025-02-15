@@ -29,7 +29,7 @@ export const useMethodNotAllowed = (
 
     c.text("Method Not Allowed", 405);
 
-    c.res.headers.set(
+    c.header(
       "Allow",
       options.getAllowedMethods().join(", "),
     );

@@ -52,42 +52,42 @@ export const useCORS = (options?: UseCORSOptions): MageMiddleware => {
 
     if (allowedOrigins.length > 0) {
       if (allowedOrigins.includes("*")) {
-        c.res.headers.set("Access-Control-Allow-Origin", "*");
+        c.header("Access-Control-Allow-Origin", "*");
       }
 
       if (origin && allowedOrigins.includes(origin)) {
-        c.res.headers.set("Access-Control-Allow-Origin", origin);
-        c.res.headers.set("Vary", "Origin");
+        c.header("Access-Control-Allow-Origin", origin);
+        c.header("Vary", "Origin");
       }
     }
 
     if (allowedMethods.length > 0) {
-      c.res.headers.set(
+      c.header(
         "Access-Control-Allow-Methods",
         allowedMethods.join(", "),
       );
     }
 
     if (allowedHeaders.length > 0) {
-      c.res.headers.set(
+      c.header(
         "Access-Control-Allow-Headers",
         allowedHeaders.join(", "),
       );
     }
 
     if (exposeHeaders.length > 0) {
-      c.res.headers.set(
+      c.header(
         "Access-Control-Expose-Headers",
         exposeHeaders.join(", "),
       );
     }
 
     if (allowCredentials) {
-      c.res.headers.set("Access-Control-Allow-Credentials", "true");
+      c.header("Access-Control-Allow-Credentials", "true");
     }
 
     if (allowedMaxAge) {
-      c.res.headers.set(
+      c.header(
         "Access-Control-Max-Age",
         allowedMaxAge.toString(),
       );

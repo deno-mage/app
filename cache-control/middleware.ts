@@ -124,7 +124,7 @@ export const useCacheControl = (
 
     const header = values.join(", ");
 
-    c.res.headers.set(
+    c.header(
       "Cache-Control",
       header,
     );

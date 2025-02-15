@@ -108,7 +108,7 @@ export const useCSP = (options?: UseCSPOptions): MageMiddleware => {
     .join(";");
 
   return async (c, next) => {
-    c.res.headers.set(
+    c.header(
       "Content-Security-Policy",
       header,
     );

@@ -23,7 +23,7 @@ export const useOptions = (options: UseOptionsOptions): MageMiddleware => {
   return async (c, next) => {
     c.empty();
 
-    c.res.headers.set(
+    c.header(
       "Allow",
       options.getAllowedMethods().join(", "),
     );

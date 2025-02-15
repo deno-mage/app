@@ -49,7 +49,7 @@ export const useServeFiles = (
     // Set long cache headers for static files that are cache busted with buildId
     const cacheBustWithBuildId = c.req.wildcard.includes(c.buildId);
     if (cacheBustWithBuildId) {
-      c.res.headers.set(
+      c.header(
         "Cache-Control",
         "max-age=31536000, public",
       );

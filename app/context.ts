@@ -90,7 +90,7 @@ export class MageContext {
       headers: this._res.headers,
     });
 
-    this._res.headers.set("Content-Type", "text/plain; charset=UTF-8");
+    this.header("Content-Type", "text/plain; charset=UTF-8");
   }
 
   /**
@@ -108,7 +108,7 @@ export class MageContext {
       headers: this._res.headers,
     });
 
-    this._res.headers.set(
+    this.header(
       "Content-Type",
       "application/json; charset=UTF-8",
     );
@@ -120,7 +120,7 @@ export class MageContext {
   public html(body: string, status?: ContentfulStatus) {
     this.text(body, status);
 
-    this._res.headers.set("Content-Type", "text/html; charset=UTF-8");
+    this.header("Content-Type", "text/html; charset=UTF-8");
   }
 
   /**
@@ -155,7 +155,7 @@ export class MageContext {
       headers: this._res.headers,
     });
 
-    this._res.headers.set("Location", location.toString());
+    this.header("Location", location.toString());
   }
 
   /**
@@ -205,7 +205,7 @@ export class MageContext {
     // they are not already set in the response
     for (const [key, value] of currentHeader.entries()) {
       if (!this._res.headers.has(key)) {
-        this._res.headers.set(key, value);
+        this.header(key, value);
       }
     }
   }
