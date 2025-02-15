@@ -17,7 +17,7 @@ beforeAll(() => {
 
   server.app.options("/custom", (c) => {
     c.empty();
-    c.res.headers.set("Allow", "CUSTOM");
+    c.header("Allow", "CUSTOM");
   });
 
   server.start();
