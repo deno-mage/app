@@ -72,6 +72,13 @@ export class MageContext {
   }
 
   /**
+   * Set a response header
+   */
+  public header(key: string, value: string) {
+    this._res.headers.set(key, value);
+  }
+
+  /**
    * Sends a text response with the provided status code and body
    *
    * @param body The body of the response
