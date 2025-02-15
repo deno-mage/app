@@ -12,14 +12,14 @@ beforeAll(() => {
   });
 
   server.app.get("/set", (c) => {
-    c.res.headers.set("X-Test", "test");
+    c.header("X-Test", "test");
     c.text("set");
   });
 
   server.app.get(
     "/delete",
     async (c, next) => {
-      c.res.headers.set("X-Test", "test");
+      c.header("X-Test", "test");
       await next();
     },
     (c) => {
