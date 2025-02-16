@@ -192,10 +192,10 @@ export class MageContext {
    *
    * @param file
    */
-  public async serveFile(filepath: string) {
+  public async file(filepath: string) {
     const fileInfo = await Deno.stat(filepath);
 
-    // `serveFile` will set the response headers, so we need to save the current
+    // Deno's`serveFile()` will set the response headers, so we need to save the current
     // headers before calling it to preserve any headers that were set before
     const currentHeader = this._res.headers;
 
