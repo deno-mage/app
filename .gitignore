@@ -2,5 +2,6 @@
 .DS_Store
 
 # Deno
+deno.lock
 *.tsbuildinfo
 coverage
