@@ -72,7 +72,7 @@ export const useServeFiles = (
     const fileExists = await exists(filepath, { isFile: true });
 
     if (fileExists) {
-      await c.serveFile(filepath);
+      await c.file(filepath);
       await next();
       return;
     }
