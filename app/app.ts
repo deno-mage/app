@@ -10,12 +10,17 @@ import type { Status } from "../status/mod.ts";
 import { MageRequest } from "./mage-request.ts";
 import { MageError } from "./mage-error.ts";
 
+export type MageDevMiddleware = (
+  mode: "dev" | "build",
+) => Promise<void> | void;
+
 /**
  * MageApp is the main class for creating and running Mage applications.
  */
 export class MageApp {
   private _router = new MageRouter();
   private _buildId = crypto.randomUUID();
+  private _devMiddleware: MageDevMiddleware[] = [];
 
   /**
    * The unique identifier for the build
@@ -154,6 +159,33 @@ export class MageApp {
   public handler: (req: Request) => Promise<Response> = this._handler.bind(
     this,
   );
+
+  /**
+   * Register a development middleware function.
+   *
+   * @param devMiddleware The development middleware function
+   */
+  public dev(devMiddleware: MageDevMiddleware): void {
+    this._devMiddleware.push(devMiddleware);
+  }
+
+  /**
+   * Run all dev middleware in build mode.
+   */
+  public async build(): Promise<void> {
+    for (const middleware of this._devMiddleware) {
+      await middleware("build");
+    }
+  }
+
+  /**
+   * Run all dev middleware in development mode and start the server.
+   */
+  public develop() {
+    for (const middleware of this._devMiddleware) {
+      middleware("dev");
+    }
+  }
 
   /**
    * Handle a request and return a response.

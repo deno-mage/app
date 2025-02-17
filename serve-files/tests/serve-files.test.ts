@@ -39,7 +39,7 @@ afterAll(async () => {
   await server.stop();
 });
 
-describe("middleware - serve file", () => {
+describe("serve file", () => {
   it("should return 404 when file does not exist", async () => {
     const response = await fetch(server.url("/public/does-not-exist"), {
       method: "GET",

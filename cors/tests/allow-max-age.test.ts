@@ -28,7 +28,7 @@ afterAll(async () => {
   await server.stop();
 });
 
-describe("middleware - cors - allow max age", () => {
+describe("cors - allow max age", () => {
   it("should not send back header when GET", async () => {
     const response = await fetch(server.url("/"), {
       method: "GET",

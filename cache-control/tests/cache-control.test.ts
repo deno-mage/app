@@ -167,7 +167,7 @@ afterAll(async () => {
   await server.stop();
 });
 
-describe("headers - cache-control", () => {
+describe("cache-control", () => {
   it("should set cache control header (all)", async () => {
     const response = await fetch(server.url("/all"), {
       method: "GET",
