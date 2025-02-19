@@ -10,9 +10,27 @@ import type { Status } from "../status/mod.ts";
 import { MageRequest } from "./mage-request.ts";
 import { MageError } from "./mage-error.ts";
 
-export type MageDevMiddleware = (
-  mode: "dev" | "build",
-) => Promise<void> | void;
+/**
+ * A plugin for Mage apps.
+ */
+export interface MagePlugin {
+  /**
+   * Name of the plugin
+   */
+  name: string;
+  /**
+   * Triggered when app.build() is called
+   *
+   * @returns Promise<void>
+   */
+  onBuild?: (app: MageApp) => Promise<void> | void;
+  /**
+   * Triggered when app.develop() is called
+   *
+   * @returns Promise<void>
+   */
+  onDevelop?: (app: MageApp) => Promise<void> | void;
+}
 
 /**
  * MageApp is the main class for creating and running Mage applications.
@@ -20,7 +38,7 @@ export type MageDevMiddleware = (
 export class MageApp {
   private _router = new MageRouter();
   private _buildId = crypto.randomUUID();
-  private _devMiddleware: MageDevMiddleware[] = [];
+  private _plugins: MagePlugin[] = [];
 
   /**
    * The unique identifier for the build
@@ -161,29 +179,33 @@ export class MageApp {
   );
 
   /**
-   * Register a development middleware function.
+   * Register a mage plygin
    *
-   * @param devMiddleware The development middleware function
+   * @param plugin The plugin to register
    */
-  public dev(devMiddleware: MageDevMiddleware): void {
-    this._devMiddleware.push(devMiddleware);
+  public plugin(plugin: MagePlugin): void {
+    this._plugins.push(plugin);
   }
 
   /**
-   * Run all dev middleware in build mode.
+   * Build the application. This may not be necessary for all
+   * applications if static assets are not required or produced by
+   * plugins.
    */
   public async build(): Promise<void> {
-    for (const middleware of this._devMiddleware) {
-      await middleware("build");
+    for (const plugin of this._plugins) {
+      await plugin.onBuild?.(this);
     }
   }
 
   /**
-   * Run all dev middleware in development mode and start the server.
+   * Start the development server. This is used to run the application
+   * locally during development including triggering any development
+   * plugins.
    */
-  public develop() {
-    for (const middleware of this._devMiddleware) {
-      middleware("dev");
+  public async develop() {
+    for (const plugin of this._plugins) {
+      await plugin.onDevelop?.(this);
     }
   }
 

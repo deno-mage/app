@@ -1,11 +1,11 @@
 import { resolve } from "@std/path";
 import { MageApp } from "../../app/mod.ts";
-import { useTailwindCSS } from "./tailwind-dev-middleware.ts";
+import { tailwindCSS } from "./plugins/tailwindcss.ts";
 import { useServeFiles } from "../../serve-files/mod.ts";
 
 export const app = new MageApp();
 
-app.dev(useTailwindCSS({
+app.plugin(tailwindCSS({
   entry: "./example/src/main.css",
   output: "./example/public/main.css",
   configFilepath: "./example/tailwind.config.ts",
