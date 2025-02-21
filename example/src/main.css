@@ -1,7 +1,0 @@
-@import "tailwindcss";
-
-@layer base {
-  html {
-    font-family: "Geist Mono", monospace, system-ui, sans-serif;
-  }
-}
