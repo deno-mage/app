@@ -15,9 +15,6 @@
     "./validate": "./validate/mod.ts"
   },
   "tasks": {
-    "example-build": "deno run --allow-all ./example/build.ts",
-    "example-develop": "deno run --allow-all --watch-hmr ./example/develop.ts",
-    "example-serve": "deno run --allow-all ./example/serve.ts",
     "test": "deno test --allow-all --clean --coverage",
     "coverage": "deno coverage",
     "lint": "deno lint",
@@ -36,6 +33,5 @@
     "@std/path": "jsr:@std/path@^1.0.8",
     "@std/testing": "jsr:@std/testing@^1.0.9",
     "zod": "npm:zod@^3.24.1"
-  },
-  "nodeModulesDir": "auto"
+  }
 }
