@@ -1,6 +1,6 @@
 const COLORS = {
   success: "\x1b[32m", // green
-  info: "\x1b[37m", // white
+  info: "\x1b[94m", // blue
   warn: "\x1b[33m", // yellow
   error: "\x1b[31m", // red
   reset: "\x1b[0m", // reset

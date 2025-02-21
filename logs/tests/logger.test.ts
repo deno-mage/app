@@ -22,7 +22,7 @@ describe("MageLogger", () => {
     logger.info("Test message");
 
     assertSpyCall(infoSpy, 0, {
-      args: ["\x1b[35m[Mage]\x1b[0m\x1b[37m[Info]\x1b[0m Test message"],
+      args: ["\x1b[35m[Mage]\x1b[0m\x1b[94m[Info]\x1b[0m Test message"],
     });
   });
 
