@@ -40,7 +40,7 @@ afterAll(async () => {
   await server.stop();
 });
 
-describe("middleware - cors - allow credentials", () => {
+describe("cors - allow credentials", () => {
   it("should send back header when credentials false when GET", async () => {
     const response = await fetch(server.url("/"), {
       method: "GET",

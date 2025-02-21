@@ -54,7 +54,7 @@ afterAll(async () => {
   await server.stop();
 });
 
-describe("headers - csp", () => {
+describe("csp", () => {
   it("should set security headers", async () => {
     const response = await fetch(server.url("/"), {
       method: "GET",

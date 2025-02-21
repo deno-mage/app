@@ -4,3 +4,9 @@
 # Deno
 *.tsbuildinfo
 coverage
+
+# Node.js
+node_modules
+
+# Example
+example/public/main.css

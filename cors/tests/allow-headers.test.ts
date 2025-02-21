@@ -28,7 +28,7 @@ afterAll(async () => {
   await server.stop();
 });
 
-describe("middleware - cors - allow headers", () => {
+describe("cors - allow headers", () => {
   it("should not send back header when GET", async () => {
     const response = await fetch(server.url("/"), {
       method: "GET",

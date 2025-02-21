@@ -47,7 +47,7 @@ afterAll(async () => {
   await server.stop();
 });
 
-describe("headers", () => {
+describe("cookies", () => {
   it("should get cookie", async () => {
     const response = await fetch(server.url("/get"), {
       method: "GET",

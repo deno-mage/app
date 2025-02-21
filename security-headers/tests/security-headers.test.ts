@@ -21,7 +21,7 @@ afterAll(async () => {
   await server.stop();
 });
 
-describe("middleware - security headers", () => {
+describe("security headers", () => {
   it("should set security headers", async () => {
     const response = await fetch(server.url("/"), {
       method: "GET",

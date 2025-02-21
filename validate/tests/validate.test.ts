@@ -87,7 +87,7 @@ afterAll(async () => {
   await server.stop();
 });
 
-describe("middleware - use validate", () => {
+describe("validate", () => {
   describe("json", () => {
     it("should return 400 for invalid data", async () => {
       const response = await fetch(server.url("/json"), {
