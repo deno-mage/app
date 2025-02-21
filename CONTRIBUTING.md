@@ -13,9 +13,8 @@
 
 ## Testing
 
-The core philosophy of the Mage Server is to be test-driven. The tests are
-written in the [tests](./tests) directory. In general favour writing tests
-against a running server.
+The core philosophy of Mage is to be test-driven. In general favour writing
+tests against a running server.
 
 Run the tests with the following command:
 
