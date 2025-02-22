@@ -7,5 +7,19 @@ export { MageApp } from "./app.ts";
 export type { MagePlugin } from "./app.ts";
 export type { MageMiddleware } from "./router.ts";
 export { MageError } from "./error.ts";
+
+/**
+ * Context object that is passed to each middleware. It persists throughout the
+ * request/response cycle and is used to interact with the request and response.
+ */
 export type MageContext = PublicOf<PrivateMageContext>;
+
+/**
+ * Wrapper around the Request object that provides memoized access to the body.
+ *
+ * This is useful because the body of a request can only be read once. If you
+ * read the body of a request, and then try to read it again, you will get an
+ * error. This class memoizes the body of the request so that you can read it
+ * multiple times by middleware.
+ */
 export type MageRequest = PublicOf<PrivateMageRequest>;
