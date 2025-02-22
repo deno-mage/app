@@ -3,4 +3,4 @@
  * @module
  */
 
-export { useCacheControl } from "./middleware.ts";
+export { cacheControl } from "./middleware.ts";

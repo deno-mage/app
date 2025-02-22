@@ -3,7 +3,7 @@ import type { MageMiddleware } from "./router.ts";
 /**
  * Options for the useMethodNotAllowed middleware.
  */
-interface UseMethodNotAllowedOptions {
+interface MethodNotAllowedOptions {
   /**
    * Function to return methods that are allowed for the requested
    * pathname.
@@ -17,8 +17,8 @@ interface UseMethodNotAllowedOptions {
  *
  * @returns MageMiddleware
  */
-export const useMethodNotAllowed = (
-  options: UseMethodNotAllowedOptions,
+export const methodNotAllowed = (
+  options: MethodNotAllowedOptions,
 ): MageMiddleware => {
   return async (c, next) => {
     if (c.req.method === "OPTIONS") {

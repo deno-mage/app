@@ -2,9 +2,9 @@ import { MageContext } from "./context.ts";
 import { compose } from "./compose.ts";
 import { MageRouter } from "./router.ts";
 import type { MageMiddleware } from "./router.ts";
-import { useOptions } from "./options.ts";
-import { useNotFound } from "./not-found.ts";
-import { useMethodNotAllowed } from "./method-not-allowed.ts";
+import { options } from "./options.ts";
+import { notFound } from "./not-found.ts";
+import { methodNotAllowed } from "./method-not-allowed.ts";
 import { statusText } from "../status/mod.ts";
 import type { Status } from "../status/mod.ts";
 import { MageRequest } from "./mage-request.ts";
@@ -230,19 +230,19 @@ export class MageApp {
     const getAllowedMethods = () => this._router.getAvailableMethods(url);
 
     const middleware = [
-      useOptions({
+      options({
         getAllowedMethods,
       }),
       ...matchResult.middleware,
     ];
 
     if (!matchResult.matchedRoutename) {
-      middleware.push(useNotFound());
+      middleware.push(notFound());
     }
 
     if (!matchResult.matchedMethod) {
       middleware.push(
-        useMethodNotAllowed({
+        methodNotAllowed({
           getAllowedMethods,
         }),
       );

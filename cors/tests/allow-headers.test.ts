@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
-import { useCORS } from "../mod.ts";
+import { cors } from "../mod.ts";
 import { MageTestServer } from "../../test-utils/server.ts";
 
 let server: MageTestServer;
@@ -10,13 +10,13 @@ beforeAll(() => {
 
   server.app.options(
     "/",
-    useCORS({
+    cors({
       headers: ["X-Custom-Header-One", "X-Custom-Header-Two"],
     }),
   );
   server.app.get(
     "/",
-    useCORS({
+    cors({
       headers: ["X-Custom-Header-One", "X-Custom-Header-Two"],
     }),
   );

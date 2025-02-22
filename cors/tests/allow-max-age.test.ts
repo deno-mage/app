@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
-import { useCORS } from "../mod.ts";
+import { cors } from "../mod.ts";
 import { MageTestServer } from "../../test-utils/server.ts";
 
 let server: MageTestServer;
@@ -10,13 +10,13 @@ beforeAll(() => {
 
   server.app.options(
     "/",
-    useCORS({
+    cors({
       maxAge: 600,
     }),
   );
   server.app.get(
     "/",
-    useCORS({
+    cors({
       maxAge: 600,
     }),
   );

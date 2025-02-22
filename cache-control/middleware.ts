@@ -1,9 +1,9 @@
 import type { MageMiddleware } from "../app/mod.ts";
 
 /**
- * Options for the useCacheControl middleware.
+ * Options for the cacheControl middleware.
  */
-export interface UseCacheControlOptions {
+export interface CacheControlOptions {
   /**
    * The number of seconds the response can be cached until it is stale.
    */
@@ -64,8 +64,8 @@ export interface UseCacheControlOptions {
  * @param options
  * @returns MageMiddleware
  */
-export const useCacheControl = (
-  options: UseCacheControlOptions,
+export const cacheControl = (
+  options: CacheControlOptions,
 ): MageMiddleware => {
   return async (c, next) => {
     const values = [];

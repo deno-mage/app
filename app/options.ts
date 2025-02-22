@@ -1,9 +1,9 @@
 import type { MageMiddleware } from "./router.ts";
 
 /**
- * Options for the useOptions middleware.
+ * Options for the options middleware.
  */
-interface UseOptionsOptions {
+interface OptionsOptions {
   /**
    * Function to return methods that are allowed for the requested
    * pathname.
@@ -19,7 +19,7 @@ interface UseOptionsOptions {
  * @param options The options for the OPTIONS middleware.
  * @returns MageMiddleware
  */
-export const useOptions = (options: UseOptionsOptions): MageMiddleware => {
+export const options = (options: OptionsOptions): MageMiddleware => {
   return async (c, next) => {
     c.empty();
 

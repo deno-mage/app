@@ -3,7 +3,7 @@ import type { StandardSchemaV1 } from "@standard-schema/spec";
 
 type ValidationSource = "json" | "form" | "params" | "search-params";
 
-interface UseValidateOptions {
+interface ValidateOptions {
   /**
    * If true then the validation errors will be reported in the
    * response body. If false then a 400 Bad Request status code
@@ -30,10 +30,10 @@ interface UseValidateOptions {
  * @param options - Additional options for the validation
  * @returns MageMiddleware
  */
-export const useValidate = (
+export const validate = (
   source: ValidationSource,
   schema: StandardSchemaV1,
-  options?: UseValidateOptions,
+  options?: ValidateOptions,
 ): MageMiddleware => {
   return async (c, next) => {
     let data: unknown;
@@ -67,7 +67,7 @@ export const useValidate = (
         break;
       }
       default: {
-        throw new MageError(`[useValidate] Invalid source: ${source}`);
+        throw new MageError(`[Validate middleware] Invalid source: ${source}`);
       }
     }
 
@@ -85,7 +85,7 @@ export const useValidate = (
     }
 
     throw new MageError(
-      "[useValidate] Validation failed",
+      "[Validate middleware] Validation failed",
       400,
     );
   };

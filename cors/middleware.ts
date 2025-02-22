@@ -1,9 +1,9 @@
 import type { MageMiddleware } from "../app/mod.ts";
 
 /**
- * Options for the useCORS middleware.
+ * Options for the cors middleware.
  */
-interface UseCORSOptions {
+interface CORSOptions {
   /**
    * The origins that are allowed to make requests. This can be a single
    * origin or an array of origins. If set to "*", all origins are allowed.
@@ -39,7 +39,7 @@ interface UseCORSOptions {
  * @param options The options for the CORS middleware.
  * @returns MageMiddleware
  */
-export const useCORS = (options?: UseCORSOptions): MageMiddleware => {
+export const cors = (options?: CORSOptions): MageMiddleware => {
   return async (c, next) => {
     const origin = c.req.header("Origin");
 

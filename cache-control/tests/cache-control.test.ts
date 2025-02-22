@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
-import { useCacheControl } from "../mod.ts";
+import { cacheControl } from "../mod.ts";
 import { MageTestServer } from "../../test-utils/server.ts";
 
 let server: MageTestServer;
@@ -10,7 +10,7 @@ beforeAll(() => {
 
   server.app.get(
     "/all",
-    useCacheControl({
+    cacheControl({
       immutable: true,
       maxAge: 60,
       mustRevalidate: true,
@@ -32,7 +32,7 @@ beforeAll(() => {
 
   server.app.get(
     "/immutable",
-    useCacheControl({
+    cacheControl({
       immutable: true,
     }),
     (c) => {
@@ -42,7 +42,7 @@ beforeAll(() => {
 
   server.app.get(
     "/max-age",
-    useCacheControl({
+    cacheControl({
       maxAge: 60,
     }),
     (c) => {
@@ -52,7 +52,7 @@ beforeAll(() => {
 
   server.app.get(
     "/must-revalidate",
-    useCacheControl({
+    cacheControl({
       mustRevalidate: true,
     }),
     (c) => {
@@ -62,7 +62,7 @@ beforeAll(() => {
 
   server.app.get(
     "/must-understand",
-    useCacheControl({
+    cacheControl({
       mustUnderstand: true,
     }),
     (c) => {
@@ -72,7 +72,7 @@ beforeAll(() => {
 
   server.app.get(
     "/no-cache",
-    useCacheControl({
+    cacheControl({
       noCache: true,
     }),
     (c) => {
@@ -82,7 +82,7 @@ beforeAll(() => {
 
   server.app.get(
     "/no-store",
-    useCacheControl({
+    cacheControl({
       noStore: true,
     }),
     (c) => {
@@ -92,7 +92,7 @@ beforeAll(() => {
 
   server.app.get(
     "/no-transform",
-    useCacheControl({
+    cacheControl({
       noTransform: true,
     }),
     (c) => {
@@ -102,7 +102,7 @@ beforeAll(() => {
 
   server.app.get(
     "/proxy-revalidate",
-    useCacheControl({
+    cacheControl({
       proxyRevalidate: true,
     }),
     (c) => {
@@ -112,7 +112,7 @@ beforeAll(() => {
 
   server.app.get(
     "/public",
-    useCacheControl({
+    cacheControl({
       public: true,
     }),
     (c) => {
@@ -122,7 +122,7 @@ beforeAll(() => {
 
   server.app.get(
     "/private",
-    useCacheControl({
+    cacheControl({
       private: true,
     }),
     (c) => {
@@ -132,7 +132,7 @@ beforeAll(() => {
 
   server.app.get(
     "/s-max-age",
-    useCacheControl({
+    cacheControl({
       sMaxAge: 60,
     }),
     (c) => {
@@ -142,7 +142,7 @@ beforeAll(() => {
 
   server.app.get(
     "/stale-if-error",
-    useCacheControl({
+    cacheControl({
       staleIfError: 60,
     }),
     (c) => {
@@ -152,7 +152,7 @@ beforeAll(() => {
 
   server.app.get(
     "/stale-while-revalidate",
-    useCacheControl({
+    cacheControl({
       staleWhileRevalidate: 60,
     }),
     (c) => {

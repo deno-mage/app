@@ -7,7 +7,7 @@ import { statusText } from "../status/mod.ts";
 /**
  * Options for the useServeFiles middleware.
  */
-interface UseServeFilesOptions {
+interface ServeFilesOptions {
   /**
    * The directory to serve files from.
    */
@@ -29,8 +29,8 @@ interface UseServeFilesOptions {
  *
  * @returns MageMiddleware
  */
-export const useServeFiles = (
-  options: UseServeFilesOptions,
+export const serveFiles = (
+  options: ServeFilesOptions,
 ): MageMiddleware => {
   return async (c, next) => {
     if (typeof c.req.wildcard !== "string") {

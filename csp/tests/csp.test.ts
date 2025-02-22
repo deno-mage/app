@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
-import { useCSP } from "../mod.ts";
+import { csp } from "../mod.ts";
 import { MageTestServer } from "../../test-utils/server.ts";
 
 let server: MageTestServer;
@@ -10,7 +10,7 @@ beforeAll(() => {
 
   server.app.get(
     "/",
-    useCSP({
+    csp({
       directives: {
         defaultSrc: "'self'",
         scriptSrc: ["'self'", "https://example.com"],
@@ -23,7 +23,7 @@ beforeAll(() => {
 
   server.app.get(
     "/upgrade-insecure-requests/true",
-    useCSP({
+    csp({
       directives: {
         defaultSrc: "'self'",
         upgradeInsecureRequests: true,
@@ -36,7 +36,7 @@ beforeAll(() => {
 
   server.app.get(
     "/upgrade-insecure-requests/false",
-    useCSP({
+    csp({
       directives: {
         defaultSrc: "'self'",
         upgradeInsecureRequests: false,

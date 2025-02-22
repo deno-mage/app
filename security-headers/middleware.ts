@@ -1,5 +1,5 @@
 import type { MageMiddleware } from "../app/mod.ts";
-import { useCSP } from "../csp/mod.ts";
+import { csp } from "../csp/mod.ts";
 
 /**
  * Adds security headers to the response to help protect against common web
@@ -7,9 +7,9 @@ import { useCSP } from "../csp/mod.ts";
  *
  * @returns MageMiddleware
  */
-export const useSecurityHeaders = (): MageMiddleware[] => {
+export const securityHeaders = (): MageMiddleware[] => {
   return [
-    useCSP(),
+    csp(),
     async (c, next) => {
       c.header("Cross-Origin-Opener-Policy", "same-origin");
       c.header(
