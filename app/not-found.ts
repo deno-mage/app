@@ -6,7 +6,7 @@ import type { MageMiddleware } from "./router.ts";
  *
  * @returns MageMiddleware
  */
-export const useNotFound = (): MageMiddleware => {
+export const notFound = (): MageMiddleware => {
   return async (c, next) => {
     if (c.req.method === "OPTIONS") {
       // If the request is an OPTIONS request then don't respond with a 405

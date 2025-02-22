@@ -3,4 +3,4 @@
  * @module
  */
 
-export { useValidate } from "./middleware.ts";
+export { validate } from "./middleware.ts";

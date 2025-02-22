@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
-import { useServeFiles } from "../mod.ts";
+import { serveFiles } from "../mod.ts";
 import { MageTestServer } from "../../test-utils/server.ts";
 import { resolve } from "@std/path";
 
@@ -11,17 +11,17 @@ beforeAll(() => {
 
   server.app.get(
     "/no-wildcard",
-    useServeFiles({ directory: resolve(Deno.cwd(), "test-utils/files") }),
+    serveFiles({ directory: resolve(Deno.cwd(), "test-utils/files") }),
   );
 
   server.app.get(
     "/public/*",
-    useServeFiles({ directory: resolve(Deno.cwd(), "test-utils/files") }),
+    serveFiles({ directory: resolve(Deno.cwd(), "test-utils/files") }),
   );
 
   server.app.get(
     "/no-serve-index/*",
-    useServeFiles({
+    serveFiles({
       directory: resolve(Deno.cwd(), "public"),
       serveIndex: false,
     }),
@@ -29,7 +29,7 @@ beforeAll(() => {
 
   server.app.all(
     "/all/*",
-    useServeFiles({ directory: resolve(Deno.cwd(), "test-utils/files") }),
+    serveFiles({ directory: resolve(Deno.cwd(), "test-utils/files") }),
   );
 
   server.start();

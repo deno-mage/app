@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
-import { useSecurityHeaders } from "../mod.ts";
+import { securityHeaders } from "../mod.ts";
 import { MageTestServer } from "../../test-utils/server.ts";
 
 let server: MageTestServer;
@@ -8,7 +8,7 @@ let server: MageTestServer;
 beforeAll(() => {
   server = new MageTestServer();
 
-  server.app.use(useSecurityHeaders());
+  server.app.use(securityHeaders());
 
   server.app.get("/", (c) => {
     c.text("Hello, World!");

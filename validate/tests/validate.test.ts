@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
-import { useValidate } from "../mod.ts";
+import { validate } from "../mod.ts";
 import { MageTestServer } from "../../test-utils/server.ts";
 import { z } from "zod";
 
@@ -37,17 +37,17 @@ let server: MageTestServer;
 beforeAll(() => {
   server = new MageTestServer();
 
-  server.app.post("/json", useValidate("json", shopSchema), (c) => {
+  server.app.post("/json", validate("json", shopSchema), (c) => {
     c.json(c.req.valid<Shop>("json"));
   });
 
-  server.app.post("/form", useValidate("form", personSchema), (c) => {
+  server.app.post("/form", validate("form", personSchema), (c) => {
     c.json(c.req.valid<Person>("form"));
   });
 
   server.app.post(
     "/params/:year/:month/:day",
-    useValidate("params", dateSchema),
+    validate("params", dateSchema),
     (c) => {
       c.json(c.req.valid<Date>("params"));
     },
@@ -55,7 +55,7 @@ beforeAll(() => {
 
   server.app.post(
     "/search-params",
-    useValidate("search-params", dateSchema),
+    validate("search-params", dateSchema),
     (c) => {
       c.json(c.req.valid<Date>("search-params"));
     },
@@ -63,7 +63,7 @@ beforeAll(() => {
 
   server.app.post(
     "/report",
-    useValidate("json", shopSchema, { reportErrors: true }),
+    validate("json", shopSchema, { reportErrors: true }),
     (c) => {
       c.json(c.req.valid("json"));
     },
@@ -71,7 +71,7 @@ beforeAll(() => {
 
   server.app.post(
     "/invalid",
-    useValidate(
+    validate(
       "invalid" as unknown as "json" | "form" | "params" | "search-params",
       shopSchema,
     ),

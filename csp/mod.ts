@@ -3,4 +3,4 @@
  * @module
  */
 
-export { useCSP } from "./middleware.ts";
+export { csp } from "./middleware.ts";

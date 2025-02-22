@@ -3,4 +3,4 @@
  * @module
  */
 
-export { useCORS } from "./middleware.ts";
+export { cors } from "./middleware.ts";

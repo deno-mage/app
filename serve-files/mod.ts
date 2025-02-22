@@ -3,4 +3,4 @@
  * @module
  */
 
-export { useServeFiles } from "./middleware.ts";
+export { serveFiles } from "./middleware.ts";

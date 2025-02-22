@@ -1,9 +1,9 @@
 import type { MageMiddleware } from "../app/mod.ts";
 
 /**
- * Options for the useCSP middleware
+ * Options for the csp middleware
  */
-export interface UseCSPOptions {
+export interface CSPOptions {
   /**
    * https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy#directives
    */
@@ -35,7 +35,7 @@ export interface UseCSPOptions {
 }
 
 const directiveKeyMap: Record<
-  keyof UseCSPOptions["directives"],
+  keyof CSPOptions["directives"],
   string
 > = {
   childSrc: "child-src",
@@ -69,7 +69,7 @@ const directiveKeyMap: Record<
  * @param options
  * @returns MageMiddleware
  */
-export const useCSP = (options?: UseCSPOptions): MageMiddleware => {
+export const csp = (options?: CSPOptions): MageMiddleware => {
   const defaultDirectives = {
     defaultSrc: ["'self'"],
     baseUri: ["'self'"],
@@ -89,8 +89,7 @@ export const useCSP = (options?: UseCSPOptions): MageMiddleware => {
     ...options?.directives,
   })
     .map(([key, value]) => {
-      const directive =
-        directiveKeyMap[key as keyof UseCSPOptions["directives"]];
+      const directive = directiveKeyMap[key as keyof CSPOptions["directives"]];
 
       if (typeof value === "boolean") {
         if (value) {
