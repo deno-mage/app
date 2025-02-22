@@ -7,8 +7,8 @@ import { notFound } from "./not-found.ts";
 import { methodNotAllowed } from "./method-not-allowed.ts";
 import { statusText } from "../status/mod.ts";
 import type { Status } from "../status/mod.ts";
-import { MageRequest } from "./mage-request.ts";
-import { MageError } from "./mage-error.ts";
+import { MageRequest } from "./request.ts";
+import { MageError } from "./error.ts";
 
 /**
  * A plugin for Mage apps.
