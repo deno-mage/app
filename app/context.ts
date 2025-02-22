@@ -1,5 +1,5 @@
 import { serveFile } from "@std/http";
-import type { MageRequest } from "./mage-request.ts";
+import type { MageRequest } from "./mod.ts";
 import {
   type ContentfulStatus,
   type ContentlessStatus,

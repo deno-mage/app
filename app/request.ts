@@ -1,5 +1,5 @@
 import { memoize } from "@std/cache";
-import { MageError } from "./mage-error.ts";
+import { MageError } from "./error.ts";
 
 type ValidationSource = "json" | "form" | "params" | "search-params";
 
