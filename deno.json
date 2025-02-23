@@ -1,6 +1,6 @@
 {
   "name": "@mage/app",
-  "version": "0.6.3",
+  "version": "0.7.0",
   "license": "MIT",
   "exports": {
     ".": "./app/mod.ts",
