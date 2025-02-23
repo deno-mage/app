@@ -9,6 +9,7 @@ import { statusText } from "../status/mod.ts";
 import type { Status } from "../status/mod.ts";
 import { MageRequest } from "./request.ts";
 import { MageError } from "./error.ts";
+import type { PublicOf } from "../type-utils/utils.ts";
 
 /**
  * A plugin for Mage apps.
@@ -23,13 +24,13 @@ export interface MagePlugin {
    *
    * @returns Promise<void>
    */
-  onBuild?: (app: MageApp) => Promise<void> | void;
+  onBuild?: (app: PublicOf<MageApp>) => Promise<void> | void;
   /**
    * Triggered when app.develop() is called
    *
    * @returns Promise<void>
    */
-  onDevelop?: (app: MageApp) => Promise<void> | void;
+  onDevelop?: (app: PublicOf<MageApp>) => Promise<void> | void;
 }
 
 /**

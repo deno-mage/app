@@ -1,7 +1,6 @@
 import type { MageContext as PrivateMageContext } from "./context.ts";
 import type { MageRequest as PrivateMageRequest } from "./request.ts";
-
-type PublicOf<T> = { [K in keyof T]: T[K] };
+import type { PublicOf } from "../type-utils/utils.ts";
 
 export { MageApp } from "./app.ts";
 export type { MagePlugin } from "./app.ts";
