@@ -33,11 +33,22 @@ export interface MagePlugin {
 }
 
 /**
+ * Options for MageApp
+ */
+interface MageAppOptions {
+  /**
+   * The unique identifier for the build. This is used for cache busting
+   * and other purposes.
+   */
+  buildId?: string;
+}
+
+/**
  * MageApp is the main class for creating and running Mage applications.
  */
 export class MageApp {
   private _router = new MageRouter();
-  private _buildId = crypto.randomUUID();
+  private _buildId: string;
   private _plugins: MagePlugin[] = [];
 
   /**
@@ -45,6 +56,15 @@ export class MageApp {
    */
   public get buildId(): string {
     return this._buildId;
+  }
+
+  /**
+   * Create a new MageApp.
+   *
+   * @param options Options for the app
+   */
+  constructor(options: MageAppOptions = {}) {
+    this._buildId = options.buildId ?? crypto.randomUUID();
   }
 
   /**
