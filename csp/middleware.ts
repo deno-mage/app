@@ -1,4 +1,30 @@
-import type { MageMiddleware } from "../app/mod.ts";
+import type { MageContext, MageMiddleware } from "../app/mod.ts";
+
+type CSPDirectives = {
+  childSrc?: string | string[];
+  connectSrc?: string | string[];
+  defaultSrc?: string | string[];
+  fontSrc?: string | string[];
+  frameSrc?: string | string[];
+  imgSrc?: string | string[];
+  manifestSrc?: string | string[];
+  mediaSrc?: string | string[];
+  objectSrc?: string | string[];
+  prefetchSrc?: string | string[];
+  scriptSrc?: string | string[];
+  scriptSrcElem?: string | string[];
+  scriptSrcAttr?: string | string[];
+  styleSrc?: string | string[];
+  styleSrcElem?: string | string[];
+  styleSrcAttr?: string | string[];
+  workerSrc?: string | string[];
+  baseUri?: string | string[];
+  sandbox?: string | string[];
+  formAction?: string | string[];
+  frameAncestors?: string | string[];
+  reportTo?: string | string[];
+  upgradeInsecureRequests?: boolean;
+};
 
 /**
  * Options for the csp middleware
@@ -6,32 +32,11 @@ import type { MageMiddleware } from "../app/mod.ts";
 export interface CSPOptions {
   /**
    * https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy#directives
+   *
+   * Can be a static object or a function that returns directives based on the request context.
+   * Use a function for dynamic CSP policies (e.g., with nonces).
    */
-  directives: {
-    childSrc?: string | string[];
-    connectSrc?: string | string[];
-    defaultSrc?: string | string[];
-    fontSrc?: string | string[];
-    frameSrc?: string | string[];
-    imgSrc?: string | string[];
-    manifestSrc?: string | string[];
-    mediaSrc?: string | string[];
-    objectSrc?: string | string[];
-    prefetchSrc?: string | string[];
-    scriptSrc?: string | string[];
-    scriptSrcElem?: string | string[];
-    scriptSrcAttr?: string | string[];
-    styleSrc?: string | string[];
-    styleSrcElem?: string | string[];
-    styleSrcAttr?: string | string[];
-    workerSrc?: string | string[];
-    baseUri?: string | string[];
-    sandbox?: string | string[];
-    formAction?: string | string[];
-    frameAncestors?: string | string[];
-    reportTo?: string | string[];
-    upgradeInsecureRequests?: boolean;
-  };
+  directives: CSPDirectives | ((c: MageContext) => CSPDirectives);
 }
 
 const directiveKeyMap: Record<
@@ -64,6 +69,30 @@ const directiveKeyMap: Record<
 };
 
 /**
+ * Build CSP header string from directives
+ */
+const buildHeader = (directives: CSPDirectives): string => {
+  return Object.entries(directives)
+    .map(([key, value]) => {
+      const directive = directiveKeyMap[key as keyof CSPOptions["directives"]];
+
+      if (typeof value === "boolean") {
+        if (value) {
+          return `${directive}`;
+        }
+
+        return "";
+      }
+
+      const directiveValue = Array.isArray(value) ? value.join(" ") : value;
+
+      return `${directive} ${directiveValue}`;
+    })
+    .filter(Boolean)
+    .join(";");
+};
+
+/**
  * Apply a Content-Security-Policy header based on the provided options.
  *
  * @param options
@@ -84,27 +113,27 @@ export const csp = (options?: CSPOptions): MageMiddleware => {
     upgradeInsecureRequests: true,
   };
 
-  const header = Object.entries({
+  // Dynamic CSP: directives computed per-request
+  if (typeof options?.directives === "function") {
+    const directivesCallback = options.directives;
+
+    return async (c, next) => {
+      const dynamicDirectives = directivesCallback(c);
+      const header = buildHeader({
+        ...defaultDirectives,
+        ...dynamicDirectives,
+      });
+
+      c.header("Content-Security-Policy", header);
+      await next();
+    };
+  }
+
+  // Static CSP: header computed once (current behavior, best performance)
+  const header = buildHeader({
     ...defaultDirectives,
     ...options?.directives,
-  })
-    .map(([key, value]) => {
-      const directive = directiveKeyMap[key as keyof CSPOptions["directives"]];
-
-      if (typeof value === "boolean") {
-        if (value) {
-          return `${directive}`;
-        }
-
-        return "";
-      }
-
-      const directiveValue = Array.isArray(value) ? value.join(" ") : value;
-
-      return `${directive} ${directiveValue}`;
-    })
-    .filter(Boolean)
-    .join(";");
+  });
 
   return async (c, next) => {
     c.header(
