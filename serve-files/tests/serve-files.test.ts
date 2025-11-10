@@ -145,6 +145,18 @@ describe("serve file", () => {
     expect(await response.text()).toEqual("Internal Server Error");
   });
 
+  it("should prevent path traversal attacks", async () => {
+    const response = await fetch(
+      server.url("/public/../../deno.json"),
+      {
+        method: "GET",
+      },
+    );
+
+    expect(response.status).toBe(404);
+    expect(await response.text()).toEqual("Not Found");
+  });
+
   describe("cache busting with build id", () => {
     it("should return file when it exists with build id suffixed", async () => {
       const response = await fetch(
