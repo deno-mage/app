@@ -1,4 +1,5 @@
 import type { MageMiddleware } from "../app/mod.ts";
+import { MageError } from "../app/mod.ts";
 
 /**
  * Options for the cacheControl middleware.
@@ -67,6 +68,31 @@ export interface CacheControlOptions {
 export const cacheControl = (
   options: CacheControlOptions,
 ): MageMiddleware => {
+  // Validate conflicting directives
+  if (options.public && options.private) {
+    throw new MageError(
+      "[Cache-Control middleware] Cannot use both 'public' and 'private' directives",
+    );
+  }
+
+  if (options.noStore && (options.maxAge || options.sMaxAge)) {
+    throw new MageError(
+      "[Cache-Control middleware] 'noStore' conflicts with 'maxAge' or 'sMaxAge' directives",
+    );
+  }
+
+  if (options.immutable && options.noCache) {
+    throw new MageError(
+      "[Cache-Control middleware] 'immutable' conflicts with 'noCache' directive",
+    );
+  }
+
+  if (options.mustRevalidate && options.noCache) {
+    throw new MageError(
+      "[Cache-Control middleware] 'mustRevalidate' is redundant with 'noCache' directive",
+    );
+  }
+
   return async (c, next) => {
     const values = [];
 
