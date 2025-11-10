@@ -28,6 +28,7 @@ interface MageContextArgs {
 export class MageContext {
   private _buildId: string;
   private _res: Response;
+  private _headers: Headers;
   private _req: MageRequest;
   private _data: Map<string, unknown>;
 
@@ -50,6 +51,8 @@ export class MageContext {
    */
   public set res(res: Response) {
     this._res = res;
+    // Sync our shared headers with the new response's headers
+    this._headers = this._res.headers;
   }
 
   /**
@@ -67,6 +70,7 @@ export class MageContext {
   public constructor(args: MageContextArgs) {
     this._buildId = args.buildId;
     this._req = args.req;
+    this._headers = new Headers();
     this._res = new Response();
     this._data = new Map<string, unknown>();
   }
@@ -75,7 +79,7 @@ export class MageContext {
    * Set a response header
    */
   public header(key: string, value: string) {
-    this._res.headers.set(key, value);
+    this._headers.set(key, value);
   }
 
   /**
@@ -85,10 +89,16 @@ export class MageContext {
    * @param status The status code of the response
    */
   public text(body: string, status?: ContentfulStatus) {
-    this._res = new Response(body, {
-      status,
-      headers: this._res.headers,
-    });
+    // Save previous headers
+    const previousHeaders = new Headers(this._headers);
+
+    this._res = new Response(body, { status });
+    this._headers = this._res.headers;
+
+    // Restore previous headers
+    for (const [key, value] of previousHeaders.entries()) {
+      this._headers.set(key, value);
+    }
 
     this.header("Content-Type", "text/plain; charset=UTF-8");
   }
@@ -103,10 +113,16 @@ export class MageContext {
     body: { [key: string]: unknown } | readonly unknown[],
     status?: ContentfulStatus,
   ) {
-    this._res = new Response(JSON.stringify(body), {
-      status,
-      headers: this._res.headers,
-    });
+    // Save previous headers
+    const previousHeaders = new Headers(this._headers);
+
+    this._res = new Response(JSON.stringify(body), { status });
+    this._headers = this._res.headers;
+
+    // Restore previous headers
+    for (const [key, value] of previousHeaders.entries()) {
+      this._headers.set(key, value);
+    }
 
     this.header(
       "Content-Type",
@@ -129,10 +145,16 @@ export class MageContext {
    * @param status The status code of the response
    */
   public empty(status?: ContentlessStatus) {
-    this._res = new Response(null, {
-      status: status ?? 204,
-      headers: this._res.headers,
-    });
+    // Save previous headers
+    const previousHeaders = new Headers(this._headers);
+
+    this._res = new Response(null, { status: status ?? 204 });
+    this._headers = this._res.headers;
+
+    // Restore previous headers
+    for (const [key, value] of previousHeaders.entries()) {
+      this._headers.set(key, value);
+    }
   }
 
   /**
@@ -150,10 +172,16 @@ export class MageContext {
    * @param status The status code of the response
    */
   public redirect(location: URL | string, status?: RedirectStatus) {
-    this._res = new Response(null, {
-      status: status ?? 307,
-      headers: this._res.headers,
-    });
+    // Save previous headers
+    const previousHeaders = new Headers(this._headers);
+
+    this._res = new Response(null, { status: status ?? 307 });
+    this._headers = this._res.headers;
+
+    // Restore previous headers
+    for (const [key, value] of previousHeaders.entries()) {
+      this._headers.set(key, value);
+    }
 
     this.header("Location", location.toString());
   }
@@ -185,28 +213,27 @@ export class MageContext {
       headers: this._req.raw.headers,
       body: this._req.raw.body,
     });
+
+    this._headers = this._res.headers;
   }
 
   /**
    * Serve a file.
    *
-   * @param file
+   * @param filepath The path to the file to serve
    */
   public async file(filepath: string) {
     const fileInfo = await Deno.stat(filepath);
 
-    // Deno's`serveFile()` will set the response headers, so we need to save the current
-    // headers before calling it to preserve any headers that were set before
-    const currentHeader = this._res.headers;
+    // Save headers that were set before calling serveFile
+    const previousHeaders = new Headers(this._headers);
 
     this._res = await serveFile(this._req.raw, filepath, { fileInfo });
+    this._headers = this._res.headers;
 
-    // Preserve the headers that were set before calling `serveFile` but only if
-    // they are not already set in the response
-    for (const [key, value] of currentHeader.entries()) {
-      if (!this._res.headers.has(key)) {
-        this.header(key, value);
-      }
+    // Restore previously set headers (they override serveFile's defaults)
+    for (const [key, value] of previousHeaders.entries()) {
+      this._headers.set(key, value);
     }
   }
 
@@ -223,6 +250,7 @@ export class MageContext {
     const { socket, response } = Deno.upgradeWebSocket(this._req.raw);
 
     this._res = response;
+    this._headers = this._res.headers;
 
     handleSocket(socket);
   }

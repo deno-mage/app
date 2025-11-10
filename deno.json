@@ -5,6 +5,7 @@
   "exports": {
     ".": "./app/mod.ts",
     "./cache-control": "./cache-control/mod.ts",
+    "./compression": "./compression/mod.ts",
     "./cookies": "./cookies/mod.ts",
     "./cors": "./cors/mod.ts",
     "./csp": "./csp/mod.ts",
