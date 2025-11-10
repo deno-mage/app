@@ -3,4 +3,4 @@
  * @module
  */
 
-export { securityHeaders } from "./middleware.ts";
+export { securityHeaders, type SecurityHeadersOptions } from "./middleware.ts";

@@ -3,4 +3,4 @@
  * @module
  */
 
-export { csp } from "./middleware.ts";
+export { csp, type CSPOptions } from "./middleware.ts";
