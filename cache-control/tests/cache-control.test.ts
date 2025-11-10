@@ -9,28 +9,6 @@ beforeAll(() => {
   server = new MageTestServer();
 
   server.app.get(
-    "/all",
-    cacheControl({
-      immutable: true,
-      maxAge: 60,
-      mustRevalidate: true,
-      mustUnderstand: true,
-      noCache: true,
-      noStore: true,
-      noTransform: true,
-      proxyRevalidate: true,
-      public: true,
-      private: true,
-      sMaxAge: 60,
-      staleIfError: 60,
-      staleWhileRevalidate: 60,
-    }),
-    (c) => {
-      c.text("Hello, World!");
-    },
-  );
-
-  server.app.get(
     "/immutable",
     cacheControl({
       immutable: true,
@@ -168,19 +146,6 @@ afterAll(async () => {
 });
 
 describe("cache-control", () => {
-  it("should set cache control header (all)", async () => {
-    const response = await fetch(server.url("/all"), {
-      method: "GET",
-    });
-
-    // drain response to ensure no memory leak
-    await response.text();
-
-    expect(response.headers.get("Cache-Control")).toEqual(
-      "max-age=60, s-maxage=60, no-cache, no-store, no-transform, must-revalidate, proxy-revalidate, must-understand, private, public, immutable, stale-while-revalidate=60, stale-if-error=60",
-    );
-  });
-
   it("should set cache control header (immutable)", async () => {
     const response = await fetch(server.url("/immutable"), {
       method: "GET",
@@ -324,5 +289,62 @@ describe("cache-control", () => {
     expect(response.headers.get("Cache-Control")).toEqual(
       "stale-while-revalidate=60",
     );
+  });
+
+  describe("validation", () => {
+    it("should throw error when both public and private are set", () => {
+      expect(() => {
+        cacheControl({
+          public: true,
+          private: true,
+        });
+      }).toThrow(
+        "[Cache-Control middleware] Cannot use both 'public' and 'private' directives",
+      );
+    });
+
+    it("should throw error when noStore is used with maxAge", () => {
+      expect(() => {
+        cacheControl({
+          noStore: true,
+          maxAge: 60,
+        });
+      }).toThrow(
+        "[Cache-Control middleware] 'noStore' conflicts with 'maxAge' or 'sMaxAge' directives",
+      );
+    });
+
+    it("should throw error when noStore is used with sMaxAge", () => {
+      expect(() => {
+        cacheControl({
+          noStore: true,
+          sMaxAge: 60,
+        });
+      }).toThrow(
+        "[Cache-Control middleware] 'noStore' conflicts with 'maxAge' or 'sMaxAge' directives",
+      );
+    });
+
+    it("should throw error when immutable is used with noCache", () => {
+      expect(() => {
+        cacheControl({
+          immutable: true,
+          noCache: true,
+        });
+      }).toThrow(
+        "[Cache-Control middleware] 'immutable' conflicts with 'noCache' directive",
+      );
+    });
+
+    it("should throw error when mustRevalidate is used with noCache", () => {
+      expect(() => {
+        cacheControl({
+          mustRevalidate: true,
+          noCache: true,
+        });
+      }).toThrow(
+        "[Cache-Control middleware] 'mustRevalidate' is redundant with 'noCache' directive",
+      );
+    });
   });
 });
