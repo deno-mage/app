@@ -50,12 +50,11 @@ export const cors = (options?: CORSOptions): MageMiddleware => {
     const allowCredentials = options?.credentials;
     const allowedMaxAge = options?.maxAge;
 
+    // Handle Access-Control-Allow-Origin
     if (allowedOrigins.length > 0) {
       if (allowedOrigins.includes("*")) {
         c.header("Access-Control-Allow-Origin", "*");
-      }
-
-      if (origin && allowedOrigins.includes(origin)) {
+      } else if (origin && allowedOrigins.includes(origin)) {
         c.header("Access-Control-Allow-Origin", origin);
         c.header("Vary", "Origin");
       }
@@ -93,15 +92,22 @@ export const cors = (options?: CORSOptions): MageMiddleware => {
       );
     }
 
-    if (c.req.method !== "OPTIONS") {
-      // don't set full CORS headers if the request is not a preflight request
-      c.res.headers.delete("Access-Control-Allow-Methods");
-      c.res.headers.delete("Access-Control-Allow-Headers");
-      c.res.headers.delete("Access-Control-Max-Age");
+    // For preflight OPTIONS requests, return immediately with headers
+    if (c.req.method === "OPTIONS") {
+      c.empty();
+      return;
     }
 
-    c.empty();
+    // For actual requests, remove preflight-only headers
+    c.res.headers.delete("Access-Control-Allow-Methods");
+    c.res.headers.delete("Access-Control-Allow-Headers");
+    c.res.headers.delete("Access-Control-Max-Age");
 
     await next();
+
+    // If no response body was set by subsequent handlers, set empty response
+    if (!c.res.body && !c.res.bodyUsed) {
+      c.empty();
+    }
   };
 };
