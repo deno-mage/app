@@ -175,6 +175,27 @@ describe("validate", () => {
         middleNames: ["Jane", "Alice"],
       });
     });
+
+    it("should handle multiple values for the same field (3+ occurrences)", async () => {
+      const params = new URLSearchParams();
+      params.append("firstName", "John");
+      params.append("lastName", "Doe");
+      params.append("middleNames", "Jane");
+      params.append("middleNames", "Alice");
+      params.append("middleNames", "Marie");
+
+      const response = await fetch(server.url("/form"), {
+        method: "POST",
+        body: params,
+      });
+
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual({
+        firstName: "John",
+        lastName: "Doe",
+        middleNames: ["Jane", "Alice", "Marie"],
+      });
+    });
   });
 
   describe("params", () => {

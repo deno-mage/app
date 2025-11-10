@@ -48,10 +48,13 @@ export const validate = (
         const formData = await c.req.formData();
         formData.forEach((value, key) => {
           if (typeof value === "string") {
-            if (values.has(key)) {
-              values.set(key, [values.get(key) as string, value]);
-            } else {
+            const existing = values.get(key);
+            if (existing === undefined) {
               values.set(key, value);
+            } else if (Array.isArray(existing)) {
+              existing.push(value);
+            } else {
+              values.set(key, [existing, value]);
             }
           }
         });
