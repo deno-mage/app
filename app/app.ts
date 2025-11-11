@@ -275,8 +275,6 @@ export class MageApp {
 
       return c.res;
     } catch (error) {
-      console.error(error);
-
       let status: Status = 500;
       if (error instanceof MageError) {
         status = error.status;
