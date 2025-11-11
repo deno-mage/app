@@ -86,6 +86,12 @@ beforeAll(() => {
     },
   );
 
+  // Test maxSize limit
+  server.app.get("/too-large", compression({ maxSize: 5000 }), (c) => {
+    const largeText = "Hello World! ".repeat(1000); // ~13KB > 5KB limit
+    return c.text(largeText);
+  });
+
   server.start();
 });
 
@@ -200,6 +206,20 @@ describe("compression", () => {
     expect(varyHeader).toBeTruthy();
     expect(varyHeader).toContain("Cookie");
     expect(varyHeader).toContain("Accept-Encoding");
+
+    const text = await response.text();
+    expect(text).toBe("Hello World! ".repeat(1000));
+  });
+
+  it("should not compress responses exceeding maxSize", async () => {
+    const response = await fetch(server.url("/too-large"), {
+      headers: {
+        "Accept-Encoding": "gzip",
+      },
+    });
+
+    // Should not be compressed because it exceeds maxSize (5KB)
+    expect(response.headers.get("Content-Encoding")).toBeNull();
 
     const text = await response.text();
     expect(text).toBe("Hello World! ".repeat(1000));

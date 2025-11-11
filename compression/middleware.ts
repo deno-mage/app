@@ -10,6 +10,11 @@ export interface CompressionOptions {
    */
   threshold?: number;
   /**
+   * Maximum response size (in bytes) to compress. Prevents OOM on very large responses.
+   * @default 10485760 (10MB)
+   */
+  maxSize?: number;
+  /**
    * Content types to compress. If not specified, compresses common text types.
    * @default ["text/*", "application/json", "application/javascript", ...]
    */
@@ -53,6 +58,7 @@ export const compression = (
 ): MageMiddleware => {
   const {
     threshold = 1024,
+    maxSize = 10 * 1024 * 1024, // 10MB default
     contentTypes = DEFAULT_CONTENT_TYPES,
   } = options ?? {};
 
@@ -94,6 +100,7 @@ export const compression = (
     const reader = c.res.body.getReader();
     const chunks: Uint8Array[] = [];
     let totalSize = 0;
+    let exceededMaxSize = false;
 
     try {
       while (true) {
@@ -102,20 +109,26 @@ export const compression = (
 
         chunks.push(value);
         totalSize += value.byteLength;
+
+        // Bail out if response is too large to prevent OOM
+        if (totalSize > maxSize) {
+          exceededMaxSize = true;
+          break;
+        }
       }
     } finally {
       reader.releaseLock();
     }
 
+    // If exceeded max size, return uncompressed
+    if (exceededMaxSize) {
+      c.res = createUncompressedResponse(c.res, chunks);
+      return;
+    }
+
     // Check threshold
     if (totalSize < threshold) {
-      // Restore the response with the original chunks
-      const body = concatenateUint8Arrays(chunks);
-      c.res = new Response(body, {
-        status: c.res.status,
-        statusText: c.res.statusText,
-        headers: c.res.headers,
-      });
+      c.res = createUncompressedResponse(c.res, chunks);
       return;
     }
 
@@ -129,27 +142,20 @@ export const compression = (
       compressed = await compressGzip(body);
     } catch (_error) {
       // If compression fails, return uncompressed
-      c.res = new Response(body, {
-        status: c.res.status,
-        statusText: c.res.statusText,
-        headers: c.res.headers,
-      });
+      c.res = createUncompressedResponse(c.res, chunks);
       return;
     }
 
     // Only use compressed version if it's actually smaller
     if (compressed.byteLength >= totalSize) {
-      c.res = new Response(body, {
-        status: c.res.status,
-        statusText: c.res.statusText,
-        headers: c.res.headers,
-      });
+      c.res = createUncompressedResponse(c.res, chunks);
       return;
     }
 
     // Create new headers with compression headers added
     const newHeaders = new Headers(c.res.headers);
     newHeaders.set("Content-Encoding", "gzip");
+    newHeaders.set("Content-Length", compressed.byteLength.toString());
 
     // Append to existing Vary header instead of overwriting
     const existingVary = newHeaders.get("Vary");
@@ -161,8 +167,6 @@ export const compression = (
     } else {
       newHeaders.set("Vary", "Accept-Encoding");
     }
-
-    newHeaders.delete("Content-Length"); // Let browser calculate from compressed body
 
     // Update response with compressed body
     c.res = new Response(compressed, {
@@ -201,4 +205,16 @@ function concatenateUint8Arrays(arrays: Uint8Array[]): Uint8Array {
     offset += arr.length;
   }
   return result;
+}
+
+function createUncompressedResponse(
+  originalResponse: Response,
+  chunks: Uint8Array[],
+): Response {
+  const body = concatenateUint8Arrays(chunks);
+  return new Response(body, {
+    status: originalResponse.status,
+    statusText: originalResponse.statusText,
+    headers: originalResponse.headers,
+  });
 }
