@@ -92,18 +92,14 @@ export const cors = (options?: CORSOptions): MageMiddleware => {
       );
     }
 
-    // For preflight OPTIONS requests, return immediately with headers
-    if (c.req.method === "OPTIONS") {
-      c.empty();
-      return;
-    }
-
-    // For actual requests, remove preflight-only headers
-    c.res.headers.delete("Access-Control-Allow-Methods");
-    c.res.headers.delete("Access-Control-Allow-Headers");
-    c.res.headers.delete("Access-Control-Max-Age");
-
     await next();
+
+    // For actual (non-OPTIONS) requests, remove preflight-only headers
+    if (c.req.method !== "OPTIONS") {
+      c.res.headers.delete("Access-Control-Allow-Methods");
+      c.res.headers.delete("Access-Control-Allow-Headers");
+      c.res.headers.delete("Access-Control-Max-Age");
+    }
 
     // If no response body was set by subsequent handlers, set empty response
     if (!c.res.body && !c.res.bodyUsed) {
