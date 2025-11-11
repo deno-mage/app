@@ -291,6 +291,37 @@ describe("cache-control", () => {
     );
   });
 
+  it("should combine multiple directives with comma-space separator", async () => {
+    const testServer = new MageTestServer();
+
+    testServer.app.get(
+      "/combined",
+      cacheControl({
+        maxAge: 3600,
+        public: true,
+        immutable: true,
+      }),
+      (c) => {
+        c.text("Hello, World!");
+      },
+    );
+
+    testServer.start();
+
+    const response = await fetch(testServer.url("/combined"), {
+      method: "GET",
+    });
+
+    // drain response to ensure no memory leak
+    await response.text();
+
+    expect(response.headers.get("Cache-Control")).toEqual(
+      "max-age=3600, public, immutable",
+    );
+
+    await testServer.stop();
+  });
+
   describe("validation", () => {
     it("should throw error when both public and private are set", () => {
       expect(() => {
