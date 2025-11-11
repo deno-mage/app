@@ -25,8 +25,6 @@ interface ServeFilesOptions {
  * without a wildcard, it will throw an error. This middleware only serves on
  * GET requests.
  *
- * It the filepath contains the build id then it wil be stripped from the pathwhen seeking the file in the directory.
- *
  * @returns MageMiddleware
  */
 export const serveFiles = (
@@ -45,20 +43,8 @@ export const serveFiles = (
 
     const serveIndex = options.serveIndex ?? true;
 
-    // Set long cache headers for static files that are cache busted with buildId
-    const cacheBustWithBuildId = c.req.wildcard.includes(c.buildId);
-    if (cacheBustWithBuildId) {
-      c.header(
-        "Cache-Control",
-        "max-age=31536000, public",
-      );
-    }
-
-    // Resolve filepath and remove the buildId from the path if it exists
-    let filepath = resolve(options.directory, c.req.wildcard).replace(
-      `${c.buildId}`,
-      "",
-    );
+    // Resolve filepath
+    let filepath = resolve(options.directory, c.req.wildcard);
 
     // Ensure the resolved path is within the allowed directory (prevent path traversal)
     const normalizedBase = resolve(options.directory);

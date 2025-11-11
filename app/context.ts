@@ -15,10 +15,6 @@ interface MageContextArgs {
    * The request object
    */
   req: MageRequest;
-  /**
-   * The unique identifier for the build
-   */
-  buildId: string;
 }
 
 /**
@@ -26,17 +22,9 @@ interface MageContextArgs {
  * request/response cycle and is used to interact with the request and response.
  */
 export class MageContext {
-  private _buildId: string;
   private _res: Response;
   private _req: MageRequest;
   private _data: Map<string, unknown>;
-
-  /**
-   * The unique identifier for the build
-   */
-  public get buildId(): string {
-    return this._buildId;
-  }
 
   /**
    * The current response
@@ -65,7 +53,6 @@ export class MageContext {
    * @param args The arguments for the MageContext class
    */
   public constructor(args: MageContextArgs) {
-    this._buildId = args.buildId;
     this._req = args.req;
     this._res = new Response();
     this._data = new Map<string, unknown>();
