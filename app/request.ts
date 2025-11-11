@@ -99,10 +99,7 @@ export class MageRequest {
    */
   public constructor(req: Request, options: MageRequestArgs) {
     this._raw = req;
-    this._validationResults = new Map<
-      ValidationSource,
-      Map<unknown, unknown>
-    >();
+    this._validationResults = new Map<ValidationSource, unknown>();
     this._wildcard = options.wildcard;
     this._params = options.params;
 
