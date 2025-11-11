@@ -137,9 +137,20 @@ export class MageContext {
 
   /**
    * Send a not found response
+   *
+   * @param text Optional text body for the response
    */
-  public notFound() {
-    this.text(statusText(404), 404);
+  public notFound(text?: string) {
+    this.text(text ?? statusText(404), 404);
+  }
+
+  /**
+   * Send a forbidden response
+   *
+   * @param text Optional text body for the response
+   */
+  public forbidden(text?: string) {
+    this.text(text ?? statusText(403), 403);
   }
 
   /**
