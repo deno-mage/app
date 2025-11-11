@@ -116,5 +116,18 @@ export const getCookie = (c: MageContext, name: string): string | null => {
     return null;
   }
 
-  return cookie.split("=")[1];
+  // Split only on the first '=' to handle values containing '='
+  const equalsIndex = cookie.indexOf("=");
+  if (equalsIndex === -1) {
+    return null;
+  }
+
+  let value = cookie.substring(equalsIndex + 1);
+
+  // Remove surrounding quotes if present (RFC 6265 allows quoted values)
+  if (value.startsWith('"') && value.endsWith('"')) {
+    value = value.slice(1, -1);
+  }
+
+  return value;
 };

@@ -109,4 +109,92 @@ describe("cookies", () => {
 
     expect(await response.text()).toBe("");
   });
+
+  it("should handle cookie values with equals signs", async () => {
+    const response = await fetch(server.url("/get"), {
+      method: "GET",
+      headers: {
+        Cookie: "get-cookie=a=b=c",
+      },
+    });
+
+    expect(await response.text()).toBe("a=b=c");
+  });
+
+  it("should handle cookie values with multiple equals signs", async () => {
+    const response = await fetch(server.url("/get"), {
+      method: "GET",
+      headers: {
+        Cookie: "get-cookie=key1=value1&key2=value2",
+      },
+    });
+
+    expect(await response.text()).toBe("key1=value1&key2=value2");
+  });
+
+  it("should handle quoted cookie values", async () => {
+    const response = await fetch(server.url("/get"), {
+      method: "GET",
+      headers: {
+        Cookie: 'get-cookie="quoted value"',
+      },
+    });
+
+    expect(await response.text()).toBe("quoted value");
+  });
+
+  it("should handle quoted cookie values with equals signs", async () => {
+    const response = await fetch(server.url("/get"), {
+      method: "GET",
+      headers: {
+        Cookie: 'get-cookie="a=b=c"',
+      },
+    });
+
+    expect(await response.text()).toBe("a=b=c");
+  });
+
+  it("should handle cookie values with special characters", async () => {
+    const response = await fetch(server.url("/get"), {
+      method: "GET",
+      headers: {
+        Cookie: "get-cookie=hello%20world",
+      },
+    });
+
+    expect(await response.text()).toBe("hello%20world");
+  });
+
+  it("should handle empty cookie values", async () => {
+    const response = await fetch(server.url("/get"), {
+      method: "GET",
+      headers: {
+        Cookie: "get-cookie=",
+      },
+    });
+
+    expect(await response.text()).toBe("");
+  });
+
+  it("should handle cookie with multiple cookies in header", async () => {
+    const response = await fetch(server.url("/get"), {
+      method: "GET",
+      headers: {
+        Cookie: "first=1; get-cookie=target-value; last=3",
+      },
+    });
+
+    expect(await response.text()).toBe("target-value");
+  });
+
+  it("should handle cookie with equals in value among multiple cookies", async () => {
+    const response = await fetch(server.url("/get"), {
+      method: "GET",
+      headers: {
+        Cookie: "first=1; get-cookie=a=b; last=3",
+      },
+    });
+
+    expect(await response.text()).toBe("a=b");
+  });
 });
