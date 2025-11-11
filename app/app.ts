@@ -238,39 +238,42 @@ export class MageApp {
    */
   private async _handler(req: Request) {
     const url = new URL(req.url);
-    const matchResult = this._router.match(url, req.method);
-
-    const c: MageContext = new MageContext({
-      buildId: this.buildId,
-      req: new MageRequest(req, {
-        params: matchResult.params,
-        wildcard: matchResult.wildcard,
-      }),
-    });
-
-    const getAllowedMethods = () => this._router.getAvailableMethods(url);
-
-    const middleware = [
-      options({
-        getAllowedMethods,
-      }),
-      ...matchResult.middleware,
-    ];
-
-    if (!matchResult.matchedRoutename) {
-      middleware.push(notFound());
-    }
-
-    if (!matchResult.matchedMethod) {
-      middleware.push(
-        methodNotAllowed({
-          getAllowedMethods,
-        }),
-      );
-    }
 
     try {
+      const matchResult = this._router.match(url, req.method);
+
+      const c: MageContext = new MageContext({
+        buildId: this.buildId,
+        req: new MageRequest(req, {
+          params: matchResult.params,
+          wildcard: matchResult.wildcard,
+        }),
+      });
+
+      const getAllowedMethods = () => this._router.getAvailableMethods(url);
+
+      const middleware = [
+        options({
+          getAllowedMethods,
+        }),
+        ...matchResult.middleware,
+      ];
+
+      if (!matchResult.matchedRoutename) {
+        middleware.push(notFound());
+      }
+
+      if (!matchResult.matchedMethod) {
+        middleware.push(
+          methodNotAllowed({
+            getAllowedMethods,
+          }),
+        );
+      }
+
       await compose(middleware)(c);
+
+      return c.res;
     } catch (error) {
       console.error(error);
 
@@ -279,12 +282,19 @@ export class MageApp {
         status = error.status;
       }
 
+      const c: MageContext = new MageContext({
+        buildId: this.buildId,
+        req: new MageRequest(req, {
+          params: {},
+        }),
+      });
+
       c.text(
         statusText(status),
         status,
       );
-    }
 
-    return c.res;
+      return c.res;
+    }
   }
 }

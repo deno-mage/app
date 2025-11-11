@@ -1,4 +1,5 @@
 import type { MageMiddleware } from "../app/mod.ts";
+import { MageError } from "../app/mod.ts";
 
 /**
  * Options for the cors middleware.
@@ -50,6 +51,14 @@ export const cors = (options?: CORSOptions): MageMiddleware => {
     const allowCredentials = options?.credentials;
     const allowedMaxAge = options?.maxAge;
 
+    // Validate: Cannot use wildcard origin with credentials (CORS spec violation)
+    if (allowedOrigins.includes("*") && allowCredentials) {
+      throw new MageError(
+        "Cannot use wildcard origin (*) with credentials. This violates the CORS specification.",
+        400,
+      );
+    }
+
     // Handle Access-Control-Allow-Origin
     if (allowedOrigins.length > 0) {
       if (allowedOrigins.includes("*")) {
@@ -92,18 +101,14 @@ export const cors = (options?: CORSOptions): MageMiddleware => {
       );
     }
 
-    // For preflight OPTIONS requests, return immediately with headers
-    if (c.req.method === "OPTIONS") {
-      c.empty();
-      return;
-    }
-
-    // For actual requests, remove preflight-only headers
-    c.res.headers.delete("Access-Control-Allow-Methods");
-    c.res.headers.delete("Access-Control-Allow-Headers");
-    c.res.headers.delete("Access-Control-Max-Age");
-
     await next();
+
+    // For actual (non-OPTIONS) requests, remove preflight-only headers
+    if (c.req.method !== "OPTIONS") {
+      c.res.headers.delete("Access-Control-Allow-Methods");
+      c.res.headers.delete("Access-Control-Allow-Headers");
+      c.res.headers.delete("Access-Control-Max-Age");
+    }
 
     // If no response body was set by subsequent handlers, set empty response
     if (!c.res.body && !c.res.bodyUsed) {
