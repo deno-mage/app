@@ -1,4 +1,5 @@
 import type { MageMiddleware } from "../app/mod.ts";
+import { MageError } from "../app/mod.ts";
 
 /**
  * Options for the cors middleware.
@@ -49,6 +50,14 @@ export const cors = (options?: CORSOptions): MageMiddleware => {
     const exposeHeaders = [options?.exposeHeaders ?? []].flat();
     const allowCredentials = options?.credentials;
     const allowedMaxAge = options?.maxAge;
+
+    // Validate: Cannot use wildcard origin with credentials (CORS spec violation)
+    if (allowedOrigins.includes("*") && allowCredentials) {
+      throw new MageError(
+        "Cannot use wildcard origin (*) with credentials. This violates the CORS specification.",
+        400,
+      );
+    }
 
     // Handle Access-Control-Allow-Origin
     if (allowedOrigins.length > 0) {

@@ -23,12 +23,14 @@ beforeAll(() => {
   server.app.options(
     "/credentials",
     cors({
+      origins: ["https://example.com"],
       credentials: true,
     }),
   );
   server.app.get(
     "/credentials",
     cors({
+      origins: ["https://example.com"],
       credentials: true,
     }),
   );
@@ -62,6 +64,9 @@ describe("cors - allow credentials", () => {
   it("should send back header when credentials true when GET", async () => {
     const response = await fetch(server.url("/credentials"), {
       method: "GET",
+      headers: {
+        Origin: "https://example.com",
+      },
     });
 
     expect(response.status).toEqual(204);
@@ -73,6 +78,9 @@ describe("cors - allow credentials", () => {
   it("should send back header when credentials true when OPTIONS", async () => {
     const response = await fetch(server.url("/credentials"), {
       method: "OPTIONS",
+      headers: {
+        Origin: "https://example.com",
+      },
     });
 
     expect(response.status).toEqual(204);
