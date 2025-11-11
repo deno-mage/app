@@ -8,6 +8,7 @@
     "./compression": "./compression/mod.ts",
     "./cookies": "./cookies/mod.ts",
     "./cors": "./cors/mod.ts",
+    "./csrf": "./csrf/mod.ts",
     "./csp": "./csp/mod.ts",
     "./logs": "./logs/mod.ts",
     "./security-headers": "./security-headers/mod.ts",
