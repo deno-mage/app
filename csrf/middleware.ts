@@ -107,7 +107,7 @@ export const csrf = (options?: CsrfOptions): MageMiddleware => {
 
   return async (ctx: MageContext, next) => {
     const method = ctx.req.method;
-    const contentType = ctx.req.raw.headers.get("content-type") || "text/plain";
+    const contentType = ctx.req.raw.headers.get("content-type") || "";
     const secFetchSite = ctx.req.raw.headers.get("sec-fetch-site") ?? undefined;
     const origin = ctx.req.raw.headers.get("origin") ?? undefined;
 
