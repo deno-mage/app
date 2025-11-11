@@ -72,6 +72,20 @@ beforeAll(() => {
     return c.text("Small but should compress");
   });
 
+  // Test Vary header preservation
+  server.app.get(
+    "/vary-header",
+    (c, next) => {
+      c.header("Vary", "Cookie");
+      return next();
+    },
+    compression(),
+    (c) => {
+      const largeText = "Hello World! ".repeat(1000);
+      return c.text(largeText);
+    },
+  );
+
   server.start();
 });
 
@@ -169,6 +183,23 @@ describe("compression", () => {
     const response = await fetch(server.url("/large"));
 
     expect(response.headers.get("Content-Encoding")).toBeNull();
+
+    const text = await response.text();
+    expect(text).toBe("Hello World! ".repeat(1000));
+  });
+
+  it("should append to existing Vary header instead of overwriting", async () => {
+    const response = await fetch(server.url("/vary-header"), {
+      headers: {
+        "Accept-Encoding": "gzip",
+      },
+    });
+
+    // Should have both Cookie and Accept-Encoding in Vary header
+    const varyHeader = response.headers.get("Vary");
+    expect(varyHeader).toBeTruthy();
+    expect(varyHeader).toContain("Cookie");
+    expect(varyHeader).toContain("Accept-Encoding");
 
     const text = await response.text();
     expect(text).toBe("Hello World! ".repeat(1000));

@@ -85,36 +85,83 @@ export const compression = (
 
     if (!shouldCompress) return;
 
-    // Clone the response to read the body
-    const clonedRes = c.res.clone();
-
-    // Get response body
-    const body = await clonedRes.arrayBuffer();
-
-    // Check threshold
-    if (body.byteLength < threshold) {
+    // Get response body without cloning
+    if (!c.res.body) {
       return;
     }
+
+    // Read the body stream into chunks to check size and compress
+    const reader = c.res.body.getReader();
+    const chunks: Uint8Array[] = [];
+    let totalSize = 0;
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        chunks.push(value);
+        totalSize += value.byteLength;
+      }
+    } finally {
+      reader.releaseLock();
+    }
+
+    // Check threshold
+    if (totalSize < threshold) {
+      // Restore the response with the original chunks
+      const body = concatenateUint8Arrays(chunks);
+      c.res = new Response(body, {
+        status: c.res.status,
+        statusText: c.res.statusText,
+        headers: c.res.headers,
+      });
+      return;
+    }
+
+    // Concatenate chunks for compression
+    const body = concatenateUint8Arrays(chunks);
 
     // Compress the body
     let compressed: Uint8Array;
 
     try {
-      compressed = await compressGzip(new Uint8Array(body));
+      compressed = await compressGzip(body);
     } catch (_error) {
       // If compression fails, return uncompressed
+      c.res = new Response(body, {
+        status: c.res.status,
+        statusText: c.res.statusText,
+        headers: c.res.headers,
+      });
       return;
     }
 
     // Only use compressed version if it's actually smaller
-    if (compressed.byteLength >= body.byteLength) {
+    if (compressed.byteLength >= totalSize) {
+      c.res = new Response(body, {
+        status: c.res.status,
+        statusText: c.res.statusText,
+        headers: c.res.headers,
+      });
       return;
     }
 
     // Create new headers with compression headers added
     const newHeaders = new Headers(c.res.headers);
     newHeaders.set("Content-Encoding", "gzip");
-    newHeaders.set("Vary", "Accept-Encoding");
+
+    // Append to existing Vary header instead of overwriting
+    const existingVary = newHeaders.get("Vary");
+    if (existingVary) {
+      const varyValues = existingVary.split(",").map((v) => v.trim());
+      if (!varyValues.includes("Accept-Encoding")) {
+        newHeaders.set("Vary", `${existingVary}, Accept-Encoding`);
+      }
+    } else {
+      newHeaders.set("Vary", "Accept-Encoding");
+    }
+
     newHeaders.delete("Content-Length"); // Let browser calculate from compressed body
 
     // Update response with compressed body
