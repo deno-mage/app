@@ -196,7 +196,14 @@ export class MageRouter {
    */
   public getAvailableMethods(url: URL): string[] {
     const methods = this._entries
-      .filter((entry) => entry.routename === url.pathname)
+      .filter((entry) => {
+        if (!entry.routename) {
+          return false;
+        }
+
+        const result = matchRoutename(entry.routename, url.pathname);
+        return result.match;
+      })
       .flatMap((entry) => entry.methods ?? []);
 
     return methods;

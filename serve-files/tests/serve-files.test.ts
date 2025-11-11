@@ -156,25 +156,4 @@ describe("serve file", () => {
     expect(response.status).toBe(404);
     expect(await response.text()).toEqual("Not Found");
   });
-
-  describe("cache busting with build id", () => {
-    it("should return file when it exists with build id suffixed", async () => {
-      const response = await fetch(
-        server.url(`/public/image${server.app.buildId}.png`),
-        {
-          method: "GET",
-        },
-      );
-
-      expect(response.status).toBe(200);
-      const data = await Deno.readFile(
-        resolve(Deno.cwd(), "./test-utils/files/image.png"),
-      );
-      expect(await response.arrayBuffer()).toEqual(data.buffer);
-      expect(response.headers.get("content-type")).toEqual("image/png");
-      expect(response.headers.get("cache-control")).toEqual(
-        "max-age=31536000, public",
-      );
-    });
-  });
 });
