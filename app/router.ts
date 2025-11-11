@@ -1,4 +1,48 @@
 import type { MageContext } from "./context.ts";
+import { MageError } from "./error.ts";
+
+/**
+ * Validates and decodes a route parameter value to prevent path traversal attacks.
+ *
+ * @param value The raw parameter value from the URL
+ * @param paramName The parameter name for error messages
+ * @returns The decoded and validated parameter value
+ * @throws MageError if the parameter contains path traversal sequences
+ */
+function validateAndDecodeParam(value: string, paramName: string): string {
+  // URL decode the parameter
+  let decoded: string;
+  try {
+    decoded = decodeURIComponent(value);
+  } catch {
+    throw new MageError(
+      `Invalid URL encoding in route parameter: ${paramName}`,
+      400,
+    );
+  }
+
+  // Check for path traversal sequences
+  const dangerousPatterns = [
+    "../", // Basic path traversal
+    "..\\", // Windows path traversal
+    "%2e%2e/", // URL encoded ../
+    "%2e%2e\\", // URL encoded ..\
+    "..%2f", // Partially encoded ../
+    "..%5c", // Partially encoded ..\
+  ];
+
+  const lowerDecoded = decoded.toLowerCase();
+  for (const pattern of dangerousPatterns) {
+    if (lowerDecoded.includes(pattern)) {
+      throw new MageError(
+        `Path traversal attempt detected in route parameter: ${paramName}`,
+        400,
+      );
+    }
+  }
+
+  return decoded;
+}
 
 interface MatchRoutenameResultMatch {
   match: true;
@@ -32,7 +76,7 @@ function matchRoutename(
 
     if (routeParts[i].startsWith(":")) {
       const paramName = routeParts[i].substring(1);
-      params[paramName] = pathParts[i];
+      params[paramName] = validateAndDecodeParam(pathParts[i], paramName);
     } else if (routeParts[i] !== pathParts[i]) {
       return { match: false };
     }
