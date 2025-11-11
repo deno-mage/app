@@ -32,11 +32,10 @@ interface ServeFilesOptions {
 export const serveFiles = (
   options: ServeFilesOptions,
 ): MageMiddleware => {
-  return async (c, next) => {
+  return async (c) => {
     // Do not serve on non-GET requests.
     if (c.req.method !== "GET") {
       c.text(statusText(405), 405);
-      await next();
       return;
     }
 
@@ -66,7 +65,6 @@ export const serveFiles = (
     const normalizedPath = resolve(filepath);
     if (!normalizedPath.startsWith(normalizedBase)) {
       c.notFound();
-      await next();
       return;
     }
 
@@ -82,13 +80,10 @@ export const serveFiles = (
 
     if (fileExists) {
       await c.file(filepath);
-      await next();
       return;
     }
 
     // If the file does not exist, return a 404.
     c.notFound();
-
-    await next();
   };
 };
