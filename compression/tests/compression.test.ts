@@ -19,6 +19,13 @@ beforeAll(() => {
     return c.text("Small");
   });
 
+  // Small response with explicit Content-Length (fast path test)
+  server.app.get("/small-with-length", compression(), (c) => {
+    const text = "Small";
+    c.header("Content-Length", text.length.toString());
+    return c.text(text);
+  });
+
   // JSON response
   server.app.get("/json", compression(), (c) => {
     const data = {
@@ -92,6 +99,31 @@ beforeAll(() => {
     return c.text(largeText);
   });
 
+  // Test maxSize with Content-Length header (fast path)
+  server.app.get(
+    "/too-large-with-length",
+    compression({ maxSize: 5000 }),
+    (c) => {
+      const largeText = "Hello World! ".repeat(1000); // ~13KB > 5KB limit
+      c.header("Content-Length", largeText.length.toString());
+      return c.text(largeText);
+    },
+  );
+
+  // Test case-insensitive Vary header deduplication
+  server.app.get(
+    "/vary-lowercase",
+    (c, next) => {
+      c.header("Vary", "accept-encoding");
+      return next();
+    },
+    compression(),
+    (c) => {
+      const largeText = "Hello World! ".repeat(1000);
+      return c.text(largeText);
+    },
+  );
+
   server.start();
 });
 
@@ -120,6 +152,19 @@ describe("compression", () => {
 
   it("should not compress responses below threshold", async () => {
     const response = await fetch(server.url("/small"), {
+      headers: {
+        "Accept-Encoding": "gzip",
+      },
+    });
+
+    expect(response.headers.get("Content-Encoding")).toBeNull();
+
+    const text = await response.text();
+    expect(text).toBe("Small");
+  });
+
+  it("should not compress small responses with Content-Length header (fast path)", async () => {
+    const response = await fetch(server.url("/small-with-length"), {
       headers: {
         "Accept-Encoding": "gzip",
       },
@@ -220,6 +265,35 @@ describe("compression", () => {
 
     // Should not be compressed because it exceeds maxSize (5KB)
     expect(response.headers.get("Content-Encoding")).toBeNull();
+
+    const text = await response.text();
+    expect(text).toBe("Hello World! ".repeat(1000));
+  });
+
+  it("should not compress large responses with Content-Length header (fast path)", async () => {
+    const response = await fetch(server.url("/too-large-with-length"), {
+      headers: {
+        "Accept-Encoding": "gzip",
+      },
+    });
+
+    // Should not be compressed because it exceeds maxSize (5KB)
+    expect(response.headers.get("Content-Encoding")).toBeNull();
+
+    const text = await response.text();
+    expect(text).toBe("Hello World! ".repeat(1000));
+  });
+
+  it("should not duplicate Vary header with case-insensitive check", async () => {
+    const response = await fetch(server.url("/vary-lowercase"), {
+      headers: {
+        "Accept-Encoding": "gzip",
+      },
+    });
+
+    // Should detect existing "accept-encoding" (lowercase) and not add duplicate
+    const varyHeader = response.headers.get("Vary");
+    expect(varyHeader).toBe("accept-encoding");
 
     const text = await response.text();
     expect(text).toBe("Hello World! ".repeat(1000));

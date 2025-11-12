@@ -96,6 +96,20 @@ export const compression = (
       return;
     }
 
+    // Fast path: check Content-Length header first to avoid reading small responses
+    const contentLengthHeader = c.res.headers.get("Content-Length");
+    if (contentLengthHeader) {
+      const contentLength = parseInt(contentLengthHeader, 10);
+      if (!isNaN(contentLength)) {
+        if (contentLength < threshold) {
+          return; // Skip without reading body
+        }
+        if (contentLength > maxSize) {
+          return; // Skip without reading body
+        }
+      }
+    }
+
     // Read the body stream into chunks to check size and compress
     const reader = c.res.body.getReader();
     const chunks: Uint8Array[] = [];
@@ -160,8 +174,10 @@ export const compression = (
     // Append to existing Vary header instead of overwriting
     const existingVary = newHeaders.get("Vary");
     if (existingVary) {
-      const varyValues = existingVary.split(",").map((v) => v.trim());
-      if (!varyValues.includes("Accept-Encoding")) {
+      const varyValues = existingVary.split(",").map((v) =>
+        v.trim().toLowerCase()
+      );
+      if (!varyValues.includes("accept-encoding")) {
         newHeaders.set("Vary", `${existingVary}, Accept-Encoding`);
       }
     } else {
