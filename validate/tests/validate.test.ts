@@ -32,6 +32,13 @@ const dateSchema = z.object({
 
 type Date = z.infer<typeof dateSchema>;
 
+const tagsSchema = z.object({
+  name: z.string(),
+  tags: z.array(z.string()),
+});
+
+type Tags = z.infer<typeof tagsSchema>;
+
 let server: MageTestServer;
 
 beforeAll(() => {
@@ -58,6 +65,14 @@ beforeAll(() => {
     validate("search-params", dateSchema),
     (c) => {
       c.json(c.req.valid<Date>("search-params"));
+    },
+  );
+
+  server.app.post(
+    "/search-params-multi",
+    validate("search-params", tagsSchema),
+    (c) => {
+      c.json(c.req.valid<Tags>("search-params"));
     },
   );
 
@@ -248,6 +263,36 @@ describe("validate", () => {
         year: "2021",
         month: "01",
         day: "01",
+      });
+    });
+
+    it("should handle multiple values for the same field", async () => {
+      const response = await fetch(
+        server.url("/search-params-multi?name=product&tags=a&tags=b"),
+        {
+          method: "POST",
+        },
+      );
+
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual({
+        name: "product",
+        tags: ["a", "b"],
+      });
+    });
+
+    it("should handle multiple values for the same field (3+ occurrences)", async () => {
+      const response = await fetch(
+        server.url("/search-params-multi?name=product&tags=a&tags=b&tags=c"),
+        {
+          method: "POST",
+        },
+      );
+
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual({
+        name: "product",
+        tags: ["a", "b", "c"],
       });
     });
   });
