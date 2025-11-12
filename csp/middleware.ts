@@ -24,6 +24,8 @@ type CSPDirectives = {
   frameAncestors?: string | string[];
   reportTo?: string | string[];
   upgradeInsecureRequests?: boolean;
+  trustedTypes?: string | string[];
+  requireTrustedTypesFor?: string | string[];
 };
 
 /**
@@ -66,6 +68,8 @@ const directiveKeyMap: Record<
   frameAncestors: "frame-ancestors",
   reportTo: "report-to",
   upgradeInsecureRequests: "upgrade-insecure-requests",
+  trustedTypes: "trusted-types",
+  requireTrustedTypesFor: "require-trusted-types-for",
 };
 
 /**

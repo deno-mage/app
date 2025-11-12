@@ -14,7 +14,7 @@ export interface CacheControlOptions {
    */
   sMaxAge?: number;
   /**
-   * Can be cached but origin server must be checked befor use.
+   * Can be cached but origin server must be checked before use.
    */
   noCache?: boolean;
   /**

@@ -66,7 +66,18 @@ export const validate = (
         break;
       }
       case "search-params": {
-        data = Object.fromEntries(c.req.url.searchParams);
+        const values = new Map<string, string | string[]>();
+        c.req.url.searchParams.forEach((value, key) => {
+          const existing = values.get(key);
+          if (existing === undefined) {
+            values.set(key, value);
+          } else if (Array.isArray(existing)) {
+            existing.push(value);
+          } else {
+            values.set(key, [existing, value]);
+          }
+        });
+        data = Object.fromEntries(values);
         break;
       }
       default: {

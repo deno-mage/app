@@ -10,6 +10,11 @@ export interface CompressionOptions {
    */
   threshold?: number;
   /**
+   * Maximum response size (in bytes) to compress. Prevents OOM on very large responses.
+   * @default 10485760 (10MB)
+   */
+  maxSize?: number;
+  /**
    * Content types to compress. If not specified, compresses common text types.
    * @default ["text/*", "application/json", "application/javascript", ...]
    */
@@ -53,6 +58,7 @@ export const compression = (
 ): MageMiddleware => {
   const {
     threshold = 1024,
+    maxSize = 10 * 1024 * 1024, // 10MB default
     contentTypes = DEFAULT_CONTENT_TYPES,
   } = options ?? {};
 
@@ -85,37 +91,98 @@ export const compression = (
 
     if (!shouldCompress) return;
 
-    // Clone the response to read the body
-    const clonedRes = c.res.clone();
-
-    // Get response body
-    const body = await clonedRes.arrayBuffer();
-
-    // Check threshold
-    if (body.byteLength < threshold) {
+    // Get response body without cloning
+    if (!c.res.body) {
       return;
     }
+
+    // Fast path: check Content-Length header first to avoid reading small responses
+    const contentLengthHeader = c.res.headers.get("Content-Length");
+    if (contentLengthHeader) {
+      const contentLength = parseInt(contentLengthHeader, 10);
+      if (!isNaN(contentLength)) {
+        if (contentLength < threshold) {
+          return; // Skip without reading body
+        }
+        if (contentLength > maxSize) {
+          return; // Skip without reading body
+        }
+      }
+    }
+
+    // Read the body stream into chunks to check size and compress
+    const reader = c.res.body.getReader();
+    const chunks: Uint8Array[] = [];
+    let totalSize = 0;
+    let exceededMaxSize = false;
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        chunks.push(value);
+        totalSize += value.byteLength;
+
+        // Bail out if response is too large to prevent OOM
+        if (totalSize > maxSize) {
+          exceededMaxSize = true;
+          break;
+        }
+      }
+    } finally {
+      reader.releaseLock();
+    }
+
+    // If exceeded max size, return uncompressed
+    if (exceededMaxSize) {
+      c.res = createUncompressedResponse(c.res, chunks);
+      return;
+    }
+
+    // Check threshold
+    if (totalSize < threshold) {
+      c.res = createUncompressedResponse(c.res, chunks);
+      return;
+    }
+
+    // Concatenate chunks for compression
+    const body = concatenateUint8Arrays(chunks);
 
     // Compress the body
     let compressed: Uint8Array;
 
     try {
-      compressed = await compressGzip(new Uint8Array(body));
+      compressed = await compressGzip(body);
     } catch (_error) {
       // If compression fails, return uncompressed
+      c.res = createUncompressedResponse(c.res, chunks);
       return;
     }
 
     // Only use compressed version if it's actually smaller
-    if (compressed.byteLength >= body.byteLength) {
+    if (compressed.byteLength >= totalSize) {
+      c.res = createUncompressedResponse(c.res, chunks);
       return;
     }
 
     // Create new headers with compression headers added
     const newHeaders = new Headers(c.res.headers);
     newHeaders.set("Content-Encoding", "gzip");
-    newHeaders.set("Vary", "Accept-Encoding");
-    newHeaders.delete("Content-Length"); // Let browser calculate from compressed body
+    newHeaders.set("Content-Length", compressed.byteLength.toString());
+
+    // Append to existing Vary header instead of overwriting
+    const existingVary = newHeaders.get("Vary");
+    if (existingVary) {
+      const varyValues = existingVary.split(",").map((v) =>
+        v.trim().toLowerCase()
+      );
+      if (!varyValues.includes("accept-encoding")) {
+        newHeaders.set("Vary", `${existingVary}, Accept-Encoding`);
+      }
+    } else {
+      newHeaders.set("Vary", "Accept-Encoding");
+    }
 
     // Update response with compressed body
     c.res = new Response(compressed, {
@@ -154,4 +221,16 @@ function concatenateUint8Arrays(arrays: Uint8Array[]): Uint8Array {
     offset += arr.length;
   }
   return result;
+}
+
+function createUncompressedResponse(
+  originalResponse: Response,
+  chunks: Uint8Array[],
+): Response {
+  const body = concatenateUint8Arrays(chunks);
+  return new Response(body, {
+    status: originalResponse.status,
+    statusText: originalResponse.statusText,
+    headers: originalResponse.headers,
+  });
 }

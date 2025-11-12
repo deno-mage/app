@@ -168,14 +168,19 @@ export class MageContext {
   public async rewrite(location: URL | string) {
     let url: URL;
 
-    if (location.toString().startsWith("/")) {
-      url = new URL(
-        `${location.toString()}${this._req.url.search}`,
-        this._req.url.origin,
-      );
+    // Handle relative path (starts with /)
+    if (typeof location === "string" && location.startsWith("/")) {
+      // Preserve query string from original request
+      url = new URL(location, this._req.url.origin);
+      url.search = this._req.url.search;
     } else {
-      const pathname = new URL(location).pathname;
-      url = new URL(`${pathname}${this._req.url.search}`, location);
+      // Handle absolute URL (string or URL object)
+      url = typeof location === "string" ? new URL(location) : location;
+
+      // If the target URL doesn't have a query string, preserve the original
+      if (!url.search && this._req.url.search) {
+        url.search = this._req.url.search;
+      }
     }
 
     this._res = await fetch(url, {

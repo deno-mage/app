@@ -68,21 +68,28 @@ function matchRoutename(
   const params: { [key: string]: string } = {};
 
   for (let i = 0; i < routeParts.length; i++) {
-    if (routeParts[i] === "*") {
-      const wildcard = pathParts.slice(i).join("/");
+    const routePart = routeParts[i];
 
+    // Wildcard matches everything from this point
+    if (routePart === "*") {
+      const wildcard = pathParts.slice(i).join("/");
       return { match: true, params, wildcard };
     }
 
-    if (routeParts[i].startsWith(":")) {
-      const paramName = routeParts[i].substring(1);
+    // Path is too short for non-wildcard route
+    if (i >= pathParts.length) {
+      return { match: false };
+    }
+
+    if (routePart.startsWith(":")) {
+      const paramName = routePart.substring(1);
       params[paramName] = validateAndDecodeParam(pathParts[i], paramName);
-    } else if (routeParts[i] !== pathParts[i]) {
+    } else if (routePart !== pathParts[i]) {
       return { match: false };
     }
   }
 
-  // Ensure all parts are matched
+  // Ensure all path parts are matched
   if (routeParts.length !== pathParts.length) {
     return { match: false };
   }

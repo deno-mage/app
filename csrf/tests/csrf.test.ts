@@ -133,6 +133,18 @@ describe("csrf middleware", () => {
       expect(response.status).toBe(200);
       expect(await response.text()).toBe("ok");
     });
+
+    it("should allow POST with non-form content-type (application/octet-stream)", async () => {
+      const response = await fetch(server.url("/json"), {
+        method: "POST",
+        headers: {
+          "content-type": "application/octet-stream",
+        },
+        body: new Uint8Array([1, 2, 3]),
+      });
+      expect(response.status).toBe(200);
+      expect(await response.text()).toBe("ok");
+    });
   });
 
   describe("unsafe methods with form content types", () => {
