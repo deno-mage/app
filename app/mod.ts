@@ -3,7 +3,6 @@ import type { MageRequest as PrivateMageRequest } from "./request.ts";
 import type { PublicOf } from "../type-utils/utils.ts";
 
 export { MageApp } from "./app.ts";
-export type { MagePlugin } from "./app.ts";
 export type { MageMiddleware } from "./router.ts";
 export { MageError } from "./error.ts";
 

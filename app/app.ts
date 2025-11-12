@@ -9,36 +9,12 @@ import { statusText } from "../status/mod.ts";
 import type { Status } from "../status/mod.ts";
 import { MageRequest } from "./request.ts";
 import { MageError } from "./error.ts";
-import type { PublicOf } from "../type-utils/utils.ts";
-
-/**
- * A plugin for Mage apps.
- */
-export interface MagePlugin {
-  /**
-   * Name of the plugin
-   */
-  name: string;
-  /**
-   * Triggered when app.build() is called
-   *
-   * @returns Promise<void>
-   */
-  onBuild?: (app: PublicOf<MageApp>) => Promise<void> | void;
-  /**
-   * Triggered when app.develop() is called
-   *
-   * @returns Promise<void>
-   */
-  onDevelop?: (app: PublicOf<MageApp>) => Promise<void> | void;
-}
 
 /**
  * MageApp is the main class for creating and running Mage applications.
  */
 export class MageApp {
   private _router = new MageRouter();
-  private _plugins: MagePlugin[] = [];
 
   /**
    * Create a new MageApp.
@@ -175,37 +151,6 @@ export class MageApp {
   public handler: (req: Request) => Promise<Response> = this._handler.bind(
     this,
   );
-
-  /**
-   * Register a mage plygin
-   *
-   * @param plugin The plugin to register
-   */
-  public plugin(plugin: MagePlugin): void {
-    this._plugins.push(plugin);
-  }
-
-  /**
-   * Build the application. This may not be necessary for all
-   * applications if static assets are not required or produced by
-   * plugins.
-   */
-  public async build(): Promise<void> {
-    for (const plugin of this._plugins) {
-      await plugin.onBuild?.(this);
-    }
-  }
-
-  /**
-   * Start the development server. This is used to run the application
-   * locally during development including triggering any development
-   * plugins.
-   */
-  public async develop() {
-    for (const plugin of this._plugins) {
-      await plugin.onDevelop?.(this);
-    }
-  }
 
   /**
    * Handle a request and return a response.
