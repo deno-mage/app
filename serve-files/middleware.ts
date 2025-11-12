@@ -21,9 +21,7 @@ interface ServeFilesOptions {
 }
 
 /**
- * Serve a file from a wildcard route. If this middleware is used on a route
- * without a wildcard, it will throw an error. This middleware only serves on
- * GET requests.
+ * Serve files from a wildcard route. Only serves on GET and HEAD requests.
  *
  * @returns MageMiddleware
  */
@@ -31,8 +29,8 @@ export const serveFiles = (
   options: ServeFilesOptions,
 ): MageMiddleware => {
   return async (c) => {
-    // Do not serve on non-GET requests.
-    if (c.req.method !== "GET") {
+    // Only serve on GET and HEAD requests
+    if (c.req.method !== "GET" && c.req.method !== "HEAD") {
       c.text(statusText(405), 405);
       return;
     }

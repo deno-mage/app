@@ -1,9 +1,50 @@
 import type { MageContext } from "../app/mod.ts";
 
 /**
+ * Create HMAC-SHA256 signature for a value
+ */
+const createSignature = async (
+  value: string,
+  secret: string,
+): Promise<string> => {
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const signature = await crypto.subtle.sign(
+    "HMAC",
+    key,
+    encoder.encode(value),
+  );
+  return Array.from(new Uint8Array(signature))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+};
+
+/**
+ * Verify HMAC-SHA256 signature
+ */
+const verifySignature = async (
+  value: string,
+  signature: string,
+  secret: string,
+): Promise<boolean> => {
+  const expectedSignature = await createSignature(value, secret);
+  return signature === expectedSignature;
+};
+
+/**
  * Options for setting a cookie
  */
 export interface CookieOptions {
+  /**
+   * Secret for signing cookies. When provided, cookie values will be signed with HMAC-SHA256.
+   */
+  secret?: string;
   /**
    * Max age in seconds, if set takes precedence over `expires`
    */
@@ -35,20 +76,22 @@ export interface CookieOptions {
 }
 
 /**
- * Set cookie on response
- *
- * @param context MageContext
- * @param name Name of the cookie
- * @param value Value of the cookie
- * @param options Options for the cookie
+ * Set cookie on response with optional signing
  */
-export const setCookie = (
+export const setCookie = async (
   c: MageContext,
   name: string,
   value: string,
   options: CookieOptions = {},
-): void => {
-  const parts = [`${name}=${value}`];
+): Promise<void> => {
+  let cookieValue = value;
+
+  if (options.secret) {
+    const signature = await createSignature(value, options.secret);
+    cookieValue = `s:${value}.${signature}`;
+  }
+
+  const parts = [`${name}=${cookieValue}`];
 
   if (options.maxAge) {
     parts.push(`Max-Age=${options.maxAge}`);
@@ -84,23 +127,35 @@ export const setCookie = (
 };
 
 /**
- * Remove cookie from the response
- *
- * @param context MageContext
- * @param name Name of the cookie
+ * Remove cookie from response
  */
-export const deleteCookie = (c: MageContext, name: string): void => {
-  c.res.headers.append("Set-Cookie", `${name}=; Max-Age=0`);
+export const deleteCookie = (
+  c: MageContext,
+  name: string,
+  options?: Pick<CookieOptions, "path" | "domain">,
+): void => {
+  const parts = [`${name}=`, `Max-Age=0`];
+
+  if (options?.path) {
+    parts.push(`Path=${options.path}`);
+  }
+
+  if (options?.domain) {
+    parts.push(`Domain=${options.domain}`);
+  }
+
+  const cookie = parts.join("; ");
+  c.res.headers.append("Set-Cookie", cookie);
 };
 
 /**
- * Get the cookie value from the request
- *
- * @param context MageContext
- * @param name Name of the cookie
- * @returns The value of the cookie or null if not found
+ * Get cookie value from request with signature verification
  */
-export const getCookie = (c: MageContext, name: string): string | null => {
+export const getCookie = async (
+  c: MageContext,
+  name: string,
+  secret?: string,
+): Promise<string | null> => {
   const cookies = c.req.header("Cookie");
 
   if (!cookies) {
@@ -127,6 +182,26 @@ export const getCookie = (c: MageContext, name: string): string | null => {
   // Remove surrounding quotes if present (RFC 6265 allows quoted values)
   if (value.startsWith('"') && value.endsWith('"')) {
     value = value.slice(1, -1);
+  }
+
+  // If secret provided and cookie is signed, verify signature
+  if (secret && value.startsWith("s:")) {
+    const signedValue = value.substring(2); // Remove 's:' prefix
+    const lastDotIndex = signedValue.lastIndexOf(".");
+
+    if (lastDotIndex === -1) {
+      return null;
+    }
+
+    const actualValue = signedValue.substring(0, lastDotIndex);
+    const signature = signedValue.substring(lastDotIndex + 1);
+
+    const isValid = await verifySignature(actualValue, signature, secret);
+    if (!isValid) {
+      return null;
+    }
+
+    return actualValue;
   }
 
   return value;

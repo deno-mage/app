@@ -8,22 +8,22 @@ let server: MageTestServer;
 beforeAll(() => {
   server = new MageTestServer();
 
-  server.app.get("/get", (c) => {
-    const cookie = getCookie(c, "get-cookie");
+  server.app.get("/get", async (c) => {
+    const cookie = await getCookie(c, "get-cookie");
 
     c.text(cookie!);
   });
 
-  server.app.get("/set", (c) => {
-    setCookie(c, "set-cookie", "123");
+  server.app.get("/set", async (c) => {
+    await setCookie(c, "set-cookie", "123");
   });
 
   server.app.get("/delete", (c) => {
     deleteCookie(c, "delete-cookie");
   });
 
-  server.app.get("/set-options", (c) => {
-    setCookie(c, "set-cookie", "123", {
+  server.app.get("/set-options", async (c) => {
+    await setCookie(c, "set-cookie", "123", {
       domain: "example.com",
       expires: new Date("2024-01-01"),
       httpOnly: true,
@@ -34,8 +34,8 @@ beforeAll(() => {
     });
   });
 
-  server.app.get("/get-null", (c) => {
-    const cookie = getCookie(c, "null-cookie");
+  server.app.get("/get-null", async (c) => {
+    const cookie = await getCookie(c, "null-cookie");
 
     c.text(cookie!);
   });

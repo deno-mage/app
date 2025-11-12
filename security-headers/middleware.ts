@@ -84,7 +84,32 @@ export interface SecurityHeadersOptions {
    * @default true
    */
   removeXPoweredBy?: boolean;
+  /**
+   * Controls browser feature permissions. Provide directives as an object mapping feature names to allowlists.
+   *
+   * Example: `{ geolocation: ["self"], camera: ["none"], microphone: ["self", "https://example.com"] }`
+   */
+  permissionsPolicy?: Record<string, string[]>;
 }
+
+/**
+ * Build Permissions-Policy header from directives
+ */
+const buildPermissionsPolicy = (
+  policy: Record<string, string[]>,
+): string => {
+  return Object.entries(policy)
+    .map(([feature, allowlist]) => {
+      if (allowlist.length === 0 || allowlist.includes("none")) {
+        return `${feature}=()`;
+      }
+      const values = allowlist
+        .map((origin) => origin === "self" ? "self" : `"${origin}"`)
+        .join(" ");
+      return `${feature}=(${values})`;
+    })
+    .join(", ");
+};
 
 /**
  * Adds security headers to the response to help protect against common web
@@ -110,6 +135,7 @@ export const securityHeaders = (
     crossOriginResourcePolicy = "same-origin",
     originAgentCluster = true,
     removeXPoweredBy = true,
+    permissionsPolicy,
   } = options ?? {};
 
   return [
@@ -120,6 +146,13 @@ export const securityHeaders = (
 
       if (originAgentCluster) {
         c.header("Origin-Agent-Cluster", "?1");
+      }
+
+      if (permissionsPolicy) {
+        c.header(
+          "Permissions-Policy",
+          buildPermissionsPolicy(permissionsPolicy),
+        );
       }
 
       c.header("Referrer-Policy", referrerPolicy);
