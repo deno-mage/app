@@ -4,6 +4,7 @@
   "license": "MIT",
   "exports": {
     ".": "./app/mod.ts",
+    "./body-size": "./body-size/mod.ts",
     "./cache-control": "./cache-control/mod.ts",
     "./compression": "./compression/mod.ts",
     "./cookies": "./cookies/mod.ts",
@@ -11,9 +12,11 @@
     "./csrf": "./csrf/mod.ts",
     "./csp": "./csp/mod.ts",
     "./logs": "./logs/mod.ts",
+    "./rate-limit": "./rate-limit/mod.ts",
     "./security-headers": "./security-headers/mod.ts",
     "./serve-files": "./serve-files/mod.ts",
     "./status": "./status/mod.ts",
+    "./timeout": "./timeout/mod.ts",
     "./validate": "./validate/mod.ts"
   },
   "tasks": {
