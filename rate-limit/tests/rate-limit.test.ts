@@ -231,6 +231,220 @@ describe("rate-limit", () => {
     await testServer.stop();
   });
 
+  it("should use X-Forwarded-For header for key generation", async () => {
+    const testServer = new MageTestServer();
+    testServer.app.get(
+      "/test",
+      rateLimit({
+        max: 2,
+        windowMs: 1000,
+      }),
+      (c) => {
+        c.text("OK");
+      },
+    );
+    testServer.start();
+
+    // Make requests with same X-Forwarded-For IP
+    const ip = "203.0.113.1";
+    const responses = await Promise.all([
+      fetch(testServer.url("/test"), {
+        headers: { "X-Forwarded-For": `${ip}, 192.168.1.1` },
+      }),
+      fetch(testServer.url("/test"), {
+        headers: { "X-Forwarded-For": `${ip}, 192.168.1.2` },
+      }),
+      fetch(testServer.url("/test"), {
+        headers: { "X-Forwarded-For": `${ip}, 192.168.1.3` },
+      }),
+    ]);
+
+    await Promise.all(responses.map((r) => r.text()));
+
+    // First 2 should succeed (from same IP)
+    expect(responses[0].status).toBe(200);
+    expect(responses[1].status).toBe(200);
+
+    // 3rd should be rate limited (same IP, exceeded limit)
+    expect(responses[2].status).toBe(429);
+
+    await testServer.stop();
+  });
+
+  it("should use X-Real-IP header for key generation", async () => {
+    const testServer = new MageTestServer();
+    testServer.app.get(
+      "/test",
+      rateLimit({
+        max: 2,
+        windowMs: 1000,
+      }),
+      (c) => {
+        c.text("OK");
+      },
+    );
+    testServer.start();
+
+    // Make requests with same X-Real-IP
+    const ip = "198.51.100.1";
+    const responses = await Promise.all([
+      fetch(testServer.url("/test"), {
+        headers: { "X-Real-IP": ip },
+      }),
+      fetch(testServer.url("/test"), {
+        headers: { "X-Real-IP": ip },
+      }),
+      fetch(testServer.url("/test"), {
+        headers: { "X-Real-IP": ip },
+      }),
+    ]);
+
+    await Promise.all(responses.map((r) => r.text()));
+
+    // First 2 should succeed
+    expect(responses[0].status).toBe(200);
+    expect(responses[1].status).toBe(200);
+
+    // 3rd should be rate limited
+    expect(responses[2].status).toBe(429);
+
+    await testServer.stop();
+  });
+
+  it("should use custom key generator function", async () => {
+    const testServer = new MageTestServer();
+    const customKeys: string[] = [];
+
+    testServer.app.get(
+      "/test",
+      rateLimit({
+        max: 2,
+        windowMs: 1000,
+        keyGenerator: (c) => {
+          // Generate key based on custom header
+          const key = c.req.header("X-User-ID") || "anonymous";
+          customKeys.push(key);
+          return key;
+        },
+      }),
+      (c) => {
+        c.text("OK");
+      },
+    );
+    testServer.start();
+
+    // Requests with same X-User-ID
+    const responses = await Promise.all([
+      fetch(testServer.url("/test"), {
+        headers: { "X-User-ID": "user-123" },
+      }),
+      fetch(testServer.url("/test"), {
+        headers: { "X-User-ID": "user-123" },
+      }),
+      fetch(testServer.url("/test"), {
+        headers: { "X-User-ID": "user-123" },
+      }),
+    ]);
+
+    await Promise.all(responses.map((r) => r.text()));
+
+    // First 2 should succeed
+    expect(responses[0].status).toBe(200);
+    expect(responses[1].status).toBe(200);
+
+    // 3rd should be rate limited (same user)
+    expect(responses[2].status).toBe(429);
+
+    // Verify custom key generator was called
+    expect(customKeys).toEqual(["user-123", "user-123", "user-123"]);
+
+    await testServer.stop();
+  });
+
+  it("should rate limit independently for different IPs", async () => {
+    const testServer = new MageTestServer();
+    testServer.app.get(
+      "/test",
+      rateLimit({
+        max: 1,
+        windowMs: 1000,
+      }),
+      (c) => {
+        c.text("OK");
+      },
+    );
+    testServer.start();
+
+    // Different IPs should have independent rate limits
+    const response1a = await fetch(testServer.url("/test"), {
+      headers: { "X-Forwarded-For": "203.0.113.1" },
+    });
+    const response2a = await fetch(testServer.url("/test"), {
+      headers: { "X-Forwarded-For": "203.0.113.2" },
+    });
+
+    await response1a.text();
+    await response2a.text();
+
+    // Both should succeed (different IPs)
+    expect(response1a.status).toBe(200);
+    expect(response2a.status).toBe(200);
+
+    // Second request from IP 1 should be rate limited
+    const response1b = await fetch(testServer.url("/test"), {
+      headers: { "X-Forwarded-For": "203.0.113.1" },
+    });
+    await response1b.text();
+    expect(response1b.status).toBe(429);
+
+    // But IP 2 can still make another request
+    const response2b = await fetch(testServer.url("/test"), {
+      headers: { "X-Forwarded-For": "203.0.113.2" },
+    });
+    await response2b.text();
+    expect(response2b.status).toBe(429); // This is also the second request from IP2
+
+    await testServer.stop();
+  });
+
+  it("should prioritize X-Forwarded-For over X-Real-IP", async () => {
+    const testServer = new MageTestServer();
+    testServer.app.get(
+      "/test",
+      rateLimit({
+        max: 1,
+        windowMs: 1000,
+      }),
+      (c) => {
+        c.text("OK");
+      },
+    );
+    testServer.start();
+
+    // First request with X-Forwarded-For
+    const first = await fetch(testServer.url("/test"), {
+      headers: {
+        "X-Forwarded-For": "203.0.113.1",
+        "X-Real-IP": "198.51.100.1",
+      },
+    });
+    await first.text();
+    expect(first.status).toBe(200);
+
+    // Second request with same X-Forwarded-For but different X-Real-IP
+    // Should be rate limited because X-Forwarded-For takes priority
+    const second = await fetch(testServer.url("/test"), {
+      headers: {
+        "X-Forwarded-For": "203.0.113.1",
+        "X-Real-IP": "198.51.100.99", // Different IP
+      },
+    });
+    await second.text();
+    expect(second.status).toBe(429);
+
+    await testServer.stop();
+  });
+
   describe("validation", () => {
     it("should throw error when max is zero", () => {
       expect(() => {
