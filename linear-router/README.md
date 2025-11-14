@@ -180,6 +180,48 @@ app.get("/users", handler);
 
 ## Security
 
+### Route Pattern Validation
+
+The Linear Router validates route patterns during registration to catch common
+mistakes early and prevent runtime errors:
+
+```typescript
+const app = new MageApp();
+
+// ✅ Valid routes
+app.get("/", handler); // Root route
+app.get("/users", handler); // Static route
+app.get("/users/:id", handler); // Parameterized route
+app.get("/files/*", handler); // Wildcard route
+app.get("/docs/:section/*", handler); // Params + wildcard
+
+// ❌ Invalid routes - throw MageError at registration time
+app.get("", handler); // Empty route
+app.get("users", handler); // Must start with /
+app.get("/users//posts", handler); // Consecutive slashes
+app.get("/users/", handler); // Trailing slash (empty segment)
+app.get("/files/*/download", handler); // Wildcard must be at end
+app.get("/users/:id/posts/:id", handler); // Duplicate param names
+app.get("/users/:", handler); // Empty param name
+```
+
+**Validation rules:**
+
+1. **Not empty** - Route must have at least one character
+2. **Starts with /** - All routes must begin with forward slash
+3. **No consecutive slashes** - e.g., `//` is not allowed in patterns
+4. **No trailing slashes** - Use `/users` not `/users/`
+5. **Wildcard at end only** - `*` must be the last segment
+6. **Unique param names** - No duplicate `:param` names in same route
+7. **Non-empty params** - Parameter names cannot be empty (`:` alone)
+
+**Why validate?**
+
+- Catches typos and mistakes at registration time, not runtime
+- Prevents confusing behavior from malformed patterns
+- Ensures consistent routing behavior
+- Provides clear error messages for debugging
+
 ### Duplicate Route Validation
 
 The Linear Router validates route registrations to prevent conflicts that would
@@ -484,6 +526,7 @@ The Linear Router has comprehensive unit tests covering:
 - Parameterized route matching with URL decoding
 - Wildcard route matching
 - Path normalization (consecutive slashes, trailing slashes)
+- Route pattern validation (format, wildcards, params)
 - Duplicate route validation
 - Path traversal security validation
 - Available methods discovery
@@ -496,6 +539,7 @@ The Linear Router has comprehensive unit tests covering:
 - `tests/wildcard.test.ts` - Wildcard route tests
 - `tests/routenames.test.ts` - Static route matching tests
 - `tests/path-normalization.test.ts` - Path normalization tests
+- `tests/routename-validation.test.ts` - Route pattern validation tests
 - `tests/duplicate-routes.test.ts` - Duplicate route validation tests
 - `tests/security-path-traversal.test.ts` - Security validation tests
 - `tests/available-methods.test.ts` - Method discovery tests

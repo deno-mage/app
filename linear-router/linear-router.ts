@@ -204,8 +204,8 @@ export class LinearRouter implements MageRouter {
   /**
    * Get available methods for a given pathname.
    *
-   * @param pathname
-   * @returns
+   * @param url The URL to check for available methods
+   * @returns Array of unique HTTP methods available for this path
    */
   public getAvailableMethods(url: URL): string[] {
     const methods = this._entries
@@ -219,7 +219,8 @@ export class LinearRouter implements MageRouter {
       })
       .flatMap((entry) => entry.methods ?? []);
 
-    return methods;
+    // Deduplicate methods for defensive programming
+    return [...new Set(methods)];
   }
 
   /**
@@ -376,6 +377,11 @@ export class LinearRouter implements MageRouter {
       ? additionalMiddleware
       : [routenameOrMiddleware, ...additionalMiddleware];
 
+    // Validate routename format (check typeof to catch empty strings)
+    if (typeof routenameOrMiddleware === "string") {
+      this.validateRoutenameFormat(routenameOrMiddleware);
+    }
+
     // Validate for duplicate route patterns that would cause param conflicts
     if (routename && methods) {
       this.validateNoDuplicateRoute(routename, methods);
@@ -386,6 +392,116 @@ export class LinearRouter implements MageRouter {
       middleware: middleware.flat(),
       methods,
     });
+  }
+
+  /**
+   * Validates the format of a routename to prevent common mistakes and runtime errors.
+   *
+   * Checks:
+   * - Route must start with "/"
+   * - No consecutive slashes (e.g., "/users//posts")
+   * - No empty segments
+   * - Wildcard "*" only appears at the end
+   * - No duplicate parameter names
+   * - Parameter names must not be empty (e.g., "/users/:")
+   *
+   * @param routename The route pattern to validate
+   * @throws MageError if the routename is invalid
+   */
+  private validateRoutenameFormat(routename: string) {
+    // Must not be empty
+    if (routename.length === 0) {
+      throw new MageError(
+        'Route pattern cannot be empty. Use "/" for root route.',
+        500,
+      );
+    }
+
+    // Must start with /
+    if (!routename.startsWith("/")) {
+      throw new MageError(
+        `Route pattern must start with "/". Got: "${routename}"`,
+        500,
+      );
+    }
+
+    // Root route "/" is valid, no further validation needed
+    if (routename === "/") {
+      return;
+    }
+
+    // Check for consecutive slashes
+    if (routename.includes("//")) {
+      throw new MageError(
+        `Route pattern cannot contain consecutive slashes. Got: "${routename}"`,
+        500,
+      );
+    }
+
+    const parts = routename.split("/");
+    const paramNames = new Set<string>();
+    let foundWildcard = false;
+
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i];
+
+      // Skip empty first segment (from leading /)
+      if (i === 0 && part === "") {
+        continue;
+      }
+
+      // Empty segment (shouldn't happen if no consecutive slashes, but check anyway)
+      if (part === "") {
+        throw new MageError(
+          `Route pattern contains empty segment. Got: "${routename}"`,
+          500,
+        );
+      }
+
+      // Check for wildcard
+      if (part === "*") {
+        foundWildcard = true;
+        // Wildcard must be at the end
+        if (i !== parts.length - 1) {
+          throw new MageError(
+            `Wildcard "*" must be the last segment in route pattern. Got: "${routename}"`,
+            500,
+          );
+        }
+        continue;
+      }
+
+      // Can't have segments after wildcard (already checked above, but be defensive)
+      if (foundWildcard) {
+        throw new MageError(
+          `No segments allowed after wildcard "*". Got: "${routename}"`,
+          500,
+        );
+      }
+
+      // Check parameter names
+      if (part.startsWith(":")) {
+        const paramName = part.substring(1);
+
+        // Empty param name
+        if (paramName === "") {
+          throw new MageError(
+            `Parameter name cannot be empty. Got: "${part}" in route "${routename}"`,
+            500,
+          );
+        }
+
+        // Duplicate param name
+        if (paramNames.has(paramName)) {
+          throw new MageError(
+            `Duplicate parameter name ":${paramName}" in route pattern "${routename}"`,
+            500,
+          );
+        }
+
+        paramNames.add(paramName);
+      }
+    }
   }
 
   /**
