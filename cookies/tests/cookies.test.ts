@@ -40,6 +40,29 @@ beforeAll(() => {
     c.text(cookie!);
   });
 
+  server.app.get("/set-signed", async (c) => {
+    await setCookie(c, "signed-cookie", "secret-value", {
+      secret: "my-secret-key",
+    });
+  });
+
+  server.app.get("/get-signed", async (c) => {
+    const cookie = await getCookie(c, "signed-cookie", "my-secret-key");
+    c.text(cookie ?? "null");
+  });
+
+  server.app.get("/get-signed-invalid", async (c) => {
+    const cookie = await getCookie(c, "signed-cookie", "wrong-secret");
+    c.text(cookie ?? "null");
+  });
+
+  server.app.get("/delete-with-options", (c) => {
+    deleteCookie(c, "delete-cookie", {
+      path: "/admin",
+      domain: "example.com",
+    });
+  });
+
   server.start();
 });
 
@@ -196,5 +219,90 @@ describe("cookies", () => {
     });
 
     expect(await response.text()).toBe("a=b");
+  });
+
+  it("should set signed cookie", async () => {
+    const response = await fetch(server.url("/set-signed"), {
+      method: "GET",
+    });
+
+    const setCookieHeader = response.headers.getSetCookie()[0];
+    expect(setCookieHeader).toContain("signed-cookie=s:");
+    expect(setCookieHeader).toMatch(/s:secret-value\.[a-f0-9]{64}/);
+  });
+
+  it("should get signed cookie with valid secret", async () => {
+    // First set the signed cookie
+    const setResponse = await fetch(server.url("/set-signed"));
+    const signedCookie = setResponse.headers.getSetCookie()[0].split("=")[1];
+
+    // Then get it back with the correct secret
+    const response = await fetch(server.url("/get-signed"), {
+      method: "GET",
+      headers: {
+        Cookie: `signed-cookie=${signedCookie}`,
+      },
+    });
+
+    expect(await response.text()).toBe("secret-value");
+  });
+
+  it("should return null for signed cookie with invalid secret", async () => {
+    // First set the signed cookie
+    const setResponse = await fetch(server.url("/set-signed"));
+    const signedCookie = setResponse.headers.getSetCookie()[0].split("=")[1];
+
+    // Then try to get it with wrong secret
+    const response = await fetch(server.url("/get-signed-invalid"), {
+      method: "GET",
+      headers: {
+        Cookie: `signed-cookie=${signedCookie}`,
+      },
+    });
+
+    expect(await response.text()).toBe("null");
+  });
+
+  it("should return null for signed cookie with malformed signature", async () => {
+    const response = await fetch(server.url("/get-signed"), {
+      method: "GET",
+      headers: {
+        Cookie: "signed-cookie=s:secret-value.invalidsignature",
+      },
+    });
+
+    expect(await response.text()).toBe("null");
+  });
+
+  it("should return null for signed cookie without signature", async () => {
+    const response = await fetch(server.url("/get-signed"), {
+      method: "GET",
+      headers: {
+        Cookie: "signed-cookie=s:secret-value",
+      },
+    });
+
+    expect(await response.text()).toBe("null");
+  });
+
+  it("should delete cookie with path and domain options", async () => {
+    const response = await fetch(server.url("/delete-with-options"), {
+      method: "GET",
+    });
+
+    expect(response.headers.getSetCookie()).toEqual([
+      "delete-cookie=; Max-Age=0; Path=/admin; Domain=example.com",
+    ]);
+  });
+
+  it("should return null for cookie with no equals sign", async () => {
+    const response = await fetch(server.url("/get"), {
+      method: "GET",
+      headers: {
+        Cookie: "get-cookie",
+      },
+    });
+
+    expect(await response.text()).toBe("");
   });
 });
