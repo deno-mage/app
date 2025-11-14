@@ -124,6 +124,28 @@ beforeAll(() => {
     },
   );
 
+  // Test streaming compression path (exceeds bufferThreshold)
+  server.app.get(
+    "/streaming",
+    compression({ bufferThreshold: 5000 }), // 5KB threshold
+    (c) => {
+      // Create a 10KB response to exceed bufferThreshold
+      const largeText = "Hello World! ".repeat(1000); // ~13KB > 5KB threshold
+      return c.text(largeText);
+    },
+  );
+
+  // Test buffered compression path (within bufferThreshold)
+  server.app.get(
+    "/buffered",
+    compression({ bufferThreshold: 20000 }), // 20KB threshold
+    (c) => {
+      // Create a 13KB response to stay within bufferThreshold
+      const largeText = "Hello World! ".repeat(1000); // ~13KB < 20KB threshold
+      return c.text(largeText);
+    },
+  );
+
   server.start();
 });
 
@@ -297,5 +319,41 @@ describe("compression", () => {
 
     const text = await response.text();
     expect(text).toBe("Hello World! ".repeat(1000));
+  });
+
+  it("should use streaming compression for large responses (exceeds bufferThreshold)", async () => {
+    const response = await fetch(server.url("/streaming"), {
+      headers: {
+        "Accept-Encoding": "gzip",
+      },
+    });
+
+    // Streaming path should still compress (indicated by Vary header)
+    expect(response.headers.get("Vary")).toBe("Accept-Encoding");
+
+    // Verify content was correctly decompressed
+    const text = await response.text();
+    expect(text).toBe("Hello World! ".repeat(1000));
+
+    // Note: We can't verify lack of Content-Length from the client side
+    // because Deno's fetch API may not expose it after decompression
+  });
+
+  it("should use buffered compression for smaller responses (within bufferThreshold)", async () => {
+    const response = await fetch(server.url("/buffered"), {
+      headers: {
+        "Accept-Encoding": "gzip",
+      },
+    });
+
+    // Buffered path should compress (indicated by Vary header)
+    expect(response.headers.get("Vary")).toBe("Accept-Encoding");
+
+    // Verify content was correctly decompressed
+    const text = await response.text();
+    expect(text).toBe("Hello World! ".repeat(1000));
+
+    // Note: Content-Length is set in buffered path but may not be visible
+    // after automatic decompression by fetch API
   });
 });

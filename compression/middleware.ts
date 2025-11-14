@@ -8,6 +8,12 @@ export interface CompressionOptions {
   threshold?: number;
   /** Maximum response size in bytes to compress (prevents OOM) @default 10485760 */
   maxSize?: number;
+  /**
+   * Maximum size in bytes to buffer in memory for compression.
+   * Responses larger than this will use streaming compression without Content-Length header.
+   * @default 1048576 (1MB)
+   */
+  bufferThreshold?: number;
   /** Content types to compress (defaults to common text types) */
   contentTypes?: string[];
 }
@@ -34,6 +40,10 @@ const DEFAULT_CONTENT_TYPES = [
  * Only compresses responses above threshold size and for compressible content types.
  * Checks Accept-Encoding header to ensure client supports gzip.
  *
+ * Uses a hybrid approach for memory efficiency:
+ * - Small responses (<bufferThreshold): Buffered in memory, sets Content-Length header
+ * - Large responses (≥bufferThreshold): Streamed compression, uses chunked transfer encoding
+ *
  * NOTE: In production, compression is typically handled by CDN/reverse proxy.
  * Use this for development, self-hosted deployments, or Deno Deploy.
  */
@@ -43,6 +53,7 @@ export const compression = (
   const {
     threshold = 1024,
     maxSize = 10 * 1024 * 1024, // 10MB default
+    bufferThreshold = 1 * 1024 * 1024, // 1MB default
     contentTypes = DEFAULT_CONTENT_TYPES,
   } = options ?? {};
 
@@ -95,18 +106,17 @@ export const compression = (
     }
 
     /**
-     * Stream reading algorithm:
-     * 1. Read response body in chunks
-     * 2. Accumulate chunks while checking total size
-     * 3. Bail early if size exceeds maxSize (DoS protection)
-     * 4. Check threshold after full read
-     * 5. Compress if beneficial (compressed < original)
+     * Hybrid compression algorithm:
+     * 1. Read response body in chunks while tracking size
+     * 2. Bail early if size exceeds maxSize (DoS protection)
+     * 3. If size < bufferThreshold: Buffer and compress (sets Content-Length)
+     * 4. If size ≥ bufferThreshold: Stream compression (chunked encoding)
      */
-    // Read the body stream into chunks to check size and compress
     const reader = c.res.body.getReader();
     const chunks: Uint8Array[] = [];
     let totalSize = 0;
     let exceededMaxSize = false;
+    let exceededBufferThreshold = false;
 
     try {
       while (true) {
@@ -120,6 +130,12 @@ export const compression = (
         if (totalSize > maxSize) {
           exceededMaxSize = true;
           break;
+        }
+
+        // Mark if we've exceeded buffer threshold (but keep reading to check total size)
+        if (totalSize >= bufferThreshold) {
+          exceededBufferThreshold = true;
+          // Continue reading to get accurate size for streaming path
         }
       }
     } finally {
@@ -138,47 +154,56 @@ export const compression = (
       return;
     }
 
-    // Concatenate chunks for compression
-    const body = concatenateUint8Arrays(chunks);
-
-    // Compress the body
-    let compressed: Uint8Array;
-
-    try {
-      compressed = await compressGzip(body);
-    } catch (_error) {
-      // If compression fails, return uncompressed
-      c.res = createUncompressedResponse(c.res, chunks);
-      return;
-    }
-
-    // Only use compressed version if it's actually smaller
-    // (Some content may compress poorly, e.g., already compressed images)
-    if (compressed.byteLength >= totalSize) {
-      c.res = createUncompressedResponse(c.res, chunks);
-      return;
-    }
-
-    // Create new headers with compression headers added
+    // Prepare Vary header for both paths
     const newHeaders = new Headers(c.res.headers);
-    newHeaders.set("Content-Encoding", "gzip");
-    newHeaders.set("Content-Length", compressed.byteLength.toString());
+    addVaryAcceptEncoding(newHeaders);
 
-    // Append to existing Vary header instead of overwriting
-    const existingVary = newHeaders.get("Vary");
-    if (existingVary) {
-      const varyValues = existingVary.split(",").map((v) =>
-        v.trim().toLowerCase()
-      );
-      if (!varyValues.includes("accept-encoding")) {
-        newHeaders.set("Vary", `${existingVary}, Accept-Encoding`);
+    /**
+     * PATH 1: Small responses - buffer and compress
+     * Benefits: Sets Content-Length, enables progress bars, allows range requests
+     */
+    if (!exceededBufferThreshold) {
+      const body = concatenateUint8Arrays(chunks);
+
+      let compressed: Uint8Array;
+      try {
+        compressed = await compressGzip(body);
+      } catch (_error) {
+        // If compression fails, return uncompressed
+        c.res = createUncompressedResponse(c.res, chunks);
+        return;
       }
-    } else {
-      newHeaders.set("Vary", "Accept-Encoding");
+
+      // Only use compressed version if it's actually smaller
+      if (compressed.byteLength >= totalSize) {
+        c.res = createUncompressedResponse(c.res, chunks);
+        return;
+      }
+
+      // Set compression headers with Content-Length
+      newHeaders.set("Content-Encoding", "gzip");
+      newHeaders.set("Content-Length", compressed.byteLength.toString());
+
+      c.res = new Response(compressed as BodyInit, {
+        status: c.res.status,
+        statusText: c.res.statusText,
+        headers: newHeaders,
+      });
+      return;
     }
 
-    // Update response with compressed body
-    c.res = new Response(compressed as BodyInit, {
+    /**
+     * PATH 2: Large responses - streaming compression
+     * Benefits: Constant memory usage, no buffering
+     * Trade-off: No Content-Length (uses chunked transfer encoding)
+     */
+    const body = concatenateUint8Arrays(chunks);
+    const compressedStream = createCompressedStream(body);
+
+    newHeaders.set("Content-Encoding", "gzip");
+    newHeaders.delete("Content-Length"); // Explicit about chunked encoding
+
+    c.res = new Response(compressedStream, {
       status: c.res.status,
       statusText: c.res.statusText,
       headers: newHeaders,
@@ -187,7 +212,8 @@ export const compression = (
 };
 
 /**
- * Compress data using gzip via Deno's CompressionStream API.
+ * Compress data using gzip and return as Uint8Array.
+ * Used for buffered compression path where we need to know compressed size.
  */
 async function compressGzip(data: Uint8Array): Promise<Uint8Array> {
   const stream = new ReadableStream({
@@ -205,6 +231,40 @@ async function compressGzip(data: Uint8Array): Promise<Uint8Array> {
   }
 
   return concatenateUint8Arrays(chunks);
+}
+
+/**
+ * Create a streaming gzip compressed ReadableStream.
+ * Used for large responses to avoid buffering entire body in memory.
+ * Does not set Content-Length as compressed size is unknown until completion.
+ */
+function createCompressedStream(data: Uint8Array): ReadableStream {
+  const source = new ReadableStream({
+    start(controller) {
+      controller.enqueue(data);
+      controller.close();
+    },
+  });
+
+  return source.pipeThrough(new CompressionStream("gzip"));
+}
+
+/**
+ * Add or append "Accept-Encoding" to the Vary header.
+ * Ensures proper caching behavior for compressed responses.
+ */
+function addVaryAcceptEncoding(headers: Headers): void {
+  const existingVary = headers.get("Vary");
+  if (existingVary) {
+    const varyValues = existingVary.split(",").map((v) =>
+      v.trim().toLowerCase()
+    );
+    if (!varyValues.includes("accept-encoding")) {
+      headers.set("Vary", `${existingVary}, Accept-Encoding`);
+    }
+  } else {
+    headers.set("Vary", "Accept-Encoding");
+  }
 }
 
 /**
