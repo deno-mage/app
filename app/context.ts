@@ -1,5 +1,6 @@
 import { serveFile } from "@std/http";
 import type { MageRequest } from "./mod.ts";
+import { MageResponse } from "./response.ts";
 import {
   type ContentfulStatus,
   type ContentlessStatus,
@@ -19,16 +20,12 @@ interface MageContextArgs {
  * request/response cycle and is used to interact with the request and response.
  */
 export class MageContext {
-  private _res: Response;
+  private _res = new MageResponse();
   private _req: MageRequest;
   private _data: Map<string, unknown>;
 
-  public get res(): Response {
+  public get res(): MageResponse {
     return this._res;
-  }
-
-  public set res(res: Response) {
-    this._res = res;
   }
 
   public get req(): MageRequest {
@@ -37,7 +34,6 @@ export class MageContext {
 
   public constructor(args: MageContextArgs) {
     this._req = args.req;
-    this._res = new Response();
     this._data = new Map<string, unknown>();
   }
 
@@ -48,11 +44,8 @@ export class MageContext {
 
   /** Send a text response */
   public text(body: string, status?: ContentfulStatus) {
-    this._res = new Response(body, {
-      status,
-      headers: this._res.headers,
-    });
-
+    this._res.setBody(body);
+    this._res.setStatus(status ?? 200);
     this.header("Content-Type", "text/plain; charset=UTF-8");
   }
 
@@ -61,15 +54,9 @@ export class MageContext {
     body: { [key: string]: unknown } | readonly unknown[],
     status?: ContentfulStatus,
   ) {
-    this._res = new Response(JSON.stringify(body), {
-      status,
-      headers: this._res.headers,
-    });
-
-    this.header(
-      "Content-Type",
-      "application/json; charset=UTF-8",
-    );
+    this._res.setBody(JSON.stringify(body));
+    this._res.setStatus(status ?? 200);
+    this.header("Content-Type", "application/json; charset=UTF-8");
   }
 
   /** Send an HTML response */
@@ -81,10 +68,8 @@ export class MageContext {
 
   /** Send an empty response with optional status code (defaults to 204) */
   public empty(status?: ContentlessStatus) {
-    this._res = new Response(null, {
-      status: status ?? 204,
-      headers: this._res.headers,
-    });
+    this._res.setBody(null);
+    this._res.setStatus(status ?? 204);
   }
 
   /** Send a 404 Not Found response */
@@ -101,11 +86,8 @@ export class MageContext {
    * Redirect to the provided location (defaults to 307 Temporary Redirect).
    */
   public redirect(location: URL | string, status?: RedirectStatus) {
-    this._res = new Response(null, {
-      status: status ?? 307,
-      headers: this._res.headers,
-    });
-
+    this._res.setBody(null);
+    this._res.setStatus(status ?? 307);
     this.header("Location", location.toString());
   }
 
@@ -133,30 +115,23 @@ export class MageContext {
       }
     }
 
-    this._res = await fetch(url, {
+    const response = await fetch(url, {
       method: this._req.method,
       headers: this._req.raw.headers,
       body: this._req.raw.body,
     });
+
+    this._res.setExternal(response);
   }
 
   /** Serve a static file from the filesystem */
   public async file(filepath: string) {
     const fileInfo = await Deno.stat(filepath);
 
-    // Deno's`serveFile()` will set the response headers, so we need to save the current
-    // headers before calling it to preserve any headers that were set before
-    const currentHeader = this._res.headers;
+    const response = await serveFile(this._req.raw, filepath, { fileInfo });
 
-    this._res = await serveFile(this._req.raw, filepath, { fileInfo });
-
-    // Preserve the headers that were set before calling `serveFile` but only if
-    // they are not already set in the response
-    for (const [key, value] of currentHeader.entries()) {
-      if (!this._res.headers.has(key)) {
-        this.header(key, value);
-      }
-    }
+    // setExternal will merge headers, preserving user-set headers
+    this._res.setExternal(response);
   }
 
   /**
@@ -171,7 +146,7 @@ export class MageContext {
 
     const { socket, response } = Deno.upgradeWebSocket(this._req.raw);
 
-    this._res = response;
+    this._res.setExternal(response);
 
     handleSocket(socket);
   }

@@ -40,6 +40,7 @@ const DEFAULT_CONTENT_TYPES = [
  * Only compresses responses above threshold size and for compressible content types.
  * Checks Accept-Encoding header to ensure client supports gzip.
  *
+ * With MageResponse, body access is direct (no streaming overhead).
  * Uses a hybrid approach for memory efficiency:
  * - Small responses (<bufferThreshold): Buffered in memory, sets Content-Length header
  * - Large responses (≥bufferThreshold): Streamed compression, uses chunked transfer encoding
@@ -59,9 +60,6 @@ export const compression = (
 
   return async (c, next) => {
     await next();
-
-    // Only compress if we have a response
-    if (!c.res) return;
 
     // Check if already compressed
     if (c.res.headers.get("Content-Encoding")) {
@@ -86,128 +84,77 @@ export const compression = (
 
     if (!shouldCompress) return;
 
-    // Get response body without cloning
-    if (!c.res.body) {
+    // Get body directly from MageResponse (no streaming overhead!)
+    const body = c.res.body;
+    if (!body) {
       return;
     }
 
-    // Fast path: check Content-Length header first to avoid reading small responses
-    const contentLengthHeader = c.res.headers.get("Content-Length");
-    if (contentLengthHeader) {
-      const contentLength = parseInt(contentLengthHeader, 10);
-      if (!isNaN(contentLength)) {
-        if (contentLength < threshold) {
-          return; // Skip without reading body
-        }
-        if (contentLength > maxSize) {
-          return; // Skip without reading body
-        }
-      }
+    // Convert body to Uint8Array for size checking and compression
+    let bodyBytes: Uint8Array;
+    if (typeof body === "string") {
+      bodyBytes = new TextEncoder().encode(body);
+    } else if (body instanceof Uint8Array) {
+      bodyBytes = body;
+    } else {
+      // Body is ReadableStream or other BodyInit - skip compression
+      // (This happens with external Responses like file serving)
+      return;
     }
+
+    const bodySize = bodyBytes.byteLength;
+
+    // Check size thresholds
+    if (bodySize < threshold) {
+      return; // Too small to compress
+    }
+    if (bodySize > maxSize) {
+      return; // Too large (DoS protection)
+    }
+
+    // Add Vary header for proper caching
+    addVaryAcceptEncoding(c.res.headers);
 
     /**
      * Hybrid compression algorithm:
-     * 1. Read response body in chunks while tracking size
-     * 2. Bail early if size exceeds maxSize (DoS protection)
-     * 3. If size < bufferThreshold: Buffer and compress (sets Content-Length)
-     * 4. If size ≥ bufferThreshold: Stream compression (chunked encoding)
+     * - Small responses (<bufferThreshold): Compress and set Content-Length
+     * - Large responses (≥bufferThreshold): Streaming compression (no Content-Length)
      */
-    const reader = c.res.body.getReader();
-    const chunks: Uint8Array[] = [];
-    let totalSize = 0;
-    let exceededMaxSize = false;
-    let exceededBufferThreshold = false;
 
-    try {
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        chunks.push(value);
-        totalSize += value.byteLength;
-
-        // Bail out if response is too large to prevent OOM
-        if (totalSize > maxSize) {
-          exceededMaxSize = true;
-          break;
-        }
-
-        // Mark if we've exceeded buffer threshold (but keep reading to check total size)
-        if (totalSize >= bufferThreshold) {
-          exceededBufferThreshold = true;
-          // Continue reading to get accurate size for streaming path
-        }
-      }
-    } finally {
-      reader.releaseLock();
-    }
-
-    // If exceeded max size, return uncompressed
-    if (exceededMaxSize) {
-      c.res = createUncompressedResponse(c.res, chunks);
-      return;
-    }
-
-    // Check threshold
-    if (totalSize < threshold) {
-      c.res = createUncompressedResponse(c.res, chunks);
-      return;
-    }
-
-    // Prepare Vary header for both paths
-    const newHeaders = new Headers(c.res.headers);
-    addVaryAcceptEncoding(newHeaders);
-
-    /**
-     * PATH 1: Small responses - buffer and compress
-     * Benefits: Sets Content-Length, enables progress bars, allows range requests
-     */
-    if (!exceededBufferThreshold) {
-      const body = concatenateUint8Arrays(chunks);
-
+    if (bodySize < bufferThreshold) {
+      /**
+       * PATH 1: Buffered compression
+       * Benefits: Sets Content-Length, enables progress bars, allows range requests
+       */
       let compressed: Uint8Array;
       try {
-        compressed = await compressGzip(body);
+        compressed = await compressGzip(bodyBytes);
       } catch (_error) {
-        // If compression fails, return uncompressed
-        c.res = createUncompressedResponse(c.res, chunks);
+        // If compression fails, skip it
         return;
       }
 
       // Only use compressed version if it's actually smaller
-      if (compressed.byteLength >= totalSize) {
-        c.res = createUncompressedResponse(c.res, chunks);
-        return;
+      if (compressed.byteLength >= bodySize) {
+        return; // Skip compression
       }
 
-      // Set compression headers with Content-Length
-      newHeaders.set("Content-Encoding", "gzip");
-      newHeaders.set("Content-Length", compressed.byteLength.toString());
+      // Update response with compressed body
+      c.res.setBody(compressed as BodyInit);
+      c.res.headers.set("Content-Encoding", "gzip");
+      c.res.headers.set("Content-Length", compressed.byteLength.toString());
+    } else {
+      /**
+       * PATH 2: Streaming compression
+       * Benefits: Constant memory usage, no buffering
+       * Trade-off: No Content-Length (uses chunked transfer encoding)
+       */
+      const compressedStream = createCompressedStream(bodyBytes);
 
-      c.res = new Response(compressed as BodyInit, {
-        status: c.res.status,
-        statusText: c.res.statusText,
-        headers: newHeaders,
-      });
-      return;
+      c.res.setBody(compressedStream);
+      c.res.headers.set("Content-Encoding", "gzip");
+      c.res.headers.delete("Content-Length"); // Chunked encoding
     }
-
-    /**
-     * PATH 2: Large responses - streaming compression
-     * Benefits: Constant memory usage, no buffering
-     * Trade-off: No Content-Length (uses chunked transfer encoding)
-     */
-    const body = concatenateUint8Arrays(chunks);
-    const compressedStream = createCompressedStream(body);
-
-    newHeaders.set("Content-Encoding", "gzip");
-    newHeaders.delete("Content-Length"); // Explicit about chunked encoding
-
-    c.res = new Response(compressedStream, {
-      status: c.res.status,
-      statusText: c.res.statusText,
-      headers: newHeaders,
-    });
   };
 };
 
@@ -279,19 +226,4 @@ function concatenateUint8Arrays(arrays: Uint8Array[]): Uint8Array {
     offset += arr.length;
   }
   return result;
-}
-
-/**
- * Recreate response from chunks when compression is skipped.
- */
-function createUncompressedResponse(
-  originalResponse: Response,
-  chunks: Uint8Array[],
-): Response {
-  const body = concatenateUint8Arrays(chunks);
-  return new Response(body as BodyInit, {
-    status: originalResponse.status,
-    statusText: originalResponse.statusText,
-    headers: originalResponse.headers,
-  });
 }

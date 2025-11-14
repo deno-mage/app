@@ -120,15 +120,40 @@ import { rateLimit } from "@mage/app/rate-limit";
 
 ## Performance
 
-**Cold start:** < 1ms for typical applications (< 100 routes)
+### Benchmarks
 
-**Request handling:** Sub-millisecond overhead for routing and middleware
+**Test Environment:**
+
+- Hardware: Apple M1 Max, 64GB RAM
+- Deno: v2.5.6 (stable)
+- Tool: bombardier v2.0.2 (`--fasthttp -d 10s -c 100`)
+
+**Results:**
+
+| Test                 | Req/sec | Latency (avg) | Throughput |
+| -------------------- | ------- | ------------- | ---------- |
+| Simple text response | 53,995  | 1.85ms        | 11.07 MB/s |
+| Route with parameter | 49,515  | 2.02ms        | 11.05 MB/s |
+| JSON response        | 52,373  | 1.91ms        | 11.94 MB/s |
+
+**What this means:**
+
+- Handles 4.3+ billion requests per day
+- ~15-30% faster than Oak (most popular Deno framework)
+- ~2.5x slower than Hono (fastest Deno framework)
+- Performance won't be a bottleneck for 99.9% of applications
+
+**Cold start:** < 1ms for typical applications (< 100 routes)
 
 **Optimized for:**
 
 - Serverless functions (AWS Lambda, Cloudflare Workers, Deno Deploy)
 - Edge computing with frequent cold starts
-- Applications prioritizing startup time over peak throughput
+- Applications prioritizing startup time and maintainability over peak
+  throughput
+
+See [benchmarks/framework-comparison.md](./benchmarks/framework-comparison.md)
+for detailed analysis.
 
 ## Example Application
 

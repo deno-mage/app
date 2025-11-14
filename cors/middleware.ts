@@ -95,7 +95,7 @@ export const cors = (options?: CORSOptions): MageMiddleware => {
     }
 
     // If no response body was set by subsequent handlers, set empty response
-    if (!c.res.body && !c.res.bodyUsed) {
+    if (!c.res.hasBody()) {
       c.empty();
     }
   };

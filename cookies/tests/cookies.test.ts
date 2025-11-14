@@ -88,6 +88,9 @@ describe("cookies", () => {
     });
 
     expect(response.headers.getSetCookie()).toEqual(["set-cookie=123"]);
+
+    // Consume response body to avoid resource leak
+    await response.text();
   });
 
   it("should delete cookie", async () => {
@@ -98,6 +101,9 @@ describe("cookies", () => {
     expect(response.headers.getSetCookie()).toEqual([
       "delete-cookie=; Max-Age=0",
     ]);
+
+    // Consume response body to avoid resource leak
+    await response.text();
   });
 
   it("should set cookie with options", async () => {
@@ -112,6 +118,9 @@ describe("cookies", () => {
         ).toUTCString()
       }; Path=/; Domain=example.com; Secure; HttpOnly; SameSite=Strict`,
     ]);
+
+    // Consume response body to avoid resource leak
+    await response.text();
   });
 
   it("should get null if cookie is not set (no cookies)", async () => {
@@ -229,12 +238,16 @@ describe("cookies", () => {
     const setCookieHeader = response.headers.getSetCookie()[0];
     expect(setCookieHeader).toContain("signed-cookie=s:");
     expect(setCookieHeader).toMatch(/s:secret-value\.[a-f0-9]{64}/);
+
+    // Consume response body to avoid resource leak
+    await response.text();
   });
 
   it("should get signed cookie with valid secret", async () => {
     // First set the signed cookie
     const setResponse = await fetch(server.url("/set-signed"));
     const signedCookie = setResponse.headers.getSetCookie()[0].split("=")[1];
+    await setResponse.text(); // Consume body to avoid resource leak
 
     // Then get it back with the correct secret
     const response = await fetch(server.url("/get-signed"), {
@@ -251,6 +264,7 @@ describe("cookies", () => {
     // First set the signed cookie
     const setResponse = await fetch(server.url("/set-signed"));
     const signedCookie = setResponse.headers.getSetCookie()[0].split("=")[1];
+    await setResponse.text(); // Consume body to avoid resource leak
 
     // Then try to get it with wrong secret
     const response = await fetch(server.url("/get-signed-invalid"), {
@@ -293,6 +307,9 @@ describe("cookies", () => {
     expect(response.headers.getSetCookie()).toEqual([
       "delete-cookie=; Max-Age=0; Path=/admin; Domain=example.com",
     ]);
+
+    // Consume response body to avoid resource leak
+    await response.text();
   });
 
   it("should return null for cookie with no equals sign", async () => {

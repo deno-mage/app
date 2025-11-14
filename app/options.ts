@@ -14,12 +14,14 @@ interface OptionsOptions {
  */
 export const options = (options: OptionsOptions): MageMiddleware => {
   return async (c, next) => {
-    c.empty();
+    if (c.req.method === "OPTIONS") {
+      c.empty();
 
-    c.header(
-      "Allow",
-      options.getAllowedMethods().join(", "),
-    );
+      c.header(
+        "Allow",
+        options.getAllowedMethods().join(", "),
+      );
+    }
 
     await next();
   };
