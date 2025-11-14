@@ -1,10 +1,8 @@
 import type { MageMiddleware } from "./router.ts";
 
 /**
- * Responds with a 404 Not Found status code. This middleware
- * will ignore OPTIONS requests.
- *
- * @returns MageMiddleware
+ * Respond with 404 Not Found.
+ * Ignores OPTIONS requests (handled by options middleware).
  */
 export const notFound = (): MageMiddleware => {
   return async (c, next) => {

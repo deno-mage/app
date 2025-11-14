@@ -10,11 +10,32 @@ import { csrf } from "@mage/app/csrf";
 
 ## Usage
 
+**Basic (same-origin only):**
+
+```typescript
+app.use(csrf()); // Only allows same-origin requests
+```
+
+**Allow specific origins:**
+
 ```typescript
 app.use(
   csrf({
-    origin: ["https://example.com"],
-    secFetchSite: ["same-origin", "same-site"],
+    origin: ["https://example.com", "https://app.example.com"],
+  }),
+);
+```
+
+**Custom validation logic:**
+
+```typescript
+app.use(
+  csrf({
+    origin: (origin, c) => {
+      // Allow specific origins or subdomains
+      return origin === c.req.url.origin ||
+        origin.endsWith(".example.com");
+    },
   }),
 );
 ```

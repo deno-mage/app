@@ -159,11 +159,7 @@ const statusTextMap = {
   511: "Network Authentication Required",
 };
 
-/**
- * Get default status text for a status
- * @param status The status
- * @returns The status text
- */
+/** Get default status text for a status code */
 export const statusText = (status: keyof typeof statusTextMap): string => {
   return statusTextMap[status];
 };

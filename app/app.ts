@@ -14,15 +14,7 @@ import { MageError } from "./error.ts";
  * Options for creating a MageApp
  */
 export interface MageAppOptions {
-  /**
-   * Custom router implementation. Defaults to LinearRouter.
-   *
-   * Use LinearRouter for:
-   * - Serverless functions with frequent cold starts
-   * - Small to medium applications (< 100 routes)
-   *
-   * Future: RadixRouter for long-running servers with many routes
-   */
+  /** Custom router implementation (defaults to LinearRouter) */
   router?: MageRouter;
 }
 
@@ -32,30 +24,20 @@ export interface MageAppOptions {
 export class MageApp {
   private _router: MageRouter;
 
-  /**
-   * Create a new MageApp.
-   *
-   * @param options Optional configuration including custom router
-   */
   constructor(options?: MageAppOptions) {
     this._router = options?.router ?? new LinearRouter();
   }
 
   /**
-   * Adds middleware to the application that will be run for every request.
-   *
-   * @param middleware The middleware to add
+   * Register global middleware that runs for every request.
    */
   public use(...middleware: (MageMiddleware | MageMiddleware[])[]): void {
     this._router.use(...middleware);
   }
 
   /**
-   * Adds middleware to the application that will be run for every method.
-   * If a routename is provided, the middleware will only run for that route.
-   *
-   * @param routenameOrMiddleware The route name or middleware
-   * @param middleware Additional middleware
+   * Register middleware for all HTTP methods.
+   * Accepts optional route pattern to limit which paths the middleware runs for.
    */
   public all(
     routenameOrMiddleware: string | MageMiddleware | MageMiddleware[],
@@ -65,11 +47,8 @@ export class MageApp {
   }
 
   /**
-   * Adds middleware to the application that will be run for GET requests.
-   * If a routename is provided, the middleware will only run for that route.
-   *
-   * @param routenameOrMiddleware The route name or middleware
-   * @param middleware Additional middleware
+   * Register middleware for GET and HEAD requests.
+   * Accepts optional route pattern to limit which paths the middleware runs for.
    */
   public get(
     routenameOrMiddleware: string | MageMiddleware | MageMiddleware[],
@@ -79,11 +58,8 @@ export class MageApp {
   }
 
   /**
-   * Adds middleware to the application that will be run for POST requests.
-   * If a routename is provided, the middleware will only run for that route.
-   *
-   * @param routenameOrMiddleware The route name or middleware
-   * @param middleware Additional middleware
+   * Register middleware for POST requests.
+   * Accepts optional route pattern to limit which paths the middleware runs for.
    */
   public post(
     routenameOrMiddleware: string | MageMiddleware | MageMiddleware[],
@@ -93,11 +69,8 @@ export class MageApp {
   }
 
   /**
-   * Adds middleware to the application that will be run for PUT requests.
-   * If a routename is provided, the middleware will only run for that route.
-   *
-   * @param routenameOrMiddleware The route name or middleware
-   * @param middleware Additional middleware
+   * Register middleware for PUT requests.
+   * Accepts optional route pattern to limit which paths the middleware runs for.
    */
   public put(
     routenameOrMiddleware: string | MageMiddleware | MageMiddleware[],
@@ -107,11 +80,8 @@ export class MageApp {
   }
 
   /**
-   * Adds middleware to the application that will be run for DELETE requests.
-   * If a routename is provided, the middleware will only run for that route.
-   *
-   * @param routenameOrMiddleware The route name or middleware
-   * @param middleware Additional middleware
+   * Register middleware for DELETE requests.
+   * Accepts optional route pattern to limit which paths the middleware runs for.
    */
   public delete(
     routenameOrMiddleware: string | MageMiddleware | MageMiddleware[],
@@ -121,11 +91,8 @@ export class MageApp {
   }
 
   /**
-   * Adds middleware to the application that will be run for PATCH requests.
-   * If a routename is provided, the middleware will only run for that route.
-   *
-   * @param routenameOrMiddleware The route name or middleware
-   * @param middleware Additional middleware
+   * Register middleware for PATCH requests.
+   * Accepts optional route pattern to limit which paths the middleware runs for.
    */
   public patch(
     routenameOrMiddleware: string | MageMiddleware | MageMiddleware[],
@@ -135,11 +102,8 @@ export class MageApp {
   }
 
   /**
-   * Adds middleware to the application that will be run for OPTIONS requests.
-   * If a routename is provided, the middleware will only run for that route.
-   *
-   * @param routenameOrMiddleware The route name or middleware
-   * @param middleware Additional middleware
+   * Register middleware for OPTIONS requests.
+   * Accepts optional route pattern to limit which paths the middleware runs for.
    */
   public options(
     routenameOrMiddleware: string | MageMiddleware | MageMiddleware[],
@@ -149,11 +113,8 @@ export class MageApp {
   }
 
   /**
-   * Adds middleware to the application that will be run for HEAD requests.
-   * If a routename is provided, the middleware will only run for that route.
-   *
-   * @param routenameOrMiddleware The route name or middleware
-   * @param middleware Additional middleware
+   * Register middleware for HEAD requests.
+   * Accepts optional route pattern to limit which paths the middleware runs for.
    */
   public head(
     routenameOrMiddleware: string | MageMiddleware | MageMiddleware[],
@@ -162,22 +123,11 @@ export class MageApp {
     this._router.head(routenameOrMiddleware, ...middleware);
   }
 
-  /**
-   * Handle a request and return a response.
-   *
-   * @param req The request to handle
-   * @returns Response
-   */
+  /** Handler function that processes incoming requests and returns responses */
   public handler: (req: Request) => Promise<Response> = this._handler.bind(
     this,
   );
 
-  /**
-   * Handle a request and return a response.
-   *
-   * @param req The request to handle
-   * @returns Response
-   */
   private async _handler(req: Request) {
     const url = new URL(req.url);
 

@@ -4,20 +4,11 @@ import type { MageMiddleware } from "../app/mod.ts";
  * Options for the compression middleware.
  */
 export interface CompressionOptions {
-  /**
-   * Minimum response size (in bytes) to compress.
-   * @default 1024
-   */
+  /** Minimum response size in bytes to compress @default 1024 */
   threshold?: number;
-  /**
-   * Maximum response size (in bytes) to compress. Prevents OOM on very large responses.
-   * @default 10485760 (10MB)
-   */
+  /** Maximum response size in bytes to compress (prevents OOM) @default 10485760 */
   maxSize?: number;
-  /**
-   * Content types to compress. If not specified, compresses common text types.
-   * @default ["text/*", "application/json", "application/javascript", ...]
-   */
+  /** Content types to compress (defaults to common text types) */
   contentTypes?: string[];
 }
 
@@ -38,20 +29,13 @@ const DEFAULT_CONTENT_TYPES = [
 ];
 
 /**
- * Compresses response bodies using gzip compression.
+ * Compress response bodies using gzip.
  *
- * Only compresses responses above a certain size threshold and for
- * compressible content types. Checks the Accept-Encoding header to ensure
- * the client supports gzip.
+ * Only compresses responses above threshold size and for compressible content types.
+ * Checks Accept-Encoding header to ensure client supports gzip.
  *
- * Note: In production, compression is typically handled by CDN/reverse proxy
- * (nginx, Cloudflare, etc.). Use this middleware for:
- * - Development environments
- * - Self-hosted deployments without reverse proxy
- * - Deno Deploy (which doesn't auto-compress)
- *
- * @param options Configuration options for compression
- * @returns MageMiddleware
+ * NOTE: In production, compression is typically handled by CDN/reverse proxy.
+ * Use this for development, self-hosted deployments, or Deno Deploy.
  */
 export const compression = (
   options?: CompressionOptions,
@@ -110,6 +94,14 @@ export const compression = (
       }
     }
 
+    /**
+     * Stream reading algorithm:
+     * 1. Read response body in chunks
+     * 2. Accumulate chunks while checking total size
+     * 3. Bail early if size exceeds maxSize (DoS protection)
+     * 4. Check threshold after full read
+     * 5. Compress if beneficial (compressed < original)
+     */
     // Read the body stream into chunks to check size and compress
     const reader = c.res.body.getReader();
     const chunks: Uint8Array[] = [];
@@ -161,6 +153,7 @@ export const compression = (
     }
 
     // Only use compressed version if it's actually smaller
+    // (Some content may compress poorly, e.g., already compressed images)
     if (compressed.byteLength >= totalSize) {
       c.res = createUncompressedResponse(c.res, chunks);
       return;
@@ -185,7 +178,7 @@ export const compression = (
     }
 
     // Update response with compressed body
-    c.res = new Response(compressed, {
+    c.res = new Response(compressed as BodyInit, {
       status: c.res.status,
       statusText: c.res.statusText,
       headers: newHeaders,
@@ -193,7 +186,9 @@ export const compression = (
   };
 };
 
-// Compression helpers using Deno's built-in APIs
+/**
+ * Compress data using gzip via Deno's CompressionStream API.
+ */
 async function compressGzip(data: Uint8Array): Promise<Uint8Array> {
   const stream = new ReadableStream({
     start(controller) {
@@ -212,6 +207,9 @@ async function compressGzip(data: Uint8Array): Promise<Uint8Array> {
   return concatenateUint8Arrays(chunks);
 }
 
+/**
+ * Concatenate multiple Uint8Array chunks into a single array.
+ */
 function concatenateUint8Arrays(arrays: Uint8Array[]): Uint8Array {
   const totalLength = arrays.reduce((acc, arr) => acc + arr.length, 0);
   const result = new Uint8Array(totalLength);
@@ -223,12 +221,15 @@ function concatenateUint8Arrays(arrays: Uint8Array[]): Uint8Array {
   return result;
 }
 
+/**
+ * Recreate response from chunks when compression is skipped.
+ */
 function createUncompressedResponse(
   originalResponse: Response,
   chunks: Uint8Array[],
 ): Response {
   const body = concatenateUint8Arrays(chunks);
-  return new Response(body, {
+  return new Response(body as BodyInit, {
     status: originalResponse.status,
     statusText: originalResponse.statusText,
     headers: originalResponse.headers,

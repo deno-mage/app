@@ -33,10 +33,8 @@ type CSPDirectives = {
  */
 export interface CSPOptions {
   /**
+   * CSP directives (static or dynamic function for nonce-based policies).
    * https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy#directives
-   *
-   * Can be a static object or a function that returns directives based on the request context.
-   * Use a function for dynamic CSP policies (e.g., with nonces).
    */
   directives: CSPDirectives | ((c: MageContext) => CSPDirectives);
 }
@@ -73,7 +71,8 @@ const directiveKeyMap: Record<
 };
 
 /**
- * Build CSP header string from directives
+ * Build CSP header string from directives.
+ * Converts camelCase keys to kebab-case and joins directives with semicolons.
  */
 const buildHeader = (directives: CSPDirectives): string => {
   return Object.entries(directives)
@@ -96,12 +95,7 @@ const buildHeader = (directives: CSPDirectives): string => {
     .join(";");
 };
 
-/**
- * Apply a Content-Security-Policy header based on the provided options.
- *
- * @param options
- * @returns MageMiddleware
- */
+/** Apply Content-Security-Policy header with provided directives */
 export const csp = (options?: CSPOptions): MageMiddleware => {
   const defaultDirectives = {
     defaultSrc: ["'self'"],

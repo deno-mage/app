@@ -9,20 +9,10 @@ import { InMemoryRateLimitStore } from "./store.ts";
  * (e.g., Redis, DynamoDB, etc.).
  */
 export interface RateLimitStore {
-  /**
-   * Record a hit for a key and return the current count within the window.
-   *
-   * @param key The identifier (e.g., IP address)
-   * @param windowMs The time window in milliseconds
-   * @returns The number of hits within the window
-   */
+  /** Record a hit and return current count within the window */
   hit(key: string, windowMs: number): Promise<number>;
 
-  /**
-   * Reset the rate limit for a key.
-   *
-   * @param key The identifier to reset
-   */
+  /** Reset the rate limit for a key */
   reset(key: string): Promise<void>;
 }
 
@@ -35,39 +25,22 @@ export type KeyGenerator = (c: MageContext) => string;
  * Options for the rateLimit middleware.
  */
 export interface RateLimitOptions {
-  /**
-   * Maximum number of requests allowed within the window.
-   * @default 100
-   */
+  /** Maximum requests allowed within window @default 100 */
   max?: number;
 
-  /**
-   * Time window in milliseconds.
-   * @default 60000 (1 minute)
-   */
+  /** Time window in milliseconds @default 60000 */
   windowMs?: number;
 
-  /**
-   * Storage backend for rate limit data.
-   * @default InMemoryRateLimitStore
-   */
+  /** Storage backend for rate limit data @default InMemoryRateLimitStore */
   store?: RateLimitStore;
 
-  /**
-   * Function to generate rate limit key from request context.
-   * @default Extract IP from request
-   */
+  /** Function to generate rate limit key @default IP extraction */
   keyGenerator?: KeyGenerator;
 
-  /**
-   * Custom message to return when rate limit is exceeded.
-   */
+  /** Custom message when rate limit exceeded */
   message?: string;
 
-  /**
-   * Whether to include rate limit headers in responses.
-   * @default true
-   */
+  /** Include rate limit headers in responses @default true */
   headers?: boolean;
 }
 
@@ -92,13 +65,8 @@ const defaultKeyGenerator: KeyGenerator = (c: MageContext): string => {
 };
 
 /**
- * Middleware that limits the rate of requests from a single source.
- *
- * Uses a sliding window algorithm to track request counts. When the limit
- * is exceeded, returns a 429 Too Many Requests response.
- *
- * @param options Configuration options for rate limiting
- * @returns MageMiddleware
+ * Limit request rate from a single source using sliding window algorithm.
+ * Returns 429 Too Many Requests when limit exceeded.
  */
 export const rateLimit = (options?: RateLimitOptions): MageMiddleware => {
   const max = options?.max ?? 100;

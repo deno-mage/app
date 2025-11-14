@@ -5,14 +5,9 @@ import { csp, type CSPOptions } from "../csp/mod.ts";
  * Options for the securityHeaders middleware.
  */
 export interface SecurityHeadersOptions {
-  /**
-   * Options for Content-Security-Policy header.
-   */
+  /** Content-Security-Policy header options */
   csp?: CSPOptions;
-  /**
-   * Controls how much referrer information should be included with requests.
-   * @default "no-referrer"
-   */
+  /** Controls referrer information sent with requests @default "no-referrer" */
   referrerPolicy?:
     | "no-referrer"
     | "no-referrer-when-downgrade"
@@ -22,56 +17,30 @@ export interface SecurityHeadersOptions {
     | "strict-origin"
     | "strict-origin-when-cross-origin"
     | "unsafe-url";
-  /**
-   * Instructs the browser to enforce HTTPS for the specified duration.
-   * @default "max-age=15552000; includeSubDomains"
-   */
+  /** Enforce HTTPS for duration @default "max-age=15552000; includeSubDomains" */
   strictTransportSecurity?: string;
-  /**
-   * Indicates whether a browser should be allowed to render a page in a frame.
-   * @default "SAMEORIGIN"
-   */
+  /** Allow page rendering in frame @default "SAMEORIGIN" */
   xFrameOptions?: "DENY" | "SAMEORIGIN";
-  /**
-   * Prevents browsers from MIME-sniffing a response away from the declared content-type.
-   * @default true
-   */
+  /** Prevent MIME-sniffing @default true */
   xContentTypeOptions?: boolean;
-  /**
-   * Controls DNS prefetching.
-   * @default false
-   */
+  /** Control DNS prefetching @default false */
   xDnsPrefetchControl?: boolean;
-  /**
-   * Prevents Internet Explorer from downloading files in the context of your site.
-   * @default true
-   */
+  /** Prevent IE downloads in site context @default true */
   xDownloadOptions?: boolean;
-  /**
-   * Restricts how documents can be loaded in cross-domain contexts.
-   * @default "none"
-   */
+  /** Cross-domain document loading policy @default "none" */
   xPermittedCrossDomainPolicies?:
     | "none"
     | "master-only"
     | "by-content-type"
     | "all";
-  /**
-   * Legacy XSS protection header (recommended to disable).
-   * @default "0"
-   */
+  /** Legacy XSS protection (recommended: disable) @default "0" */
   xXssProtection?: "0" | "1" | "1; mode=block";
-  /**
-   * Controls which window opener browsing context group to use.
-   * @default "same-origin"
-   */
+  /** Window opener browsing context group @default "same-origin" */
   crossOriginOpenerPolicy?:
     | "unsafe-none"
     | "same-origin-allow-popups"
     | "same-origin";
-  /**
-   * Controls sharing of resources across origins.
-   * @default "same-origin"
+  /** Cross-origin resource sharing policy @default "same-origin"
    */
   crossOriginResourcePolicy?: "same-site" | "same-origin" | "cross-origin";
   /**
@@ -93,7 +62,8 @@ export interface SecurityHeadersOptions {
 }
 
 /**
- * Build Permissions-Policy header from directives
+ * Build Permissions-Policy header from directives.
+ * Converts object format to header string: `{ geolocation: ["self"] }` → `geolocation=(self)`
  */
 const buildPermissionsPolicy = (
   policy: Record<string, string[]>,
@@ -112,11 +82,7 @@ const buildPermissionsPolicy = (
 };
 
 /**
- * Adds security headers to the response to help protect against common web
- * vulnerabilities.
- *
- * @param options Configuration options for security headers
- * @returns MageMiddleware
+ * Add security headers to protect against common web vulnerabilities.
  */
 export const securityHeaders = (
   options?: SecurityHeadersOptions,

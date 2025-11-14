@@ -4,18 +4,13 @@ import type { MageMiddleware } from "./router.ts";
  * Options for the useMethodNotAllowed middleware.
  */
 interface MethodNotAllowedOptions {
-  /**
-   * Function to return methods that are allowed for the requested
-   * pathname.
-   */
+  /** Function to return allowed methods for the requested pathname */
   getAllowedMethods: () => string[];
 }
 
 /**
- * Responds with a 405 Method Not Allowed status code. This middleware
- * will ignore OPTIONS requests.
- *
- * @returns MageMiddleware
+ * Respond with 405 Method Not Allowed.
+ * Ignores OPTIONS requests (handled by options middleware).
  */
 export const methodNotAllowed = (
   options: MethodNotAllowedOptions,
