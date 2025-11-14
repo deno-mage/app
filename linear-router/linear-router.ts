@@ -58,12 +58,36 @@ type MatchRoutenameResult =
   | MatchRoutenameResultMatch
   | MatchRoutenameResultNoMatch;
 
+/**
+ * Normalizes a pathname by removing empty segments caused by consecutive slashes.
+ * This prevents path confusion and matches common web server behavior.
+ *
+ * Examples:
+ * - "/users//123" → "/users/123"
+ * - "//users/123" → "/users/123"
+ * - "/users///123" → "/users/123"
+ * - "/users/123/" → "/users/123" (trailing slash removed)
+ *
+ * @param pathname The pathname to normalize
+ * @returns The normalized pathname
+ */
+function normalizePath(pathname: string): string {
+  return pathname
+    .split("/")
+    .filter((part) => part !== "") // Remove empty segments
+    .join("/")
+    .replace(/^/, "/"); // Ensure leading slash
+}
+
 function matchRoutename(
   routename: string,
   pathname: string,
 ): MatchRoutenameResult {
+  // Normalize the pathname to remove consecutive slashes and trailing slashes
+  const normalizedPathname = normalizePath(pathname);
+
   const routeParts = routename.split("/");
-  const pathParts = pathname.split("/");
+  const pathParts = normalizedPathname.split("/");
 
   const params: { [key: string]: string } = {};
 
@@ -352,10 +376,80 @@ export class LinearRouter implements MageRouter {
       ? additionalMiddleware
       : [routenameOrMiddleware, ...additionalMiddleware];
 
+    // Validate for duplicate route patterns that would cause param conflicts
+    if (routename && methods) {
+      this.validateNoDuplicateRoute(routename, methods);
+    }
+
     this._entries.push({
       routename,
       middleware: middleware.flat(),
       methods,
     });
+  }
+
+  /**
+   * Normalizes a route pattern by replacing all param names with a placeholder.
+   * This allows detection of functionally identical routes with different param names.
+   *
+   * Examples:
+   * - "/users/:id" → "/users/:param"
+   * - "/users/:userId" → "/users/:param"
+   * - "/posts/:postId/comments/:commentId" → "/posts/:param/comments/:param"
+   * - "/files/*" → "/files/*"
+   *
+   * @param routename The route pattern to normalize
+   * @returns The normalized pattern
+   */
+  private normalizeRoutePattern(routename: string): string {
+    return routename
+      .split("/")
+      .map((part) => {
+        if (part.startsWith(":")) {
+          return ":param";
+        }
+        return part;
+      })
+      .join("/");
+  }
+
+  /**
+   * Validates that a route pattern hasn't already been registered with overlapping methods.
+   * This prevents param conflicts where multiple routes with the same pattern but different
+   * param names would cause only the last match's params to be available.
+   *
+   * @param routename The route pattern to validate
+   * @param methods The HTTP methods for this route
+   * @throws MageError if a duplicate route is found
+   */
+  private validateNoDuplicateRoute(routename: string, methods: string[]) {
+    const normalizedPattern = this.normalizeRoutePattern(routename);
+
+    for (const entry of this._entries) {
+      // Skip entries without routenames (global middleware)
+      if (!entry.routename || !entry.methods) {
+        continue;
+      }
+
+      // Check if routename patterns are functionally identical
+      const entryNormalizedPattern = this.normalizeRoutePattern(
+        entry.routename,
+      );
+      if (entryNormalizedPattern === normalizedPattern) {
+        // Check if any methods overlap
+        const overlappingMethods = entry.methods.filter((method) =>
+          methods.includes(method)
+        );
+
+        if (overlappingMethods.length > 0) {
+          throw new MageError(
+            `Duplicate route detected: "${routename}" conflicts with existing route "${entry.routename}" for method(s) ${
+              overlappingMethods.join(", ")
+            }. Each route pattern can only be registered once per HTTP method.`,
+            500,
+          );
+        }
+      }
+    }
   }
 }

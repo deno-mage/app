@@ -180,6 +180,80 @@ app.get("/users", handler);
 
 ## Security
 
+### Duplicate Route Validation
+
+The Linear Router validates route registrations to prevent conflicts that would
+cause param confusion. Each route pattern can only be registered once per HTTP
+method:
+
+```typescript
+const app = new MageApp();
+
+// ✅ Allowed - different HTTP methods
+app.get("/users/:id", getUser);
+app.post("/users/:id", createUser);
+app.put("/users/:id", updateUser);
+
+// ✅ Allowed - different route patterns
+app.get("/users/:id", getUser);
+app.get("/posts/:id", getPost);
+
+// ❌ Error - duplicate pattern with same method
+app.get("/users/:id", handler1);
+app.get("/users/:userId", handler2); // Throws MageError
+// These are functionally identical patterns!
+
+// ❌ Error - method overlap with all()
+app.get("/users/:id", handler1);
+app.all("/users/:userId", handler2); // Throws MageError
+// all() includes GET, which conflicts
+```
+
+**Why this matters:**
+
+Without validation, registering `/users/:id` and `/users/:userId` would allow
+both handlers to run, but only the last one's params would be available. This
+causes bugs where `handler1` expects `c.req.params.id` but receives
+`c.req.params.userId` instead.
+
+The router normalizes patterns by replacing all param names with placeholders
+(`/users/:param`) to detect functional duplicates, regardless of param naming.
+
+### Path Normalization
+
+The Linear Router automatically normalizes incoming request paths to handle edge
+cases and match common web server behavior:
+
+```typescript
+const app = new MageApp();
+app.get("/users/:id", handler);
+
+// All of these requests match the same route:
+// GET /users/123        → ✅ params.id = "123"
+// GET /users//123       → ✅ params.id = "123" (consecutive slashes)
+// GET //users/123       → ✅ params.id = "123" (leading slashes)
+// GET /users/123/       → ✅ params.id = "123" (trailing slash)
+// GET /users///123///   → ✅ params.id = "123" (multiple slashes)
+```
+
+**Normalization rules:**
+
+1. **Consecutive slashes are collapsed** - `/users//123` becomes `/users/123`
+2. **Trailing slashes are removed** - `/users/123/` becomes `/users/123`
+3. **Leading slashes are preserved** - All paths start with `/`
+4. **Empty segments are removed** - Caused by multiple slashes
+
+**Why normalize?**
+
+- Prevents confusion between `/users/123` and `/users//123` being treated as
+  different routes
+- Matches common web server behavior (Nginx, Apache, etc.)
+- Improves security by preventing path-based confusion attacks
+- Provides better developer experience with consistent routing
+
+**Note:** URL-encoded slashes (`%2F`) in parameters are NOT treated as path
+separators and are preserved after decoding.
+
 ### Path Traversal Protection
 
 All parameterized routes are automatically protected against path traversal
@@ -337,6 +411,23 @@ console.log("Registered: GET /users/:id");
 
 ### Common Issues
 
+**Duplicate route error:**
+
+```typescript
+// ❌ Error - functionally identical patterns
+app.get("/users/:id", handler1);
+app.get("/users/:userId", handler2);
+// MageError: Duplicate route detected: "/users/:userId" conflicts with
+// existing route "/users/:id" for method(s) GET, HEAD
+
+// ✅ Fix - use the same param name
+app.get("/users/:id", handler1);
+app.get("/users/:id", handler2); // Still error - same route!
+
+// ✅ Actually fix - use different paths or combine handlers
+app.get("/users/:id", composedHandler);
+```
+
 **Routes not matching:**
 
 ```typescript
@@ -392,6 +483,8 @@ The Linear Router has comprehensive unit tests covering:
 - Static route matching
 - Parameterized route matching with URL decoding
 - Wildcard route matching
+- Path normalization (consecutive slashes, trailing slashes)
+- Duplicate route validation
 - Path traversal security validation
 - Available methods discovery
 - Route priority and ordering
@@ -402,6 +495,8 @@ The Linear Router has comprehensive unit tests covering:
 - `tests/params.test.ts` - Parameter extraction tests
 - `tests/wildcard.test.ts` - Wildcard route tests
 - `tests/routenames.test.ts` - Static route matching tests
+- `tests/path-normalization.test.ts` - Path normalization tests
+- `tests/duplicate-routes.test.ts` - Duplicate route validation tests
 - `tests/security-path-traversal.test.ts` - Security validation tests
 - `tests/available-methods.test.ts` - Method discovery tests
 
