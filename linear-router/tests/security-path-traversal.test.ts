@@ -118,4 +118,83 @@ describe("LinearRouter - security: path traversal in route parameters", () => {
       router.match(new URL("http://localhost/%2E%2E%5Cparent"), "GET");
     }).toThrow(MageError);
   });
+
+  it("should block URL-encoded path traversal (case insensitive)", () => {
+    const router = new LinearRouter();
+    router.get("/:filename", () => {});
+
+    // After URL decoding, these all become "../" which is blocked
+    // Testing case variations: %2E = . (dot), %2F = / (slash)
+    const variants = [
+      "%2E%2E%2Fetc", // Uppercase
+      "%2e%2e%2fetc", // Lowercase
+      "%2E%2e%2Fetc", // Mixed case
+    ];
+
+    variants.forEach((variant) => {
+      expect(() => {
+        router.match(new URL(`http://localhost/${variant}`), "GET");
+      }).toThrow(MageError);
+    });
+  });
+
+  it("should block Windows path traversal (case insensitive)", () => {
+    const router = new LinearRouter();
+    router.get("/:filename", () => {});
+
+    // Testing case variations: %2E = . (dot), %5C = \ (backslash)
+    const variants = [
+      "%2E%2E%5Cwindows", // Uppercase
+      "%2e%2e%5cwindows", // Lowercase
+      "%2E%2e%5Cwindows", // Mixed case
+    ];
+
+    variants.forEach((variant) => {
+      expect(() => {
+        router.match(new URL(`http://localhost/${variant}`), "GET");
+      }).toThrow(MageError);
+    });
+  });
+
+  it("should block partially encoded path traversal", () => {
+    const router = new LinearRouter();
+    router.get("/:filename", () => {});
+
+    // After decoding, these become "../" or "..\\" which are blocked
+    const variants = [
+      "..%2Fetc", // Only slash encoded (uppercase)
+      "..%2fetc", // Only slash encoded (lowercase)
+      "..%5Cwin", // Only backslash encoded (uppercase)
+      "..%5cwin", // Only backslash encoded (lowercase)
+    ];
+
+    variants.forEach((variant) => {
+      expect(() => {
+        router.match(new URL(`http://localhost/${variant}`), "GET");
+      }).toThrow(MageError);
+    });
+  });
+
+  it("should handle legitimate dots that are not traversal", () => {
+    const router = new LinearRouter();
+    router.get("/:filename", () => {});
+
+    // These should all be allowed
+    const legitimate = [
+      "file.txt",
+      "my.file.name.txt",
+      ".gitignore",
+      "..config", // Not followed by / or \
+      "test..",
+    ];
+
+    legitimate.forEach((filename) => {
+      const result = router.match(
+        new URL(`http://localhost/${encodeURIComponent(filename)}`),
+        "GET",
+      );
+      expect(result.matchedRoutename).toBe(true);
+      expect(result.params.filename).toBe(filename);
+    });
+  });
 });
