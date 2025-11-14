@@ -1,7 +1,7 @@
 import { MageContext } from "./context.ts";
 import { compose } from "./compose.ts";
-import { MageRouter } from "./router.ts";
-import type { MageMiddleware } from "./router.ts";
+import { LinearRouter } from "../linear-router/linear-router.ts";
+import type { MageMiddleware, MageRouter } from "./router.ts";
 import { options } from "./options.ts";
 import { notFound } from "./not-found.ts";
 import { methodNotAllowed } from "./method-not-allowed.ts";
@@ -11,15 +11,35 @@ import { MageRequest } from "./request.ts";
 import { MageError } from "./error.ts";
 
 /**
+ * Options for creating a MageApp
+ */
+export interface MageAppOptions {
+  /**
+   * Custom router implementation. Defaults to LinearRouter.
+   *
+   * Use LinearRouter for:
+   * - Serverless functions with frequent cold starts
+   * - Small to medium applications (< 100 routes)
+   *
+   * Future: RadixRouter for long-running servers with many routes
+   */
+  router?: MageRouter;
+}
+
+/**
  * MageApp is the main class for creating and running Mage applications.
  */
 export class MageApp {
-  private _router = new MageRouter();
+  private _router: MageRouter;
 
   /**
    * Create a new MageApp.
+   *
+   * @param options Optional configuration including custom router
    */
-  constructor() {}
+  constructor(options?: MageAppOptions) {
+    this._router = options?.router ?? new LinearRouter();
+  }
 
   /**
    * Adds middleware to the application that will be run for every request.
