@@ -4,31 +4,17 @@ import type { StandardSchemaV1 } from "@standard-schema/spec";
 type ValidationSource = "json" | "form" | "params" | "search-params";
 
 interface ValidateOptions {
-  /**
-   * If true then the validation errors will be reported in the
-   * response body. If false then a 400 Bad Request status code
-   * will be returned without any error details.
-   */
+  /** Report validation errors in response body (otherwise just 400) */
   reportErrors?: boolean;
 }
 
 /**
- * Validates the request based on a Standard Schema. If the request
- * does not match the schema then a 400 Bad Request status code is
- * returned.
+ * Validate request data against a Standard Schema.
+ * Returns 400 Bad Request on validation failure.
  *
- * The source parameter is used to determine where the request data
- * should be validated from. The source can be one of the following:
+ * Sources: "json" | "form" | "params" | "search-params"
  *
- * - "json" - The request body as JSON
- * - "form" - The requests form data
- * - "params" - The route parameters
- * - "search-params" - The URL search parameters
- *
- * @param source - The source of the request data to validate
- * @param schema - The schema to validate the request against
- * @param options - Additional options for the validation
- * @returns MageMiddleware
+ * @throws MageError if validation source is invalid or validation fails
  */
 export const validate = (
   source: ValidationSource,

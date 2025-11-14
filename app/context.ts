@@ -11,9 +11,6 @@ import {
  * Arguments for the MageContext class
  */
 interface MageContextArgs {
-  /**
-   * The request object
-   */
   req: MageRequest;
 }
 
@@ -26,51 +23,30 @@ export class MageContext {
   private _req: MageRequest;
   private _data: Map<string, unknown>;
 
-  /**
-   * The current response
-   */
   public get res(): Response {
     return this._res;
   }
 
-  /**
-   * The current response
-   */
   public set res(res: Response) {
     this._res = res;
   }
 
-  /**
-   * The current request
-   */
   public get req(): MageRequest {
     return this._req;
   }
 
-  /**
-   * Construct a new MageContext object
-   *
-   * @param args The arguments for the MageContext class
-   */
   public constructor(args: MageContextArgs) {
     this._req = args.req;
     this._res = new Response();
     this._data = new Map<string, unknown>();
   }
 
-  /**
-   * Set a response header
-   */
+  /** Set a response header */
   public header(key: string, value: string) {
     this._res.headers.set(key, value);
   }
 
-  /**
-   * Sends a text response with the provided status code and body
-   *
-   * @param body The body of the response
-   * @param status The status code of the response
-   */
+  /** Send a text response */
   public text(body: string, status?: ContentfulStatus) {
     this._res = new Response(body, {
       status,
@@ -80,12 +56,7 @@ export class MageContext {
     this.header("Content-Type", "text/plain; charset=UTF-8");
   }
 
-  /**
-   * Sends a JSON response with the provided status code and body
-   *
-   * @param body The body of the response
-   * @param status The status code of the response
-   */
+  /** Send a JSON response */
   public json(
     body: { [key: string]: unknown } | readonly unknown[],
     status?: ContentfulStatus,
@@ -101,20 +72,14 @@ export class MageContext {
     );
   }
 
-  /**
-   * Sends HTML response with the provided status code and body
-   */
+  /** Send an HTML response */
   public html(body: string, status?: ContentfulStatus) {
     this.text(body, status);
 
     this.header("Content-Type", "text/html; charset=UTF-8");
   }
 
-  /**
-   * Sends an empty response with the provided status code
-   *
-   * @param status The status code of the response
-   */
+  /** Send an empty response with optional status code (defaults to 204) */
   public empty(status?: ContentlessStatus) {
     this._res = new Response(null, {
       status: status ?? 204,
@@ -122,30 +87,18 @@ export class MageContext {
     });
   }
 
-  /**
-   * Send a not found response
-   *
-   * @param text Optional text body for the response
-   */
+  /** Send a 404 Not Found response */
   public notFound(text?: string) {
     this.text(text ?? statusText(404), 404);
   }
 
-  /**
-   * Send a forbidden response
-   *
-   * @param text Optional text body for the response
-   */
+  /** Send a 403 Forbidden response */
   public forbidden(text?: string) {
     this.text(text ?? statusText(403), 403);
   }
 
   /**
-   * Redirects the request to the provided location with the specified redirect.
-   * Default to 307 temporary redirect.
-   *
-   * @param location The location to redirect to
-   * @param status The status code of the response
+   * Redirect to the provided location (defaults to 307 Temporary Redirect).
    */
   public redirect(location: URL | string, status?: RedirectStatus) {
     this._res = new Response(null, {
@@ -157,13 +110,10 @@ export class MageContext {
   }
 
   /**
-   * Rewrites the request to the provided location
+   * Rewrite the request to a different location by making a new fetch.
+   * Useful for proxying requests to another server.
    *
-   * NOTE: This is not optimal for local rewrites, as it will make a new request
-   * to the provided location. This is useful for proxying requests to another
-   * server.
-   *
-   * @param location The location to rewrite to
+   * NOTE: Not optimal for local rewrites as it creates a network request.
    */
   public async rewrite(location: URL | string) {
     let url: URL;
@@ -190,11 +140,7 @@ export class MageContext {
     });
   }
 
-  /**
-   * Serve a file.
-   *
-   * @param file
-   */
+  /** Serve a static file from the filesystem */
   public async file(filepath: string) {
     const fileInfo = await Deno.stat(filepath);
 
@@ -214,8 +160,8 @@ export class MageContext {
   }
 
   /**
-   * Establish a WebSocket connection. If the request is not a WebSocket request
-   * it will send a 501 Not Implemented response and no WebSocket will be created.
+   * Upgrade to WebSocket connection.
+   * Sends 501 Not Implemented if the request is not a WebSocket upgrade request.
    */
   public webSocket(handleSocket: (socket: WebSocket) => void) {
     if (this.req.header("upgrade") !== "websocket") {
@@ -230,21 +176,12 @@ export class MageContext {
     handleSocket(socket);
   }
 
-  /**
-   * Get data stored via `set()` method
-   *
-   * @param key The key of the data to get
-   */
+  /** Get data stored in context via `set()` method */
   public get<TData = unknown>(key: string): TData {
     return this._data.get(key) as TData;
   }
 
-  /**
-   * Set data to be stored in the context for the duraction of the request
-   *
-   * @param key The key of the data to set
-   * @param value The value of the data to set
-   */
+  /** Store data in context for the duration of the request */
   public set(key: string, value: unknown) {
     this._data.set(key, value);
   }

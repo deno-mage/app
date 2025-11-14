@@ -11,6 +11,8 @@ import { z } from "zod";
 
 ## Usage
 
+**JSON body validation:**
+
 ```typescript
 const loginSchema = z.object({
   email: z.string().email(),
@@ -21,9 +23,41 @@ app.post("/login", validate("json", loginSchema), async (c) => {
   const { email, password } = c.req.valid<{ email: string; password: string }>(
     "json",
   );
-  // email and password are now type-safe and validated
   c.json({ success: true });
 });
+```
+
+**Route params validation:**
+
+```typescript
+const idSchema = z.object({
+  id: z.string().uuid(),
+});
+
+app.get("/users/:id", validate("params", idSchema), async (c) => {
+  const { id } = c.req.valid<{ id: string }>("params");
+  c.json({ userId: id });
+});
+```
+
+**Query params with error reporting:**
+
+```typescript
+const searchSchema = z.object({
+  q: z.string().min(1),
+  limit: z.coerce.number().min(1).max(100).default(10),
+});
+
+app.get(
+  "/search",
+  validate("search-params", searchSchema, { reportErrors: true }),
+  async (c) => {
+    const { q, limit } = c.req.valid<{ q: string; limit: number }>(
+      "search-params",
+    );
+    c.json({ query: q, limit });
+  },
+);
 ```
 
 ## API

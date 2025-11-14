@@ -10,11 +10,29 @@ import { compression } from "@mage/app/compression";
 
 ## Usage
 
+**Basic (default settings):**
+
+```typescript
+app.use(compression());
+```
+
+**Custom thresholds:**
+
 ```typescript
 app.use(
   compression({
-    threshold: 1024,
-    maxSize: 10485760,
+    threshold: 2048, // Only compress >2KB responses
+    maxSize: 5242880, // Limit to 5MB (prevent OOM)
+  }),
+);
+```
+
+**Custom content types:**
+
+```typescript
+app.use(
+  compression({
+    contentTypes: ["text/*", "application/json", "application/xml"],
   }),
 );
 ```

@@ -4,10 +4,12 @@ import type { MageMiddleware, MageRouter, MatchResult } from "../app/router.ts";
 /**
  * Validates and decodes a route parameter value to prevent path traversal attacks.
  *
- * @param value The raw parameter value from the URL
- * @param paramName The parameter name for error messages
- * @returns The decoded and validated parameter value
- * @throws MageError if the parameter contains path traversal sequences
+ * Security algorithm:
+ * 1. Decode URL-encoded parameter
+ * 2. Check for path traversal patterns (../, ..\, encoded variants)
+ * 3. Use case-insensitive matching to catch evasion attempts
+ *
+ * @throws MageError if parameter contains path traversal sequences or invalid encoding
  */
 function validateAndDecodeParam(value: string, paramName: string): string {
   // URL decode the parameter
@@ -21,7 +23,7 @@ function validateAndDecodeParam(value: string, paramName: string): string {
     );
   }
 
-  // Check for path traversal sequences
+  // Check for path traversal sequences (case-insensitive to prevent evasion)
   const dangerousPatterns = [
     "../", // Basic path traversal
     "..\\", // Windows path traversal
@@ -62,14 +64,9 @@ type MatchRoutenameResult =
  * Normalizes a pathname by removing empty segments caused by consecutive slashes.
  * This prevents path confusion and matches common web server behavior.
  *
- * Examples:
- * - "/users//123" → "/users/123"
- * - "//users/123" → "/users/123"
- * - "/users///123" → "/users/123"
- * - "/users/123/" → "/users/123" (trailing slash removed)
- *
- * @param pathname The pathname to normalize
- * @returns The normalized pathname
+ * "/users//123" → "/users/123"
+ * "//users/123" → "/users/123"
+ * "/users/123/" → "/users/123"
  */
 function normalizePath(pathname: string): string {
   return pathname
@@ -79,6 +76,18 @@ function normalizePath(pathname: string): string {
     .replace(/^/, "/"); // Ensure leading slash
 }
 
+/**
+ * Match a route pattern against a pathname.
+ *
+ * Algorithm:
+ * 1. Normalize pathname (remove consecutive/trailing slashes)
+ * 2. Split both route and path into segments
+ * 3. Match segment by segment:
+ *    - Wildcard (*) matches all remaining segments
+ *    - Parameters (:name) extract and validate the segment
+ *    - Static segments must match exactly
+ * 4. Verify full path is consumed (no extra segments)
+ */
 function matchRoutename(
   routename: string,
   pathname: string,
@@ -113,7 +122,7 @@ function matchRoutename(
     }
   }
 
-  // Ensure all path parts are matched
+  // Ensure all path parts are matched (prevents /users from matching /users/123)
   if (routeParts.length !== pathParts.length) {
     return { match: false };
   }
@@ -125,19 +134,11 @@ function matchRoutename(
  * RouterEntry is an entry in the router's middleware registry.
  */
 interface RouterEntry {
-  /**
-   * The methods that this middleware should run for. If not provided, the
-   * middleware will run for all methods.
-   */
+  /** HTTP methods this middleware runs for (undefined = all methods) */
   methods?: string[];
-  /**
-   * The routename that this middleware should run for. If not provided, the
-   * middleware will run for all routes.
-   */
+  /** Route pattern this middleware runs for (undefined = all routes) */
   routename?: string;
-  /**
-   * The middleware to run.
-   */
+  /** Middleware functions to execute */
   middleware: MageMiddleware[];
 }
 
@@ -155,10 +156,6 @@ export class LinearRouter implements MageRouter {
 
   /**
    * Match middleware for a given request and extract parameters.
-   *
-   * @param url
-   * @param method
-   * @returns
    */
   public match(url: URL, method: string): MatchResult {
     let matchedRoutename = false;
@@ -202,10 +199,8 @@ export class LinearRouter implements MageRouter {
   }
 
   /**
-   * Get available methods for a given pathname.
-   *
-   * @param url The URL to check for available methods
-   * @returns Array of unique HTTP methods available for this path
+   * Get available HTTP methods registered for a pathname.
+   * Used for generating 405 Method Not Allowed responses with Allow header.
    */
   public getAvailableMethods(url: URL): string[] {
     const methods = this._entries
@@ -224,11 +219,10 @@ export class LinearRouter implements MageRouter {
   }
 
   /**
-   * Adds middleware to the router that will be run for every request. If a
-   * request is only handled by middleware registered via `use(...)` then the
-   * request will be responded to with a 404 Not Found status code by default.
+   * Register global middleware that runs for every request.
    *
-   * @param middleware
+   * If a request is only handled by global middleware (no route-specific
+   * middleware matched), the default behavior is to respond with 404 Not Found.
    */
   public use(...middleware: (MageMiddleware | MageMiddleware[])[]) {
     this._entries.push({
@@ -237,11 +231,8 @@ export class LinearRouter implements MageRouter {
   }
 
   /**
-   * Adds middleware to the application that will be run for every request.
-   * If a routename is provided, the middleware will only run for that route.
-   *
-   * @param routenameOrMiddleware
-   * @param middleware
+   * Register middleware for all HTTP methods.
+   * Accepts optional route pattern to limit which paths the middleware runs for.
    */
   public all(
     routenameOrMiddleware: string | MageMiddleware | MageMiddleware[],
@@ -263,11 +254,8 @@ export class LinearRouter implements MageRouter {
   }
 
   /**
-   * Adds middleware to the application that will be run for GET requests.
-   * If a routename is provided, the middleware will only run for that route.
-   *
-   * @param routenameOrMiddleware
-   * @param middleware
+   * Register middleware for GET and HEAD requests.
+   * Accepts optional route pattern to limit which paths the middleware runs for.
    */
   public get(
     routenameOrMiddleware: string | MageMiddleware | MageMiddleware[],
@@ -281,11 +269,8 @@ export class LinearRouter implements MageRouter {
   }
 
   /**
-   * Adds middleware to the application that will be run for POST requests.
-   * If a routename is provided, the middleware will only run for that route.
-   *
-   * @param routenameOrMiddleware
-   * @param middleware
+   * Register middleware for POST requests.
+   * Accepts optional route pattern to limit which paths the middleware runs for.
    */
   public post(
     routenameOrMiddleware: string | MageMiddleware | MageMiddleware[],
@@ -295,11 +280,8 @@ export class LinearRouter implements MageRouter {
   }
 
   /**
-   * Adds middleware to the application that will be run for PUT requests.
-   * If a routename is provided, the middleware will only run for that route.
-   *
-   * @param routenameOrMiddleware
-   * @param middleware
+   * Register middleware for PUT requests.
+   * Accepts optional route pattern to limit which paths the middleware runs for.
    */
   public put(
     routenameOrMiddleware: string | MageMiddleware | MageMiddleware[],
@@ -309,11 +291,8 @@ export class LinearRouter implements MageRouter {
   }
 
   /**
-   * Adds middleware to the application that will be run for DELETE requests.
-   * If a routename is provided, the middleware will only run for that route.
-   *
-   * @param routenameOrMiddleware
-   * @param middleware
+   * Register middleware for DELETE requests.
+   * Accepts optional route pattern to limit which paths the middleware runs for.
    */
   public delete(
     routenameOrMiddleware: string | MageMiddleware | MageMiddleware[],
@@ -323,11 +302,8 @@ export class LinearRouter implements MageRouter {
   }
 
   /**
-   * Adds middleware to the application that will be run for PATCH requests.
-   * If a routename is provided, the middleware will only run for that route.
-   *
-   * @param routenameOrMiddleware
-   * @param middleware
+   * Register middleware for PATCH requests.
+   * Accepts optional route pattern to limit which paths the middleware runs for.
    */
   public patch(
     routenameOrMiddleware: string | MageMiddleware | MageMiddleware[],
@@ -337,11 +313,8 @@ export class LinearRouter implements MageRouter {
   }
 
   /**
-   * Adds middleware to the application that will be run for OPTIONS requests.
-   * If a routename is provided, the middleware will only run for that route.
-   *
-   * @param routenameOrMiddleware
-   * @param middleware
+   * Register middleware for OPTIONS requests.
+   * Accepts optional route pattern to limit which paths the middleware runs for.
    */
   public options(
     routenameOrMiddleware: string | MageMiddleware | MageMiddleware[],
@@ -351,11 +324,8 @@ export class LinearRouter implements MageRouter {
   }
 
   /**
-   * Adds middleware to the application that will be run for HEAD requests.
-   * If a routename is provided, the middleware will only run for that route.
-   *
-   * @param routenameOrMiddleware
-   * @param middleware
+   * Register middleware for HEAD requests.
+   * Accepts optional route pattern to limit which paths the middleware runs for.
    */
   public head(
     routenameOrMiddleware: string | MageMiddleware | MageMiddleware[],
@@ -395,18 +365,15 @@ export class LinearRouter implements MageRouter {
   }
 
   /**
-   * Validates the format of a routename to prevent common mistakes and runtime errors.
+   * Validates route pattern format at registration time to prevent runtime errors.
    *
-   * Checks:
-   * - Route must start with "/"
-   * - No consecutive slashes (e.g., "/users//posts")
-   * - No empty segments
-   * - Wildcard "*" only appears at the end
-   * - No duplicate parameter names
-   * - Parameter names must not be empty (e.g., "/users/:")
+   * Enforces:
+   * - Must start with "/"
+   * - No consecutive slashes ("/users//posts")
+   * - Wildcard "*" only at end
+   * - Unique, non-empty parameter names
    *
-   * @param routename The route pattern to validate
-   * @throws MageError if the routename is invalid
+   * @throws MageError if the route pattern is invalid
    */
   private validateRoutenameFormat(routename: string) {
     // Must not be empty
@@ -505,17 +472,11 @@ export class LinearRouter implements MageRouter {
   }
 
   /**
-   * Normalizes a route pattern by replacing all param names with a placeholder.
-   * This allows detection of functionally identical routes with different param names.
+   * Normalizes route pattern by replacing param names with placeholders.
+   * Enables detection of functionally identical routes with different param names.
    *
-   * Examples:
-   * - "/users/:id" → "/users/:param"
-   * - "/users/:userId" → "/users/:param"
-   * - "/posts/:postId/comments/:commentId" → "/posts/:param/comments/:param"
-   * - "/files/*" → "/files/*"
-   *
-   * @param routename The route pattern to normalize
-   * @returns The normalized pattern
+   * "/users/:id" → "/users/:param"
+   * "/users/:userId" → "/users/:param" (functionally identical to above)
    */
   private normalizeRoutePattern(routename: string): string {
     return routename
@@ -530,13 +491,11 @@ export class LinearRouter implements MageRouter {
   }
 
   /**
-   * Validates that a route pattern hasn't already been registered with overlapping methods.
-   * This prevents param conflicts where multiple routes with the same pattern but different
-   * param names would cause only the last match's params to be available.
+   * Validates no duplicate route patterns exist for the same HTTP method.
+   * Prevents param conflicts where "/users/:id" and "/users/:userId" would both match,
+   * causing only the last match's params to be available.
    *
-   * @param routename The route pattern to validate
-   * @param methods The HTTP methods for this route
-   * @throws MageError if a duplicate route is found
+   * @throws MageError if duplicate route detected
    */
   private validateNoDuplicateRoute(routename: string, methods: string[]) {
     const normalizedPattern = this.normalizeRoutePattern(routename);

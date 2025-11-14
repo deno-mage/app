@@ -5,65 +5,38 @@ import { MageError } from "../app/mod.ts";
  * Options for the cacheControl middleware.
  */
 export interface CacheControlOptions {
-  /**
-   * The number of seconds the response can be cached until it is stale.
-   */
+  /** Seconds the response can be cached until stale */
   maxAge?: number;
-  /**
-   * The number of seconds the response can be cached in shared cache until it is stale.
-   */
+  /** Seconds the response can be cached in shared cache until stale */
   sMaxAge?: number;
-  /**
-   * Can be cached but origin server must be checked before use.
-   */
+  /** Can be cached but origin must be checked before use */
   noCache?: boolean;
-  /**
-   * No caches of the response can be stored.
-   */
+  /** No caching allowed */
   noStore?: boolean;
-  /**
-   * Do not transform response contents when caching.
-   */
+  /** Do not transform response when caching */
   noTransform?: boolean;
-  /**
-   * Must revalidate stale cache entry before using it.
-   */
+  /** Must revalidate stale cache before use */
   mustRevalidate?: boolean;
-  /**
-   * Must revalidate stale cache entry before using it (shared cache only).
-   */
+  /** Must revalidate stale cache before use (shared cache only) */
   proxyRevalidate?: boolean;
-  /**
-   * Responses can be cached only if store understands caching requirements based on status code.
-   */
+  /** Cache only if store understands caching requirements */
   mustUnderstand?: boolean;
-  /**
-   * Can be stored in private caches only (non-shared, ie browser cache).
-   */
+  /** Store in private caches only (browser cache) */
   private?: boolean;
-  /**
-   * Can be stored in public caches.
-   */
+  /** Can be stored in public caches */
   public?: boolean;
-  /**
-   * The cache response should not be updated while the cache is stll fresh.
-   */
+  /** Cache should not be updated while still fresh */
   immutable?: boolean;
-  /**
-   * The number of seconds a stale cache response can be used while the cache is being revalidated.
-   */
+  /** Seconds stale cache can be used while revalidating */
   staleWhileRevalidate?: number;
-  /**
-   * The number of seconds a stale cache response can be used if the origin server is not available.
-   */
+  /** Seconds stale cache can be used if origin unavailable */
   staleIfError?: number;
 }
 
 /**
- * Apply a Cache-Control header based on the provided options.
+ * Set Cache-Control header based on provided directives.
  *
- * @param options
- * @returns MageMiddleware
+ * @throws MageError if conflicting directives are specified
  */
 export const cacheControl = (
   options: CacheControlOptions,

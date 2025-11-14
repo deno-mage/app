@@ -5,19 +5,14 @@ import { MageError } from "../app/mod.ts";
  * Options for the bodySize middleware.
  */
 export interface BodySizeOptions {
-  /**
-   * Maximum request body size in bytes.
-   * @default 1048576 (1MB)
-   */
+  /** Maximum request body size in bytes @default 1048576 */
   maxSize?: number;
 }
 
 /**
- * Middleware that limits the size of request bodies to prevent memory exhaustion
- * and denial of service attacks.
+ * Limit request body size to prevent memory exhaustion and DoS attacks.
  *
- * @param options Configuration options for body size limiting
- * @returns MageMiddleware
+ * @throws MageError if maxSize is invalid or request body exceeds limit
  */
 export const bodySize = (options?: BodySizeOptions): MageMiddleware => {
   const maxSize = options?.maxSize ?? 1048576; // 1MB default

@@ -5,20 +5,15 @@ import { MageError } from "../app/mod.ts";
  * Options for the timeout middleware.
  */
 export interface TimeoutOptions {
-  /**
-   * Maximum request duration in milliseconds.
-   * @default 30000 (30 seconds)
-   */
+  /** Maximum request duration in milliseconds @default 30000 */
   ms?: number;
 }
 
 /**
- * Middleware that enforces a maximum request duration. If the request
- * takes longer than the specified timeout, it will be aborted with a
- * 408 Request Timeout response.
+ * Enforce maximum request duration.
+ * Aborts with 408 Request Timeout if exceeded.
  *
- * @param options Configuration options for timeout
- * @returns MageMiddleware
+ * @throws MageError if timeout value is invalid or request exceeds time limit
  */
 export const timeout = (options?: TimeoutOptions): MageMiddleware => {
   const ms = options?.ms ?? 30000; // 30 seconds default

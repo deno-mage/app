@@ -4,8 +4,7 @@ import type { MageMiddleware } from "./router.ts";
 /**
  * Compose middleware, running each in sequence.
  *
- * @param middleware The middleware to compose
- * @returns MageMiddleware
+ * @throws Error if next() is called multiple times in the same middleware
  */
 export const compose = (middleware: MageMiddleware[]) => {
   return async function (c: MageContext): Promise<void> {

@@ -7,13 +7,9 @@ type ValidationSource = "json" | "form" | "params" | "search-params";
  * Arguments for the MageRequest class
  */
 interface MageRequestArgs {
-  /**
-   * The wildcard path part matched by the router
-   */
+  /** Wildcard path part matched by the router */
   wildcard?: string;
-  /**
-   * The URL parameters of the request matched by the router
-   */
+  /** URL parameters matched by the router */
   params: { [key: string]: string };
 }
 
@@ -31,72 +27,41 @@ export class MageRequest {
   private _wildcard?: string;
   private _params: { [key: string]: string };
 
-  /**
-   * The raw Request object
-   */
   public get raw(): Request {
     return this._raw;
   }
 
-  /**
-   * The URL of the request
-   */
   public get url(): URL {
     return new URL(this._raw.url);
   }
 
-  /**
-   * The method and URL of the request
-   */
   public get method(): string {
     return this._raw.method;
   }
 
-  /**
-   * The wildcard path part matched by the router
-   */
   public get wildcard(): string | undefined {
     return this._wildcard;
   }
 
-  /**
-   * The URL parameters of the request matched by the router
-   */
   public get params(): { [key: string]: string } {
     return this._params;
   }
 
-  /**
-   * Memoized access to the body of the request
-   */
+  /** Memoized access to request body as ArrayBuffer */
   public arrayBuffer: () => Promise<ArrayBuffer>;
 
-  /**
-   * Memoized access to the body of the request
-   */
+  /** Memoized access to request body as Blob */
   public blob: () => Promise<Blob>;
 
-  /**
-   * Memoized access to the body of the request
-   */
+  /** Memoized access to request body as FormData */
   public formData: () => Promise<FormData>;
 
-  /**
-   * Memoized access to the body of the request
-   */
+  /** Memoized access to request body as JSON */
   public json: () => Promise<unknown>;
 
-  /**
-   * Memoized access to the body of the request
-   */
+  /** Memoized access to request body as text */
   public text: () => Promise<string>;
 
-  /**
-   * Constructor for MageRequest
-   *
-   * @param req The raw Request object
-   * @param options Options for the request
-   */
   public constructor(req: Request, options: MageRequestArgs) {
     this._raw = req;
     this._validationResults = new Map<ValidationSource, unknown>();
@@ -110,28 +75,20 @@ export class MageRequest {
     this.text = memoize(this._raw.text.bind(req));
   }
 
-  /**
-   * Get the value of a header from the request
-   *
-   * @param name The name of the header
-   */
+  /** Get a request header value */
   public header(name: string): string | null {
     return this.raw.headers.get(name);
   }
 
-  /**
-   * Get the value of a search parameter from the request
-   *
-   * @param name The name of the search parameter
-   */
+  /** Get a URL search parameter value */
   public searchParam(name: string): string | null {
     return this.url.searchParams.get(name);
   }
 
   /**
-   * Get a validation result, if it exists.
+   * Get validated data from a validation middleware.
    *
-   * @param source The source of the validation result
+   * @throws MageError if no validation result exists for the source
    */
   public valid<TResult>(source: ValidationSource): TResult {
     const result = this._validationResults.get(source);
@@ -143,13 +100,7 @@ export class MageRequest {
     return result as TResult;
   }
 
-  /**
-   * Set a validation result,
-   *
-   * @param source The source of the validation result
-   * @param schema The schema to validate the result against
-   * @param result The result of the validation
-   */
+  /** Store validation result for later retrieval via `valid()` method */
   public setValidationResult<TResult>(
     source: ValidationSource,
     result: TResult,

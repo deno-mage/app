@@ -8,22 +8,17 @@ import { statusText } from "../status/mod.ts";
  * Options for the useServeFiles middleware.
  */
 interface ServeFilesOptions {
-  /**
-   * The directory to serve files from.
-   */
+  /** Directory to serve files from */
   directory: string;
-  /**
-   * Whether to try and serve index.html when the path is a directory.
-   *
-   * @default: true
-   */
+  /** Serve index.html for directory paths @default true */
   serveIndex?: boolean;
 }
 
 /**
- * Serve files from a wildcard route. Only serves on GET and HEAD requests.
+ * Serve static files from a wildcard route.
+ * Only serves on GET and HEAD requests.
  *
- * @returns MageMiddleware
+ * @throws MageError if wildcard parameter is not present in request
  */
 export const serveFiles = (
   options: ServeFilesOptions,

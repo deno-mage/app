@@ -5,40 +5,24 @@ import { MageError } from "../app/mod.ts";
  * Options for the cors middleware.
  */
 interface CORSOptions {
-  /**
-   * The origins that are allowed to make requests. This can be a single
-   * origin or an array of origins. If set to "*", all origins are allowed.
-   */
+  /** Allowed origins ("*" or array of specific origins) */
   origins?: "*" | string[];
-  /**
-   * The methods that are allowed for the requested pathname.
-   */
+  /** Allowed HTTP methods */
   methods?: "*" | string[];
-  /**
-   * The headers that are allowed for the requested pathname.
-   */
+  /** Allowed request headers */
   headers?: string[];
-  /**
-   * The headers that are exposed to the browser.
-   */
+  /** Headers exposed to the browser */
   exposeHeaders?: string[];
-  /**
-   * Indicates whether the request can include user credentials like
-   * cookies, HTTP authentication or client-side certificates.
-   */
+  /** Allow credentials (cookies, HTTP auth, client certificates) */
   credentials?: boolean;
-  /**
-   * The amount of seconds the results of a preflight request can be cached
-   * in a preflight result cache.
-   */
+  /** Seconds to cache preflight results */
   maxAge?: number;
 }
 
 /**
- * Middleware that handles Cross-Origin Resource Sharing (CORS) requests.
+ * Handle Cross-Origin Resource Sharing (CORS) requests.
  *
- * @param options The options for the CORS middleware.
- * @returns MageMiddleware
+ * @throws MageError if wildcard origin is used with credentials (CORS spec violation)
  */
 export const cors = (options?: CORSOptions): MageMiddleware => {
   return async (c, next) => {

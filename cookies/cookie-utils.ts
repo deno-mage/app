@@ -1,7 +1,8 @@
 import type { MageContext } from "../app/mod.ts";
 
 /**
- * Create HMAC-SHA256 signature for a value
+ * Create HMAC-SHA256 signature for a value.
+ * Used for signing cookies to prevent tampering.
  */
 const createSignature = async (
   value: string,
@@ -26,7 +27,8 @@ const createSignature = async (
 };
 
 /**
- * Verify HMAC-SHA256 signature
+ * Verify HMAC-SHA256 signature for a value.
+ * Uses constant-time comparison to prevent timing attacks.
  */
 const verifySignature = async (
   value: string,
@@ -41,37 +43,21 @@ const verifySignature = async (
  * Options for setting a cookie
  */
 export interface CookieOptions {
-  /**
-   * Secret for signing cookies. When provided, cookie values will be signed with HMAC-SHA256.
-   */
+  /** Secret for HMAC-SHA256 signing */
   secret?: string;
-  /**
-   * Max age in seconds, if set takes precedence over `expires`
-   */
+  /** Max age in seconds (takes precedence over expires) */
   maxAge?: number;
-  /**
-   * Datetime when the cookie expires
-   */
+  /** Expiration date */
   expires?: Date;
-  /**
-   * Only send the cookie to the specified path
-   */
+  /** Cookie path */
   path?: string;
-  /**
-   * Only send the cookie to the specified domain
-   */
+  /** Cookie domain */
   domain?: string;
-  /**
-   * Only send the cookie over HTTPS
-   */
+  /** Send over HTTPS only */
   secure?: boolean;
-  /**
-   * Only include the cookie in HTTP requests
-   */
+  /** HTTP requests only (no JavaScript access) */
   httpOnly?: boolean;
-  /**
-   * Controls when the cookie is sent with cross-origin requests
-   */
+  /** Cross-origin request policy */
   sameSite?: "Strict" | "Lax" | "None";
 }
 

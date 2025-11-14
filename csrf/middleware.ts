@@ -23,20 +23,14 @@ type IsAllowedSecFetchSiteHandler = (
  */
 export interface CsrfOptions {
   /**
-   * Allowed origins for requests.
-   * - string: Single allowed origin (e.g., 'https://example.com')
-   * - string[]: Multiple allowed origins
-   * - function: Custom validation logic
-   * - Default: Only same origin as the request URL
+   * Allowed origins (string, array, or custom validator).
+   * @default Request URL origin only
    */
   origin?: string | string[] | IsAllowedOriginHandler;
 
   /**
-   * Sec-Fetch-Site header validation. Standard values include 'same-origin', 'same-site', 'cross-site', 'none'.
-   * - string: Single allowed value (e.g., 'same-origin')
-   * - string[]: Multiple allowed values (e.g., ['same-origin', 'same-site'])
-   * - function: Custom validation with access to context
-   * - Default: Only allows 'same-origin'
+   * Allowed Sec-Fetch-Site header values (string, array, or custom validator).
+   * @default "same-origin"
    */
   secFetchSite?: SecFetchSite | SecFetchSite[] | IsAllowedSecFetchSiteHandler;
 }

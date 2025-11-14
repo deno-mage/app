@@ -1,5 +1,5 @@
 import { describe, it } from "@std/testing/bdd";
-import { assertSpyCall, spy } from "jsr:@std/testing/mock";
+import { assertSpyCall, spy } from "@std/testing/mock";
 import { MageLogger } from "../logger.ts";
 
 const logSpy = spy(console, "log");
