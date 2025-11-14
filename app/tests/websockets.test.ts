@@ -49,6 +49,11 @@ describe("websockets", () => {
 
     expect(await message).toBe("pong");
 
+    // Wait for WebSocket to close properly
+    const closed = new Promise<void>((resolve) => {
+      ws.onclose = () => resolve();
+    });
     ws.close();
+    await closed;
   });
 });
