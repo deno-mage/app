@@ -124,6 +124,46 @@ describe("security headers", () => {
     });
   });
 
+  describe("Permissions-Policy configuration", () => {
+    let server: MageTestServer;
+
+    beforeAll(() => {
+      server = new MageTestServer();
+
+      server.app.use(securityHeaders({
+        permissionsPolicy: {
+          geolocation: ["self"],
+          camera: ["none"],
+          microphone: ["self", "https://example.com"],
+          payment: [],
+        },
+      }));
+
+      server.app.get("/", (c) => {
+        c.text("Hello, World!");
+      });
+
+      server.start();
+    });
+
+    afterAll(async () => {
+      await server.stop();
+    });
+
+    it("should set Permissions-Policy header", async () => {
+      const response = await fetch(server.url("/"), {
+        method: "GET",
+      });
+
+      // drain response to ensure no memory leak
+      await response.text();
+
+      expect(response.headers.get("Permissions-Policy")).toEqual(
+        'geolocation=(self), camera=(), microphone=(self "https://example.com"), payment=()',
+      );
+    });
+  });
+
   describe("CSP configuration", () => {
     let server: MageTestServer;
 
