@@ -1,4 +1,3 @@
-import { exists } from "@std/fs";
 import { resolve } from "@std/path";
 import type { MageMiddleware } from "../app/mod.ts";
 import { MageError } from "../app/mod.ts";
@@ -52,31 +51,46 @@ export const serveFiles = (
     // 2. Directory with index.html (if serveIndex enabled)
     // 3. File with .html extension appended
 
+    // Helper to check if path is a file
+    const isFile = async (path: string): Promise<boolean> => {
+      try {
+        const stat = await Deno.stat(path);
+        return stat.isFile;
+      } catch {
+        return false;
+      }
+    };
+
+    // Helper to check if path is a directory
+    const isDirectory = async (path: string): Promise<boolean> => {
+      try {
+        const stat = await Deno.stat(path);
+        return stat.isDirectory;
+      } catch {
+        return false;
+      }
+    };
+
     // Check if exact file exists
-    if (await exists(filepath, { isFile: true })) {
+    if (await isFile(filepath)) {
       await c.file(filepath);
       return;
     }
 
     // Check if it's a directory with index.html
-    if (serveIndex) {
-      const directoryExists = await exists(filepath, { isDirectory: true });
-      if (directoryExists) {
-        const indexPath = resolve(filepath, "index.html");
-        if (await exists(indexPath, { isFile: true })) {
-          await c.file(indexPath);
-          return;
-        }
+    if (serveIndex && await isDirectory(filepath)) {
+      const indexPath = resolve(filepath, "index.html");
+      if (await isFile(indexPath)) {
+        await c.file(indexPath);
+        return;
       }
     }
 
     // Check if file exists with .html extension
     const htmlPath = `${normalizedPath}.html`;
-    if (htmlPath.startsWith(normalizedBase)) {
-      if (await exists(htmlPath, { isFile: true })) {
-        await c.file(htmlPath);
-        return;
-      }
+    if (htmlPath.startsWith(normalizedBase) && await isFile(htmlPath)) {
+      await c.file(htmlPath);
+      return;
     }
 
     // If no file found, return a 404.

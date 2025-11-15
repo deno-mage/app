@@ -179,6 +179,7 @@ describe("serve file", () => {
     });
 
     expect(response.status).toBe(200);
+    await response.text(); // Consume response body
     expect(response.headers.get("content-type")).toEqual(
       "application/json; charset=UTF-8",
     );

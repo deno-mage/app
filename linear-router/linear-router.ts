@@ -194,67 +194,83 @@ export class LinearRouter implements MageRouter {
     let params: { [key: string]: string } = {};
     let wildcard: string | undefined;
 
-    // Filter and collect matching entries with their specificity scores
-    const matchedEntries = this._entries
-      .map((entry) => {
-        if (entry.routename) {
-          const result = matchRoutename(entry.routename, url.pathname);
+    // Collect all matching entries (globals + route matches)
+    const matchedEntries: Array<{
+      entry: RouterEntry;
+      entryParams: { [key: string]: string };
+      entryWildcard: string | undefined;
+      specificity: number;
+      isGlobal: boolean;
+    }> = [];
 
-          if (!result.match) {
-            return null;
-          }
+    for (const entry of this._entries) {
+      if (entry.routename) {
+        // Route-specific middleware
+        const result = matchRoutename(entry.routename, url.pathname);
 
-          // Store params and wildcard from the match
-          const entryParams = result.params;
-          const entryWildcard = result.wildcard;
-          matchedRoutename = true;
-
-          // Calculate specificity for sorting
-          const specificity = calculateRouteSpecificity(entry.routename);
-
-          return { entry, entryParams, entryWildcard, specificity };
+        if (!result.match) {
+          continue; // Skip non-matching routes
         }
 
-        // Global middleware (no routename)
-        return {
+        matchedRoutename = true;
+
+        // Check method matching
+        if (entry.methods && !entry.methods.includes(method)) {
+          continue; // Skip method mismatches
+        }
+
+        if (entry.methods) {
+          matchedMethod = true;
+        }
+
+        const specificity = calculateRouteSpecificity(entry.routename);
+        matchedEntries.push({
+          entry,
+          entryParams: result.params,
+          entryWildcard: result.wildcard,
+          specificity,
+          isGlobal: false,
+        });
+      } else {
+        // Global middleware (always matches)
+        // Check method matching
+        if (entry.methods && !entry.methods.includes(method)) {
+          continue; // Skip method mismatches
+        }
+
+        if (entry.methods) {
+          matchedMethod = true;
+        }
+
+        matchedEntries.push({
           entry,
           entryParams: {},
           entryWildcard: undefined,
           specificity: 0,
-        };
-      })
-      .filter((item) => item !== null)
-      .filter((item) => {
-        // Check method matching
-        if (item!.entry.methods && !item!.entry.methods.includes(method)) {
-          return false;
-        }
-
-        if (item!.entry.methods) {
-          matchedMethod = true;
-        }
-
-        return true;
-      }) as Array<{
-        entry: RouterEntry;
-        entryParams: { [key: string]: string };
-        entryWildcard: string | undefined;
-        specificity: number;
-      }>;
-
-    // Sort by specificity (highest first), preserving registration order for ties
-    matchedEntries.sort((a, b) => b.specificity - a.specificity);
-
-    // Extract middleware and use params/wildcard from most specific match
-    const middleware = matchedEntries.flatMap((item, index) => {
-      // Use params and wildcard from the first (most specific) matching route only
-      if (index === 0) {
-        params = item.entryParams;
-        wildcard = item.entryWildcard;
+          isGlobal: true,
+        });
       }
+    }
 
-      return item.entry.middleware;
-    });
+    // Separate globals from route matches
+    const globals = matchedEntries.filter((item) => item.isGlobal);
+    const routeMatches = matchedEntries.filter((item) => !item.isGlobal);
+
+    // Sort route matches by specificity (most specific first)
+    routeMatches.sort((a, b) => b.specificity - a.specificity);
+
+    // Use params/wildcard from the most specific route match
+    if (routeMatches.length > 0) {
+      const mostSpecific = routeMatches[0];
+      params = mostSpecific.entryParams;
+      wildcard = mostSpecific.entryWildcard;
+    }
+
+    // Extract middleware: globals in registration order, then all route matches by specificity
+    const middleware = [
+      ...globals.flatMap((item) => item.entry.middleware),
+      ...routeMatches.flatMap((item) => item.entry.middleware),
+    ];
 
     return {
       middleware,
