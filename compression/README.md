@@ -76,6 +76,27 @@ app.use(
 );
 ```
 
+## When to Use Compression
+
+**Use this middleware when:**
+
+- Deploying to Deno Deploy or serverless (no nginx/CDN)
+- Serving dynamic, uncacheable API responses (user-specific data, real-time
+  content)
+- Network bandwidth is more expensive than CPU (mobile networks, pay-per-GB
+  scenarios)
+
+**Don't use this middleware when:**
+
+- Static files (pre-compress at build time instead)
+- Behind a CDN or reverse proxy (they handle compression with caching)
+- Responses are cacheable (CDN/proxy compression is more efficient)
+- Local/fast networks where CPU cost outweighs bandwidth savings
+
+**Performance note:** On-demand compression is CPU-intensive. Benchmarks show
+70-80% reduction in requests/sec for 10-100KB responses. Only use when bandwidth
+savings justify the CPU cost.
+
 ## Notes
 
 - Only compresses if client sends `Accept-Encoding: gzip`

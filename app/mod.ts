@@ -16,6 +16,7 @@ export type { MageAppOptions } from "./app.ts";
 export type { MageMiddleware, MageRouter, MatchResult } from "./router.ts";
 export { LinearRouter } from "../linear-router/mod.ts";
 export { MageError } from "./error.ts";
+export { MageResponse } from "./response.ts";
 
 /**
  * Context object that is passed to each middleware. It persists throughout the

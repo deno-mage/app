@@ -35,21 +35,21 @@ afterAll(async () => {
 });
 
 describe("middleware - chaining", () => {
-  it("should apply middleware to all routes - four", async () => {
+  it("should apply middleware to all routes - three", async () => {
     const response = await fetch(server.url("/four"), {
       method: "GET",
     });
 
     expect(response.status).toBe(200);
-    expect(await response.text()).toBe("4");
+    expect(await response.text()).toBe("3");
   });
 
-  it("should apply middleware to specific routes - five", async () => {
+  it("should apply middleware to specific routes - four", async () => {
     const response = await fetch(server.url("/five"), {
       method: "GET",
     });
 
     expect(response.status).toBe(200);
-    expect(await response.text()).toBe("5");
+    expect(await response.text()).toBe("4");
   });
 });

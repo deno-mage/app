@@ -60,12 +60,9 @@ beforeAll(() => {
       offset += arr.length;
     }
 
-    c.res = new Response(gzipped, {
-      headers: {
-        "Content-Type": "text/plain; charset=UTF-8",
-        "Content-Encoding": "gzip",
-      },
-    });
+    c.res.setBody(gzipped as BodyInit);
+    c.header("Content-Type", "text/plain; charset=UTF-8");
+    c.header("Content-Encoding", "gzip");
   });
 
   // Non-compressible content type

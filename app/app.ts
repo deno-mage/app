@@ -164,7 +164,7 @@ export class MageApp {
 
       await compose(middleware)(c);
 
-      return c.res;
+      return c.res.finalize();
     } catch (error) {
       let status: Status = 500;
       if (error instanceof MageError) {
@@ -182,7 +182,7 @@ export class MageApp {
         status,
       );
 
-      return c.res;
+      return c.res.finalize();
     }
   }
 }
