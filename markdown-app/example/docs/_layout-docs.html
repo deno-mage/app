@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="auto">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{title}} - Example Docs</title>
+
+    <!-- Pico CSS for beautiful defaults (optional - remove for custom styles) -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"
+    />
+
+    <!-- GFM styles for markdown content -->
+    <link rel="stylesheet" href="{{basePath}}/gfm.css" />
+
+    <style>
+      /* Simple two-column layout */
+      body {
+        display: grid;
+        grid-template-columns: 250px 1fr;
+        gap: 2rem;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+      }
+
+      aside {
+        position: sticky;
+        top: 2rem;
+        height: fit-content;
+      }
+
+      aside nav section {
+        margin-bottom: 2rem;
+      }
+
+      aside nav h3 {
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--muted-color);
+        margin-bottom: 0.5rem;
+      }
+
+      aside nav ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      aside nav li {
+        margin-bottom: 0.25rem;
+      }
+
+      aside nav a {
+        display: block;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        text-decoration: none;
+        color: var(--color);
+      }
+
+      aside nav a:hover {
+        background: var(--contrast-inverse);
+      }
+
+      aside nav a[data-current="true"] {
+        background: var(--primary);
+        color: var(--primary-inverse);
+        font-weight: 600;
+      }
+
+      main {
+        min-width: 0;
+      }
+
+      /* Responsive layout */
+      @media (max-width: 768px) {
+        body {
+          grid-template-columns: 1fr;
+        }
+
+        aside {
+          position: static;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <aside>{{navigation}}</aside>
+    <main>
+      <article>{{content}}</article>
+    </main>
+  </body>
+</html>
