@@ -1,7 +1,5 @@
 import { MageApp } from "../app/mod.ts";
 
-const TEST_PORT_FLOOR = 60000;
-
 /**
  * A test server for running Mage apps in a test environment
  */
@@ -19,7 +17,9 @@ export class MageTestServer {
   start(port?: number) {
     this._server = Deno.serve(
       {
-        port: port ?? Math.floor(Math.random() * 1000) + TEST_PORT_FLOOR,
+        // Use port 0 to let the OS assign a free port (prevents "address in use" errors)
+        // Only use the provided port if explicitly specified
+        port: port ?? 0,
       },
       this._app.handler,
     );
