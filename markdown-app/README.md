@@ -14,7 +14,7 @@ philosophy - you control the design.
 **Key features:**
 
 - YAML frontmatter for metadata (title, slug, layout, navigation)
-- GitHub Flavored Markdown with syntax highlighting
+- GitHub Flavored Markdown with configurable syntax highlighting
 - Auto-generated navigation from frontmatter
 - Hot reload during development via WebSocket
 - Build to static HTML for deployment
@@ -218,8 +218,28 @@ interface MarkdownAppOptions {
   layoutDir: string; // Directory with layout templates
   basePath?: string; // Base path for URLs (default: "/")
   dev?: boolean; // Development mode (default: false)
+  syntaxHighlightLanguages?: string[]; // Languages for syntax highlighting (default: ["typescript", "bash", "json", "yaml"])
 }
 ```
+
+**Syntax Highlighting:**
+
+By default, JavaScript, HTML, and Markdown are included. Additional languages
+are loaded dynamically based on `syntaxHighlightLanguages`:
+
+```typescript
+// Default languages
+syntaxHighlightLanguages: ["typescript", "bash", "json", "yaml"];
+
+// Custom languages
+syntaxHighlightLanguages: ["python", "rust", "go"];
+
+// Minimal (JS/HTML/Markdown only)
+syntaxHighlightLanguages: [];
+```
+
+See [Prism language list](https://unpkg.com/browse/prismjs@1.29.0/components/)
+for available languages.
 
 **Returns:**
 

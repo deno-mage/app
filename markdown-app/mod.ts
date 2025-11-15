@@ -33,6 +33,14 @@ export interface MarkdownAppOptions {
    * @default false
    */
   dev?: boolean;
+
+  /**
+   * Languages to enable for syntax highlighting.
+   * JavaScript, Markdown, and HTML are included by default.
+   *
+   * @default ["typescript", "bash", "json", "yaml"]
+   */
+  syntaxHighlightLanguages?: string[];
 }
 
 /**
@@ -71,6 +79,7 @@ export function markdownApp(options: MarkdownAppOptions): MarkdownApp {
     layoutDir,
     basePath = "/",
     dev = false,
+    syntaxHighlightLanguages = ["typescript", "bash", "json", "yaml"],
   } = options;
 
   // Validate required options
@@ -90,6 +99,7 @@ export function markdownApp(options: MarkdownAppOptions): MarkdownApp {
     layoutDir,
     basePath,
     dev,
+    syntaxHighlightLanguages,
   };
 
   return {

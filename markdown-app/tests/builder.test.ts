@@ -55,6 +55,7 @@ layout: docs
         layoutDir,
         basePath: "/",
         dev: false,
+        syntaxHighlightLanguages: ["typescript", "bash", "json", "yaml"],
       };
 
       await build(options);
@@ -100,6 +101,7 @@ Content`,
         layoutDir,
         basePath: "/",
         dev: false,
+        syntaxHighlightLanguages: ["typescript", "bash", "json", "yaml"],
       };
 
       await build(options);
@@ -153,6 +155,7 @@ Content 2`,
         layoutDir,
         basePath: "/",
         dev: false,
+        syntaxHighlightLanguages: ["typescript", "bash", "json", "yaml"],
       };
 
       await build(options);
@@ -203,6 +206,7 @@ Content`,
         layoutDir,
         basePath: "/", // Should be normalized to empty string
         dev: false,
+        syntaxHighlightLanguages: ["typescript", "bash", "json", "yaml"],
       };
 
       await build(options);
@@ -242,6 +246,7 @@ Content`,
         layoutDir,
         basePath: "/",
         dev: true,
+        syntaxHighlightLanguages: ["typescript", "bash", "json", "yaml"],
       };
 
       await build(options);
@@ -282,6 +287,7 @@ Content`,
         layoutDir,
         basePath: "/",
         dev: false,
+        syntaxHighlightLanguages: ["typescript", "bash", "json", "yaml"],
       };
 
       await build(options);
@@ -321,6 +327,7 @@ Content`,
         layoutDir,
         basePath: "/",
         dev: false,
+        syntaxHighlightLanguages: ["typescript", "bash", "json", "yaml"],
       };
 
       await build(options);
@@ -362,6 +369,7 @@ Home page`,
         layoutDir,
         basePath: "/",
         dev: false,
+        syntaxHighlightLanguages: ["typescript", "bash", "json", "yaml"],
       };
 
       await build(options);
@@ -400,6 +408,7 @@ Content`,
         layoutDir,
         basePath: "/",
         dev: false,
+        syntaxHighlightLanguages: ["typescript", "bash", "json", "yaml"],
       };
 
       await expect(build(options)).rejects.toThrow("Layout file not found");
@@ -419,6 +428,7 @@ Content`,
         layoutDir,
         basePath: "/",
         dev: false,
+        syntaxHighlightLanguages: ["typescript", "bash", "json", "yaml"],
       };
 
       // Should not throw, just log warning
@@ -469,6 +479,7 @@ Nested content`,
         layoutDir,
         basePath: "/",
         dev: false,
+        syntaxHighlightLanguages: ["typescript", "bash", "json", "yaml"],
       };
 
       await build(options);
@@ -509,6 +520,7 @@ Content`,
         layoutDir,
         basePath: "/docs",
         dev: false,
+        syntaxHighlightLanguages: ["typescript", "bash", "json", "yaml"],
       };
 
       await build(options);
@@ -547,6 +559,7 @@ Content`,
         layoutDir,
         basePath: "/",
         dev: true,
+        syntaxHighlightLanguages: ["typescript", "bash", "json", "yaml"],
       };
 
       await build(options);
@@ -589,6 +602,7 @@ Content`,
         layoutDir,
         basePath: "/",
         dev: true,
+        syntaxHighlightLanguages: ["typescript", "bash", "json", "yaml"],
       };
 
       await build(options);

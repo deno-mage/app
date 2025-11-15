@@ -38,7 +38,8 @@
     "npm:marked-footnote@^1.2.0": "1.4.0_marked@12.0.2",
     "npm:marked-gfm-heading-id@^3.1.0": "3.2.0_marked@12.0.2",
     "npm:marked@12": "12.0.2",
-    "npm:prismjs@^1.29.0": "1.30.0",
+    "npm:prismjs@1.29.0": "1.29.0",
+    "npm:prismjs@^1.29.0": "1.29.0",
     "npm:sanitize-html@^2.13.0": "2.17.0",
     "npm:zod@^3.24.1": "3.24.1"
   },
@@ -54,7 +55,7 @@
         "npm:marked-alert",
         "npm:marked-footnote",
         "npm:marked-gfm-heading-id",
-        "npm:prismjs",
+        "npm:prismjs@^1.29.0",
         "npm:sanitize-html"
       ]
     },
@@ -255,8 +256,8 @@
         "source-map-js"
       ]
     },
-    "prismjs@1.30.0": {
-      "integrity": "sha512-DEvV2ZF2r2/63V+tK8hQvrR2ZGn10srHbXviTlcv7Kpzw8jWiNTqbVgjO3IY8RxrrOUF8VPMQQFysYYYv0YZxw=="
+    "prismjs@1.29.0": {
+      "integrity": "sha512-Kx/1w86q/epKcmte75LNrEoT+lX8pBpavuAbvJWRXar7Hz8jrtF+e3vY751p0R8H9HdArwaCTNDDzHg/ScJK1Q=="
     },
     "sanitize-html@2.17.0": {
       "integrity": "sha512-dLAADUSS8rBwhaevT12yCezvioCA+bmUTPH/u57xKPT8d++voeYE6HeluA/bPbQ15TwDBG2ii+QZIEmYx8VdxA==",

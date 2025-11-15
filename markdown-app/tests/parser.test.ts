@@ -66,7 +66,8 @@ const x = 1;
       expect(result.content).toContain("<h2");
       expect(result.content).toContain("<ul>");
       expect(result.content).toContain("<li>");
-      expect(result.content).toContain("<code");
+      expect(result.content).toContain("<pre>");
+      expect(result.content).toContain("<code>");
     });
 
     it("should throw error for missing frontmatter", () => {

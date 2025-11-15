@@ -9,6 +9,27 @@ import { generateNavigation } from "./navigation.ts";
 const logger = new MageLogger("Markdown App");
 
 /**
+ * Load Prism syntax highlighting language components dynamically.
+ */
+async function loadSyntaxHighlightLanguages(
+  languages: string[],
+): Promise<void> {
+  const PRISM_VERSION = "1.29.0";
+
+  for (const lang of languages) {
+    try {
+      await import(`npm:prismjs@${PRISM_VERSION}/components/prism-${lang}.js`);
+    } catch (error) {
+      logger.warn(
+        `Failed to load syntax highlighting for language "${lang}": ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    }
+  }
+}
+
+/**
  * Options for building markdown files to static HTML.
  */
 export interface BuildOptions {
@@ -17,6 +38,7 @@ export interface BuildOptions {
   layoutDir: string;
   basePath: string;
   dev: boolean;
+  syntaxHighlightLanguages: string[];
 }
 
 /**
@@ -29,11 +51,15 @@ export async function build(options: BuildOptions): Promise<void> {
     layoutDir,
     basePath,
     dev,
+    syntaxHighlightLanguages,
   } = options;
 
   logger.info(`Building markdown files from ${sourceDir}...`);
 
-  // Step 1: Find all markdown files
+  // Step 1: Load syntax highlighting languages
+  await loadSyntaxHighlightLanguages(syntaxHighlightLanguages);
+
+  // Step 2: Find all markdown files
   const markdownFiles = await findMarkdownFiles(sourceDir);
   logger.info(`Found ${markdownFiles.length} markdown files`);
 
@@ -42,11 +68,11 @@ export async function build(options: BuildOptions): Promise<void> {
     return;
   }
 
-  // Step 2: Parse all markdown files
+  // Step 3: Parse all markdown files
   const pages = await parseAllFiles(markdownFiles);
   logger.info(`Parsed ${pages.length} pages`);
 
-  // Step 3: Build each page
+  // Step 4: Build each page
   for (const page of pages) {
     await buildPage(page, pages, {
       outputDir,
@@ -56,7 +82,7 @@ export async function build(options: BuildOptions): Promise<void> {
     });
   }
 
-  // Step 4: Write GFM CSS
+  // Step 5: Write GFM CSS
   await writeGfmCss(outputDir);
 
   logger.success(`Build complete! Output: ${outputDir}`);
@@ -244,6 +270,25 @@ function injectHotReloadScript(html: string): string {
  */
 async function writeGfmCss(outputDir: string): Promise<void> {
   const cssPath = join(outputDir, "gfm.css");
-  await Deno.writeTextFile(cssPath, GFM_CSS);
+
+  // Add Prism token styles that map to GFM prettylights colors
+  const prismStyles = `
+/* Prism syntax highlighting using GFM prettylights colors */
+.token.comment, .token.prolog, .token.doctype, .token.cdata { color: var(--color-prettylights-syntax-comment); }
+.token.punctuation { opacity: 0.7; }
+.token.property, .token.tag, .token.boolean, .token.number, .token.constant, .token.symbol, .token.deleted { color: var(--color-prettylights-syntax-constant); }
+.token.selector, .token.attr-name, .token.string, .token.char, .token.builtin, .token.inserted { color: var(--color-prettylights-syntax-string); }
+.token.operator, .token.entity, .token.url, .language-css .token.string, .style .token.string { color: var(--color-prettylights-syntax-entity); }
+.token.atrule, .token.attr-value, .token.keyword { color: var(--color-prettylights-syntax-keyword); }
+.token.function, .token.class-name { color: var(--color-prettylights-syntax-entity); }
+.token.regex, .token.important, .token.variable { color: var(--color-prettylights-syntax-variable); }
+
+/* Code block padding */
+.highlight pre {
+  padding: 16px;
+}
+`;
+
+  await Deno.writeTextFile(cssPath, GFM_CSS + prismStyles);
   logger.info(`Wrote GFM CSS`);
 }
