@@ -104,6 +104,7 @@ app.all("/admin/*", requireAuth, handleAdmin);
 | [**csrf**](./csrf)                         | CSRF protection (Fetch Metadata)  |
 | [**logs**](./logs)                         | Structured logging                |
 | [**rate-limit**](./rate-limit)             | Sliding window rate limiting      |
+| [**request-id**](./request-id)             | Request ID tracking and tracing   |
 | [**security-headers**](./security-headers) | Common security headers           |
 | [**serve-files**](./serve-files)           | Static file serving               |
 | [**status**](./status)                     | HTTP status utilities             |
@@ -162,12 +163,14 @@ import { MageApp } from "@mage/app";
 import { cors } from "@mage/app/cors";
 import { rateLimit } from "@mage/app/rate-limit";
 import { csrf } from "@mage/app/csrf";
+import { requestId } from "@mage/app/request-id";
 import { validate } from "@mage/app/validate";
 import { z } from "zod";
 
 const app = new MageApp();
 
 // Global middleware
+app.use(requestId());
 app.use(cors());
 app.use(csrf());
 app.use(rateLimit({ max: 100, windowMs: 60000 }));
