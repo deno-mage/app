@@ -40,6 +40,9 @@ export class MageTestServer {
   }
 
   async stop() {
-    await this._server?.shutdown();
+    if (this._server) {
+      await this._server.shutdown();
+      await this._server.finished;
+    }
   }
 }
