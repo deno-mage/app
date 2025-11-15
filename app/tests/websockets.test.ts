@@ -43,16 +43,18 @@ describe("websockets", () => {
       };
     });
 
+    // Set up close handler before opening to avoid race condition
+    const closed = new Promise<void>((resolve) => {
+      ws.onclose = () => resolve();
+    });
+
     ws.onopen = () => {
       ws.send("ping");
     };
 
     expect(await message).toBe("pong");
 
-    // Wait for WebSocket to close properly
-    const closed = new Promise<void>((resolve) => {
-      ws.onclose = () => resolve();
-    });
+    // Close and wait for the close to complete
     ws.close();
     await closed;
   });

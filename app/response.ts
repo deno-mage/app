@@ -110,6 +110,12 @@ export class MageResponse {
    */
   public finalize(): Response {
     if (this._externalResponse) {
+      // WebSocket upgrade responses (status 101) must be returned as-is
+      // They cannot be cloned or recreated from their body
+      if (this._externalResponse.status === 101) {
+        return this._externalResponse;
+      }
+
       // Return external Response with our merged headers
       // Need to create new Response to apply modified headers
       return new Response(this._externalResponse.body, {
