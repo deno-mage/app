@@ -143,8 +143,39 @@ interface RouterEntry {
 }
 
 /**
+ * Calculate route specificity score for sorting.
+ * Higher scores = more specific = higher priority.
+ *
+ * Scoring:
+ * - Static segment: 3 points (most specific)
+ * - Parameter segment: 2 points (medium specific)
+ * - Wildcard segment: 1 point (least specific)
+ */
+function calculateRouteSpecificity(routename: string): number {
+  const segments = routename.split("/").filter((s) => s !== "");
+  let score = 0;
+
+  for (const segment of segments) {
+    if (segment === "*") {
+      score += 1; // Wildcard: lowest priority
+    } else if (segment.startsWith(":")) {
+      score += 2; // Parameter: medium priority
+    } else {
+      score += 3; // Static: highest priority
+    }
+  }
+
+  return score;
+}
+
+/**
  * LinearRouter uses linear search (O(n)) to match routes.
  * Simple, proven implementation suitable for most applications.
+ *
+ * Routes are automatically sorted by specificity when matching:
+ * 1. Static routes (exact matches) - highest priority
+ * 2. Parameterized routes (:param) - medium priority
+ * 3. Wildcard routes (*) - lowest priority
  *
  * Best for:
  * - Serverless functions with frequent cold starts
@@ -163,31 +194,67 @@ export class LinearRouter implements MageRouter {
     let params: { [key: string]: string } = {};
     let wildcard: string | undefined;
 
-    const middleware = this._entries
-      .filter((entry) => {
+    // Filter and collect matching entries with their specificity scores
+    const matchedEntries = this._entries
+      .map((entry) => {
         if (entry.routename) {
           const result = matchRoutename(entry.routename, url.pathname);
 
           if (!result.match) {
-            return false;
+            return null;
           }
 
-          params = result.params;
-          wildcard = result.wildcard;
+          // Store params and wildcard from the match
+          const entryParams = result.params;
+          const entryWildcard = result.wildcard;
           matchedRoutename = true;
+
+          // Calculate specificity for sorting
+          const specificity = calculateRouteSpecificity(entry.routename);
+
+          return { entry, entryParams, entryWildcard, specificity };
         }
 
-        if (entry.methods && !entry.methods.includes(method)) {
+        // Global middleware (no routename)
+        return {
+          entry,
+          entryParams: {},
+          entryWildcard: undefined,
+          specificity: 0,
+        };
+      })
+      .filter((item) => item !== null)
+      .filter((item) => {
+        // Check method matching
+        if (item!.entry.methods && !item!.entry.methods.includes(method)) {
           return false;
         }
 
-        if (entry.methods) {
+        if (item!.entry.methods) {
           matchedMethod = true;
         }
 
         return true;
-      })
-      .flatMap((entry) => entry.middleware);
+      }) as Array<{
+        entry: RouterEntry;
+        entryParams: { [key: string]: string };
+        entryWildcard: string | undefined;
+        specificity: number;
+      }>;
+
+    // Sort by specificity (highest first), preserving registration order for ties
+    matchedEntries.sort((a, b) => b.specificity - a.specificity);
+
+    // Extract middleware and use params/wildcard from most specific match
+    const middleware = matchedEntries.flatMap((item, index) => {
+      // Use params and wildcard from the first (most specific) matching route only
+      if (index === 0) {
+        params = item.entryParams;
+        wildcard = item.entryWildcard;
+      }
+
+      return item.entry.middleware;
+    });
 
     return {
       middleware,
