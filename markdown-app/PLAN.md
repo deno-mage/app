@@ -105,18 +105,26 @@ docs/_site/
 
 ```html
 <!DOCTYPE html>
-<html>
+<html lang="en" data-theme="auto">
   <head>
     <title>{{title}}</title>
-    <link rel="stylesheet" href="{{basePath}}/gfm.css">
+
+    <!-- Optional: Pico CSS for beautiful defaults (remove for custom styles) -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"
+    />
+
+    <!-- GFM styles for markdown content -->
+    <link rel="stylesheet" href="{{basePath}}/gfm.css" />
   </head>
   <body>
-    <aside>
-      {{navigation}}
-    </aside>
-    <main>
-      {{content}}
-    </main>
+    <div class="container-fluid">
+      <aside>{{navigation}}</aside>
+      <main>
+        <article>{{content}}</article>
+      </main>
+    </div>
   </body>
 </html>
 ```
@@ -129,6 +137,73 @@ docs/_site/
 | `{{content}}`    | Rendered markdown HTML      | `<h1>CORS</h1><p>...</p>`           |
 | `{{navigation}}` | Auto-generated nav HTML     | `<nav><section>...</section></nav>` |
 | `{{basePath}}`   | URL prefix from config      | `/docs`                             |
+
+---
+
+## Styling
+
+### BYO-Styles (Bring Your Own Styles)
+
+**markdown-app** provides the markdown → HTML pipeline. **You** control all
+styling via layout templates.
+
+**What we provide:**
+
+- ✅ `gfm.css` file in `outputDir` (GitHub-style markdown rendering)
+- ✅ Example layouts showing one approach (Pico CSS)
+- ✅ Semantic HTML compatible with any CSS framework
+
+**What you provide:**
+
+- ✅ Your own `_layout-*.html` templates
+- ✅ Whatever CSS you want (or none at all)
+
+### Example Approaches
+
+**Option A: Pico CSS (shown in example above)**
+
+```html
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"
+/>
+<link rel="stylesheet" href="{{basePath}}/gfm.css" />
+```
+
+**Option B: Custom CSS**
+
+```html
+<link rel="stylesheet" href="/my-custom-styles.css" />
+<link rel="stylesheet" href="{{basePath}}/gfm.css" />
+```
+
+**Option C: Other Frameworks**
+
+```html
+<!-- Water.css -->
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css"
+/>
+
+<!-- MVP.css -->
+<link rel="stylesheet" href="https://unpkg.com/mvp.css" />
+
+<!-- Simple.css -->
+<link rel="stylesheet" href="https://cdn.simplecss.org/simple.min.css" />
+```
+
+**Option D: Just GFM or No Styles**
+
+```html
+<!-- Only markdown styles -->
+<link rel="stylesheet" href="{{basePath}}/gfm.css" />
+
+<!-- Or completely custom/none -->
+```
+
+**Zero lock-in** - the generated HTML uses semantic tags, making it compatible
+with any styling approach.
 
 ---
 
