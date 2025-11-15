@@ -10,6 +10,8 @@ nav-order: 1
 
 This is an example documentation site built with **Mage Markdown App**.
 
+![Image: A screenshot of the example docs site]({{assets}}/image.png)
+
 ## Features
 
 - 📝 Markdown-driven content

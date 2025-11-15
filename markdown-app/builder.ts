@@ -1,15 +1,18 @@
 import { walk } from "@std/fs";
 import { dirname, join, resolve } from "@std/path";
 import { CSS as GFM_CSS } from "@deno/gfm";
-import { MageLogger } from "../logs/mod.ts";
 import { type Frontmatter, parseMarkdown } from "./parser.ts";
 import { renderTemplate, type TemplateData } from "./template.ts";
 import { generateNavigation } from "./navigation.ts";
 import { generateSitemap } from "./sitemap.ts";
 import { generateRobotsTxt } from "./robots.ts";
 import { generateManifest } from "./manifest.ts";
-
-const logger = new MageLogger("Markdown App");
+import {
+  type AssetMap,
+  copyAssetsWithHashing,
+  replaceAssetPlaceholders,
+} from "./assets.ts";
+import { logger } from "./logger.ts";
 
 /**
  * Load Prism syntax highlighting language components dynamically.
@@ -70,6 +73,8 @@ export interface BuildOptions {
   syntaxHighlightLanguages: string[];
   /** Site metadata for production files (sitemap, robots.txt, manifest) */
   siteMetadata?: SiteMetadata;
+  /** Directory containing static assets to copy (with cache busting) */
+  assetsDir?: string;
 }
 
 /**
@@ -84,6 +89,7 @@ export async function build(options: BuildOptions): Promise<void> {
     dev,
     syntaxHighlightLanguages,
     siteMetadata,
+    assetsDir = "assets",
   } = options;
 
   logger.info(`Building markdown files from ${sourceDir}...`);
@@ -91,7 +97,10 @@ export async function build(options: BuildOptions): Promise<void> {
   // Step 1: Load syntax highlighting languages
   await loadSyntaxHighlightLanguages(syntaxHighlightLanguages);
 
-  // Step 2: Find all markdown files
+  // Step 2: Copy assets with cache busting
+  const assetMap = await copyAssetsWithHashing(assetsDir, outputDir, basePath);
+
+  // Step 3: Find all markdown files
   const markdownFiles = await findMarkdownFiles(sourceDir);
   logger.info(`Found ${markdownFiles.length} markdown files`);
 
@@ -100,11 +109,11 @@ export async function build(options: BuildOptions): Promise<void> {
     return;
   }
 
-  // Step 3: Parse all markdown files
-  const pages = await parseAllFiles(markdownFiles);
+  // Step 4: Parse all markdown files
+  const pages = await parseAllFiles(markdownFiles, assetMap);
   logger.info(`Parsed ${pages.length} pages`);
 
-  // Step 4: Build each page
+  // Step 5: Build each page
   for (const page of pages) {
     await buildPage(page, pages, {
       outputDir,
@@ -114,16 +123,17 @@ export async function build(options: BuildOptions): Promise<void> {
     });
   }
 
-  // Step 5: Write GFM CSS
+  // Step 6: Write GFM CSS
   await writeGfmCss(outputDir);
 
-  // Step 6: Generate production files (sitemap, robots.txt, manifest) if siteMetadata provided
+  // Step 7: Generate production files (sitemap, robots.txt, manifest) if siteMetadata provided
   if (siteMetadata) {
     await writeProductionFiles(
       pages.map((p) => p.frontmatter),
       siteMetadata,
       basePath,
       outputDir,
+      assetMap,
     );
   }
 
@@ -156,15 +166,22 @@ interface ParsedPage {
 }
 
 /**
- * Parse all markdown files.
+ * Parse all markdown files with asset placeholder replacement.
  */
-async function parseAllFiles(files: string[]): Promise<ParsedPage[]> {
+async function parseAllFiles(
+  files: string[],
+  assetMap: AssetMap,
+): Promise<ParsedPage[]> {
   const pages: ParsedPage[] = [];
 
   for (const filepath of files) {
     try {
       const fileContent = await Deno.readTextFile(filepath);
-      const parsed = parseMarkdown(fileContent, filepath);
+
+      // Replace {{assets}} placeholders in markdown before parsing
+      const contentWithAssets = replaceAssetPlaceholders(fileContent, assetMap);
+
+      const parsed = parseMarkdown(contentWithAssets, filepath);
 
       pages.push({
         filepath,
@@ -343,6 +360,7 @@ async function writeProductionFiles(
   siteMetadata: SiteMetadata,
   basePath: string,
   outputDir: string,
+  assetMap: AssetMap,
 ): Promise<void> {
   // Generate and write sitemap.xml
   const sitemap = generateSitemap(pages, siteMetadata.siteUrl, basePath);
@@ -357,7 +375,7 @@ async function writeProductionFiles(
   logger.info(`Wrote robots.txt`);
 
   // Generate and write manifest.webmanifest
-  const manifest = generateManifest(siteMetadata, basePath);
+  const manifest = generateManifest(siteMetadata, basePath, assetMap);
   const manifestPath = join(outputDir, "manifest.webmanifest");
   await Deno.writeTextFile(manifestPath, manifest);
   logger.info(`Wrote manifest.webmanifest`);

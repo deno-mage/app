@@ -50,6 +50,15 @@ export interface MarkdownAppOptions {
    * When provided, these files will be generated during build.
    */
   siteMetadata?: SiteMetadata;
+
+  /**
+   * Directory containing static assets to copy with cache busting.
+   * Assets are hashed and can be referenced with {{assets}}/path in markdown.
+   * Files will be output to __assets/ directory to avoid route conflicts.
+   *
+   * @default "assets"
+   */
+  assetsDir?: string;
 }
 
 /**
@@ -90,6 +99,7 @@ export function markdownApp(options: MarkdownAppOptions): MarkdownApp {
     dev = false,
     syntaxHighlightLanguages = ["typescript", "bash", "json", "yaml"],
     siteMetadata,
+    assetsDir = "assets",
   } = options;
 
   // Validate required options
@@ -111,6 +121,7 @@ export function markdownApp(options: MarkdownAppOptions): MarkdownApp {
     dev,
     syntaxHighlightLanguages,
     siteMetadata,
+    assetsDir,
   };
 
   return {

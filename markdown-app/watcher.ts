@@ -1,9 +1,7 @@
 import type { BuildOptions } from "./builder.ts";
 import { build } from "./builder.ts";
 import { resolve } from "@std/path";
-import { MageLogger } from "../logs/mod.ts";
-
-const logger = new MageLogger("Markdown App");
+import { logger } from "./logger.ts";
 
 /**
  * WebSocket clients connected for hot reload.

@@ -205,6 +205,141 @@ nav a[data-current="true"] {
 }
 ```
 
+## Static Assets
+
+The Markdown App includes automatic asset management with cache busting for
+optimal performance.
+
+### Asset Directory
+
+By default, assets are placed in the `assets/` directory relative to your
+project root. During build, they are copied to `dist/__assets/` to avoid
+conflicts with page routes. This can be customized via the `assetsDir` option.
+
+```
+your-project/
+├── assets/             # Source assets (configurable)
+│   ├── icon.svg
+│   ├── images/
+│   │   └── logo.png
+│   └── styles.css
+├── docs/               # Markdown files
+└── dist/               # Built output
+    └── __assets/       # Built assets (fixed path)
+        ├── icon-a3f2b1c8.svg
+        ├── images/
+        │   └── logo-d4e5f6a7.png
+        └── styles-f1e2d3c4.css
+```
+
+### Cache Busting
+
+Assets are automatically copied to `__assets/` in the output directory with
+content-based hashes in their filenames:
+
+- `assets/icon.svg` → `dist/__assets/icon-a3f2b1c8.svg`
+- `assets/images/logo.png` → `dist/__assets/images/logo-d4e5f6a7.png`
+- `assets/styles.css` → `dist/__assets/styles-f1e2d3c4.css`
+
+Hashes are generated using SHA-256 (first 8 characters), ensuring that file
+changes always produce new URLs for cache invalidation.
+
+### Using Assets in Markdown
+
+Reference assets using the `{{assets}}` placeholder:
+
+```markdown
+---
+title: Getting Started
+slug: getting-started
+layout: docs
+---
+
+# Getting Started
+
+![Logo]({{assets}}/images/logo.png)
+
+Check out our [icon]({{assets}}/icon.svg)!
+```
+
+The placeholder will be replaced with the cache-busted URL during build:
+
+```html
+<img src="/__assets/images/logo-d4e5f6a7.png" alt="Logo">
+<a href="/__assets/icon-a3f2b1c8.svg">icon</a>
+```
+
+### Using Assets in Layout Templates
+
+Assets work in layout templates too:
+
+```html
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>{{title}}</title>
+    <link rel="stylesheet" href="{{assets}}/styles.css">
+    <link rel="icon" href="{{assets}}/icon.svg">
+  </head>
+  <body>
+    {{content}}
+  </body>
+</html>
+```
+
+Note: `{{assets}}` replacement happens in **markdown content only**, not in
+layout templates. For layouts, reference assets with direct paths or place
+critical assets directly in the output directory.
+
+### Icons for PWA Manifest
+
+When using `siteMetadata` for PWA support, you can reference assets in the icon
+paths:
+
+```typescript
+const { build } = markdownApp({
+  sourceDir: "./docs",
+  outputDir: "./dist",
+  layoutDir: "./docs",
+  basePath: "/",
+  dev: false,
+  siteMetadata: {
+    siteUrl: "https://example.com",
+    siteName: "My Docs",
+    // Reference assets that will be cache-busted
+    icon192Path: "icon-192.png", // From __assets/icon-192.png
+    icon512Path: "icon-512.png", // From __assets/icon-512.png
+  },
+});
+```
+
+The manifest will automatically use cache-busted paths if the icons are found in
+the assets directory.
+
+### Configuration
+
+Customize the assets directory location:
+
+```typescript
+const { build } = markdownApp({
+  sourceDir: "./docs",
+  outputDir: "./dist",
+  layoutDir: "./docs",
+  basePath: "/",
+  dev: false,
+  assetsDir: "./static", // Default: "__assets"
+});
+```
+
+### Behavior
+
+- **Missing assets directory**: Build continues without error, logs info message
+- **Missing asset reference**: Placeholder left unchanged, warning logged
+- **Directory structure**: Preserved under `__assets/` (e.g.,
+  `assets/images/logo.png` → `dist/__assets/images/logo-hash.png`)
+- **Consistent hashing**: Same content always produces same hash across builds
+- **URL prefix**: All asset URLs include `/__assets/` to avoid route conflicts
+
 ## Production Files
 
 The build process can automatically generate production-ready files for SEO and
@@ -375,6 +510,7 @@ interface MarkdownAppOptions {
   dev?: boolean; // Development mode (default: false)
   syntaxHighlightLanguages?: string[]; // Languages for syntax highlighting (default: ["typescript", "bash", "json", "yaml"])
   siteMetadata?: SiteMetadata; // Site metadata for production files (sitemap, robots.txt, manifest)
+  assetsDir?: string; // Directory containing static assets to copy with cache busting (default: "assets")
 }
 
 interface SiteMetadata {
@@ -469,13 +605,15 @@ await build();
 
 **What it builds:**
 
-1. Finds all `.md` files in `sourceDir` (recursive)
-2. Parses frontmatter and renders markdown
-3. Generates navigation from all pages
-4. Applies layout template
-5. Writes HTML to `outputDir`
-6. Writes `gfm.css` for syntax highlighting
-7. Writes production files if `siteMetadata` provided:
+1. Loads syntax highlighting languages
+2. Copies assets from `assetsDir` with cache busting (if directory exists)
+3. Finds all `.md` files in `sourceDir` (recursive)
+4. Parses frontmatter and renders markdown (with `{{assets}}` replacement)
+5. Generates navigation from all pages
+6. Applies layout template
+7. Writes HTML to `outputDir`
+8. Writes `gfm.css` for syntax highlighting
+9. Writes production files if `siteMetadata` provided:
    - `sitemap.xml` - XML sitemap with all pages
    - `robots.txt` - Crawler directives
    - `manifest.webmanifest` - PWA manifest

@@ -2,9 +2,7 @@ import type { MageApp } from "../app/app.ts";
 import { serveFiles } from "../serve-files/middleware.ts";
 import { registerHotReloadClient } from "./watcher.ts";
 import { resolve } from "@std/path";
-import { MageLogger } from "../logs/mod.ts";
-
-const logger = new MageLogger("Markdown App");
+import { logger } from "./logger.ts";
 
 /**
  * Options for registering markdown app middleware.

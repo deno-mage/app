@@ -1,4 +1,5 @@
 import type { SiteMetadata } from "./builder.ts";
+import type { AssetMap } from "./assets.ts";
 
 /**
  * PWA manifest icon entry.
@@ -29,11 +30,13 @@ interface WebManifest {
  *
  * @param siteMetadata - Site metadata including name, description, icons
  * @param basePath - Base path for routes (e.g., "/docs")
+ * @param assetMap - Asset mapping for cache-busted paths (optional)
  * @returns JSON string for manifest.webmanifest
  */
 export function generateManifest(
   siteMetadata: SiteMetadata,
   basePath: string,
+  assetMap?: AssetMap,
 ): string {
   // Normalize basePath (empty string if just "/", otherwise ensure leading slash)
   const normalizedBasePath = basePath === "/" ? "" : basePath;
@@ -48,12 +51,20 @@ export function generateManifest(
     background_color: siteMetadata.themeColor || "#ffffff",
   };
 
+  // Helper to resolve icon path (check asset map first, then use direct path)
+  const resolveIconPath = (iconPath: string): string => {
+    if (assetMap && assetMap[iconPath]) {
+      return assetMap[iconPath];
+    }
+    return `${normalizedBasePath}/${iconPath}`;
+  };
+
   // Add icons if provided
   const icons: ManifestIcon[] = [];
 
   if (siteMetadata.icon192Path) {
     icons.push({
-      src: `${normalizedBasePath}/${siteMetadata.icon192Path}`,
+      src: resolveIconPath(siteMetadata.icon192Path),
       sizes: "192x192",
       type: "image/png",
     });
@@ -61,7 +72,7 @@ export function generateManifest(
 
   if (siteMetadata.icon512Path) {
     icons.push({
-      src: `${normalizedBasePath}/${siteMetadata.icon512Path}`,
+      src: resolveIconPath(siteMetadata.icon512Path),
       sizes: "512x512",
       type: "image/png",
     });
@@ -69,7 +80,7 @@ export function generateManifest(
 
   if (siteMetadata.icon512MaskablePath) {
     icons.push({
-      src: `${normalizedBasePath}/${siteMetadata.icon512MaskablePath}`,
+      src: resolveIconPath(siteMetadata.icon512MaskablePath),
       sizes: "512x512",
       type: "image/png",
       purpose: "maskable",
