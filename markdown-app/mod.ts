@@ -1,7 +1,10 @@
 import type { MageApp } from "../app/app.ts";
-import { build as buildImpl } from "./builder.ts";
+import { build as buildImpl, type SiteMetadata } from "./builder.ts";
 import { watch as watchImpl } from "./watcher.ts";
 import { register as registerImpl } from "./middleware.ts";
+
+// Re-export SiteMetadata for convenience
+export type { SiteMetadata };
 
 /**
  * Configuration options for markdown app.
@@ -41,6 +44,12 @@ export interface MarkdownAppOptions {
    * @default ["typescript", "bash", "json", "yaml"]
    */
   syntaxHighlightLanguages?: string[];
+
+  /**
+   * Site metadata for production files (sitemap.xml, robots.txt, manifest.webmanifest).
+   * When provided, these files will be generated during build.
+   */
+  siteMetadata?: SiteMetadata;
 }
 
 /**
@@ -80,6 +89,7 @@ export function markdownApp(options: MarkdownAppOptions): MarkdownApp {
     basePath = "/",
     dev = false,
     syntaxHighlightLanguages = ["typescript", "bash", "json", "yaml"],
+    siteMetadata,
   } = options;
 
   // Validate required options
@@ -100,6 +110,7 @@ export function markdownApp(options: MarkdownAppOptions): MarkdownApp {
     basePath,
     dev,
     syntaxHighlightLanguages,
+    siteMetadata,
   };
 
   return {

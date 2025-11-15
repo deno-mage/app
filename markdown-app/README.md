@@ -205,6 +205,161 @@ nav a[data-current="true"] {
 }
 ```
 
+## Production Files
+
+The build process can automatically generate production-ready files for SEO and
+PWA support.
+
+### Generated Files
+
+When `siteMetadata` is provided in build options, the following files are
+automatically generated:
+
+1. **`sitemap.xml`** - XML sitemap for search engines
+2. **`robots.txt`** - Crawler directives + sitemap reference
+3. **`manifest.webmanifest`** - PWA manifest for "Add to Home Screen"
+
+### Site Metadata Configuration
+
+```typescript
+import { markdownApp } from "@mage/markdown-app";
+
+const { build } = markdownApp({
+  sourceDir: "./docs",
+  outputDir: "./dist",
+  layoutDir: "./docs",
+  basePath: "/",
+  dev: false,
+  siteMetadata: {
+    siteUrl: "https://example.com", // Required for sitemap
+    siteName: "My Documentation", // Optional
+    description: "Comprehensive documentation", // Optional
+    themeColor: "#1e40af", // Optional (default: "#ffffff")
+
+    // Optional icon paths (relative to outputDir)
+    icon192Path: "icon-192.png",
+    icon512Path: "icon-512.png",
+    icon512MaskablePath: "icon-512-maskable.png",
+  },
+});
+
+await build();
+```
+
+### SEO Frontmatter Fields
+
+Add optional SEO metadata to individual pages:
+
+```yaml
+---
+title: Getting Started
+slug: getting-started
+layout: docs
+description: Learn how to get started with our framework  # Meta description
+lastmod: 2025-01-15                                       # Last modified (YYYY-MM-DD)
+changefreq: weekly                                        # Change frequency
+priority: 0.8                                             # Priority (0.0 to 1.0)
+---
+```
+
+**Available SEO fields:**
+
+- `description` - SEO description for meta tags and sitemap
+- `lastmod` - Last modified date (ISO 8601: YYYY-MM-DD)
+- `changefreq` - How often the page changes: `always`, `hourly`, `daily`,
+  `weekly`, `monthly`, `yearly`, `never`
+- `priority` - Page priority in sitemap (0.0 to 1.0)
+
+### Generated sitemap.xml
+
+Example output:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://example.com/getting-started</loc>
+    <lastmod>2025-01-15</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+</urlset>
+```
+
+### Generated robots.txt
+
+Example output:
+
+```
+# Allow all crawlers
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://example.com/sitemap.xml
+```
+
+### Generated manifest.webmanifest
+
+Example output:
+
+```json
+{
+  "name": "My Documentation",
+  "short_name": "My Docs",
+  "description": "Comprehensive documentation",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#1e40af",
+  "background_color": "#1e40af",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
+```
+
+### Linking Production Files in HTML
+
+Add these to your layout templates for full SEO/PWA support:
+
+```html
+<head>
+  <title>{{title}}</title>
+
+  <!-- SEO Meta Tags -->
+  <meta name="description" content="Your site description">
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="{{basePath}}/manifest.webmanifest">
+
+  <!-- Favicons -->
+  <link rel="icon" href="{{basePath}}/favicon.ico" sizes="32x32">
+  <link rel="icon" href="{{basePath}}/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="{{basePath}}/apple-touch-icon.png">
+
+  <!-- Theme Color -->
+  <meta name="theme-color" content="#1e40af">
+</head>
+```
+
+**Note:** The build process only generates `sitemap.xml`, `robots.txt`, and
+`manifest.webmanifest`. You must provide your own icon files in `outputDir`.
+
 ## API
 
 ### markdownApp(options)
@@ -219,6 +374,20 @@ interface MarkdownAppOptions {
   basePath?: string; // Base path for URLs (default: "/")
   dev?: boolean; // Development mode (default: false)
   syntaxHighlightLanguages?: string[]; // Languages for syntax highlighting (default: ["typescript", "bash", "json", "yaml"])
+  siteMetadata?: SiteMetadata; // Site metadata for production files (sitemap, robots.txt, manifest)
+}
+
+interface SiteMetadata {
+  siteUrl: string; // Full site URL (e.g., "https://example.com") - required for sitemap
+  siteName?: string; // Site name for manifest
+  description?: string; // Site description for manifest
+  themeColor?: string; // Theme color (default: "#ffffff")
+  faviconPath?: string; // Path to favicon.ico (relative to outputDir)
+  iconSvgPath?: string; // Path to icon.svg (relative to outputDir)
+  appleTouchIconPath?: string; // Path to apple-touch-icon.png (relative to outputDir)
+  icon192Path?: string; // Path to 192x192 icon (relative to outputDir)
+  icon512Path?: string; // Path to 512x512 icon (relative to outputDir)
+  icon512MaskablePath?: string; // Path to 512x512 maskable icon (relative to outputDir)
 }
 ```
 
@@ -306,6 +475,10 @@ await build();
 4. Applies layout template
 5. Writes HTML to `outputDir`
 6. Writes `gfm.css` for syntax highlighting
+7. Writes production files if `siteMetadata` provided:
+   - `sitemap.xml` - XML sitemap with all pages
+   - `robots.txt` - Crawler directives
+   - `manifest.webmanifest` - PWA manifest
 
 ## Hot Reload
 

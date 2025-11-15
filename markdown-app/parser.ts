@@ -10,6 +10,21 @@ export interface Frontmatter {
   layout: string;
   nav?: string;
   "nav-order"?: number;
+  /** SEO description for meta tags and sitemap */
+  description?: string;
+  /** Last modified date for sitemap (ISO 8601 format: YYYY-MM-DD) */
+  lastmod?: string;
+  /** How frequently the page changes (for sitemap) */
+  changefreq?:
+    | "always"
+    | "hourly"
+    | "daily"
+    | "weekly"
+    | "monthly"
+    | "yearly"
+    | "never";
+  /** Priority of page in sitemap (0.0 to 1.0) */
+  priority?: number;
   [key: string]: unknown;
 }
 

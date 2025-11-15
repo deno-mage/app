@@ -12,6 +12,11 @@ const { register, watch } = markdownApp({
   layoutDir: "./docs",
   basePath: "/",
   dev: true,
+  siteMetadata: {
+    siteName: "Mage Markdown Site",
+    siteUrl: "http://localhost:3000",
+    description: "A site generated from markdown files using Mage.",
+  },
 });
 
 // Register routes (serveFiles + WebSocket) BEFORE building

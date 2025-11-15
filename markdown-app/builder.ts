@@ -5,6 +5,9 @@ import { MageLogger } from "../logs/mod.ts";
 import { type Frontmatter, parseMarkdown } from "./parser.ts";
 import { renderTemplate, type TemplateData } from "./template.ts";
 import { generateNavigation } from "./navigation.ts";
+import { generateSitemap } from "./sitemap.ts";
+import { generateRobotsTxt } from "./robots.ts";
+import { generateManifest } from "./manifest.ts";
 
 const logger = new MageLogger("Markdown App");
 
@@ -30,6 +33,32 @@ async function loadSyntaxHighlightLanguages(
 }
 
 /**
+ * Site metadata for production files (sitemap, manifest, etc.).
+ */
+export interface SiteMetadata {
+  /** Full site URL (e.g., "https://example.com") - required for sitemap.xml */
+  siteUrl: string;
+  /** Site name for manifest.webmanifest */
+  siteName?: string;
+  /** Site description for manifest.webmanifest */
+  description?: string;
+  /** Theme color for manifest and mobile browsers */
+  themeColor?: string;
+  /** Path to favicon.ico (relative to outputDir), if not provided, won't be referenced */
+  faviconPath?: string;
+  /** Path to icon.svg (relative to outputDir) */
+  iconSvgPath?: string;
+  /** Path to apple-touch-icon.png (relative to outputDir) */
+  appleTouchIconPath?: string;
+  /** Path to 192x192 icon for PWA (relative to outputDir) */
+  icon192Path?: string;
+  /** Path to 512x512 icon for PWA (relative to outputDir) */
+  icon512Path?: string;
+  /** Path to 512x512 maskable icon for PWA (relative to outputDir) */
+  icon512MaskablePath?: string;
+}
+
+/**
  * Options for building markdown files to static HTML.
  */
 export interface BuildOptions {
@@ -39,6 +68,8 @@ export interface BuildOptions {
   basePath: string;
   dev: boolean;
   syntaxHighlightLanguages: string[];
+  /** Site metadata for production files (sitemap, robots.txt, manifest) */
+  siteMetadata?: SiteMetadata;
 }
 
 /**
@@ -52,6 +83,7 @@ export async function build(options: BuildOptions): Promise<void> {
     basePath,
     dev,
     syntaxHighlightLanguages,
+    siteMetadata,
   } = options;
 
   logger.info(`Building markdown files from ${sourceDir}...`);
@@ -84,6 +116,16 @@ export async function build(options: BuildOptions): Promise<void> {
 
   // Step 5: Write GFM CSS
   await writeGfmCss(outputDir);
+
+  // Step 6: Generate production files (sitemap, robots.txt, manifest) if siteMetadata provided
+  if (siteMetadata) {
+    await writeProductionFiles(
+      pages.map((p) => p.frontmatter),
+      siteMetadata,
+      basePath,
+      outputDir,
+    );
+  }
 
   logger.success(`Build complete! Output: ${outputDir}`);
 }
@@ -291,4 +333,32 @@ async function writeGfmCss(outputDir: string): Promise<void> {
 
   await Deno.writeTextFile(cssPath, GFM_CSS + prismStyles);
   logger.info(`Wrote GFM CSS`);
+}
+
+/**
+ * Write production files (sitemap.xml, robots.txt, manifest.webmanifest).
+ */
+async function writeProductionFiles(
+  pages: Frontmatter[],
+  siteMetadata: SiteMetadata,
+  basePath: string,
+  outputDir: string,
+): Promise<void> {
+  // Generate and write sitemap.xml
+  const sitemap = generateSitemap(pages, siteMetadata.siteUrl, basePath);
+  const sitemapPath = join(outputDir, "sitemap.xml");
+  await Deno.writeTextFile(sitemapPath, sitemap);
+  logger.info(`Wrote sitemap.xml`);
+
+  // Generate and write robots.txt
+  const robotsTxt = generateRobotsTxt(siteMetadata.siteUrl, basePath);
+  const robotsPath = join(outputDir, "robots.txt");
+  await Deno.writeTextFile(robotsPath, robotsTxt);
+  logger.info(`Wrote robots.txt`);
+
+  // Generate and write manifest.webmanifest
+  const manifest = generateManifest(siteMetadata, basePath);
+  const manifestPath = join(outputDir, "manifest.webmanifest");
+  await Deno.writeTextFile(manifestPath, manifest);
+  logger.info(`Wrote manifest.webmanifest`);
 }
