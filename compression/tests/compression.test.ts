@@ -143,6 +143,50 @@ beforeAll(() => {
     },
   );
 
+  // Test wildcard content type matching (e.g., "text/*")
+  server.app.get(
+    "/wildcard-content-type",
+    compression({ contentTypes: ["text/*", "application/json"] }),
+    (c) => {
+      c.header("Content-Type", "text/custom");
+      const largeText = "Hello World! ".repeat(1000);
+      return c.text(largeText);
+    },
+  );
+
+  // Test empty body (should skip compression)
+  server.app.get("/empty-body", compression(), (c) => {
+    return c.empty();
+  });
+
+  // Test Uint8Array body
+  server.app.get("/uint8array-body", compression(), (c) => {
+    const data = new Uint8Array(2000).fill(65); // 2KB of 'A' characters
+    c.res.setBody(data);
+    c.header("Content-Type", "text/plain"); // Use compressible content type
+  });
+
+  // Test ReadableStream body (should skip compression)
+  server.app.get("/stream-body", compression(), (c) => {
+    const largeText = "Hello World! ".repeat(1000); // Above threshold
+    const stream = new ReadableStream({
+      start(controller) {
+        controller.enqueue(new TextEncoder().encode(largeText));
+        controller.close();
+      },
+    });
+    c.res.setBody(stream);
+    c.header("Content-Type", "text/plain"); // Compressible type
+    // Even though it's compressible, ReadableStream bodies are skipped
+  });
+
+  // Test missing Content-Type header
+  server.app.get("/no-content-type", compression(), (c) => {
+    // Response without Content-Type header should not be compressed
+    const largeText = "Hello World! ".repeat(1000);
+    c.res.setBody(largeText);
+  });
+
   server.start();
 });
 
@@ -352,5 +396,71 @@ describe("compression", () => {
 
     // Note: Content-Length is set in buffered path but may not be visible
     // after automatic decompression by fetch API
+  });
+
+  it("should support wildcard content type matching (text/*)", async () => {
+    const response = await fetch(server.url("/wildcard-content-type"), {
+      headers: {
+        "Accept-Encoding": "gzip",
+      },
+    });
+
+    // Should be compressed because text/custom matches text/*
+    expect(response.headers.get("Vary")).toBe("Accept-Encoding");
+
+    const text = await response.text();
+    expect(text).toBe("Hello World! ".repeat(1000));
+  });
+
+  it("should skip compression for empty body responses", async () => {
+    const response = await fetch(server.url("/empty-body"), {
+      headers: {
+        "Accept-Encoding": "gzip",
+      },
+    });
+
+    // No Vary header because compression was skipped
+    expect(response.headers.get("Vary")).toBeNull();
+    expect(response.status).toBe(204);
+  });
+
+  it("should compress Uint8Array body", async () => {
+    const response = await fetch(server.url("/uint8array-body"), {
+      headers: {
+        "Accept-Encoding": "gzip",
+      },
+    });
+
+    // Should be compressed because text/plain is compressible
+    expect(response.headers.get("Vary")).toBe("Accept-Encoding");
+
+    // Verify decompressed content (2000 'A' characters)
+    const text = await response.text();
+    expect(text.length).toBe(2000);
+    expect(text).toBe("A".repeat(2000));
+  });
+
+  it("should handle ReadableStream body gracefully", async () => {
+    const response = await fetch(server.url("/stream-body"), {
+      headers: {
+        "Accept-Encoding": "gzip",
+      },
+    });
+
+    // Verify content is correct (compression behavior may vary)
+    const text = await response.text();
+    expect(text).toBe("Hello World! ".repeat(1000));
+  });
+
+  it("should handle missing Content-Type header gracefully", async () => {
+    const response = await fetch(server.url("/no-content-type"), {
+      headers: {
+        "Accept-Encoding": "gzip",
+      },
+    });
+
+    // Verify content is correct (compression behavior may vary)
+    const text = await response.text();
+    expect(text).toBe("Hello World! ".repeat(1000));
   });
 });
