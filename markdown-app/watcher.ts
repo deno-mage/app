@@ -2,6 +2,7 @@ import type { BuildOptions } from "./builder.ts";
 import { build } from "./builder.ts";
 import { resolve } from "@std/path";
 import { logger } from "./logger.ts";
+import { WATCHER_DEBOUNCE_MS } from "./constants.ts";
 
 /**
  * WebSocket clients connected for hot reload.
@@ -62,15 +63,22 @@ export async function watch(options: BuildOptions): Promise<void> {
   // Watch for changes
   const watcher = Deno.watchFs(absoluteSourceDir);
 
-  // Debounce rapid changes
+  // Debounce rapid changes and prevent concurrent builds
   let rebuildTimer: number | null = null;
-  const DEBOUNCE_MS = 100;
+  let isBuilding = false;
+  let needsRebuild = false; // Flag to track if rebuild is needed after current build
 
   for await (const event of watcher) {
     // Only handle modify events for .md files
     const isMarkdownChange = event.paths.some((path) => path.endsWith(".md"));
 
     if (event.kind === "modify" && isMarkdownChange) {
+      // If currently building, mark that we need another rebuild after this one
+      if (isBuilding) {
+        needsRebuild = true;
+        continue;
+      }
+
       // Clear existing timer
       if (rebuildTimer !== null) {
         clearTimeout(rebuildTimer);
@@ -78,19 +86,30 @@ export async function watch(options: BuildOptions): Promise<void> {
 
       // Schedule rebuild
       rebuildTimer = setTimeout(async () => {
-        logger.info(`Detected changes, rebuilding...`);
+        // Build loop: keep building while there are pending changes
+        do {
+          needsRebuild = false;
+          isBuilding = true;
+          logger.info(`Detected changes, rebuilding...`);
 
-        try {
-          await build(options);
-          notifyClients();
-        } catch (error) {
-          logger.error(
-            error instanceof Error ? error : new Error(String(error)),
-          );
-        }
+          try {
+            await build(options);
+            notifyClients();
+          } catch (error) {
+            logger.error(
+              error instanceof Error ? error : new Error(String(error)),
+            );
+          } finally {
+            isBuilding = false;
+            rebuildTimer = null;
+          }
 
-        rebuildTimer = null;
-      }, DEBOUNCE_MS);
+          // If changes came in during build, rebuild immediately
+          if (needsRebuild) {
+            logger.info("Additional changes detected, rebuilding again...");
+          }
+        } while (needsRebuild);
+      }, WATCHER_DEBOUNCE_MS);
     }
   }
 }

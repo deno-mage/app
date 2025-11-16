@@ -3,7 +3,7 @@ import { dirname, join, resolve } from "@std/path";
 import { CSS as GFM_CSS } from "@deno/gfm";
 import { type Frontmatter, parseMarkdown } from "./parser.ts";
 import type { TemplateData } from "./template.ts";
-import { generateNavigation } from "./navigation.ts";
+import { generateNavigation, type NavigationData } from "./navigation.ts";
 import { generateSitemap } from "./sitemap.ts";
 import { generateRobotsTxt } from "./robots.ts";
 import { generateManifest } from "./manifest.ts";
@@ -14,26 +14,28 @@ import {
 } from "./assets.ts";
 import { logger } from "./logger.ts";
 import { renderJsxLayout } from "./jsx-renderer.ts";
+import { LAYOUT_PREFIX, LAYOUT_SUFFIX } from "./constants.ts";
 
 /**
- * Load Prism syntax highlighting language components dynamically.
+ * Load Prism syntax highlighting language components dynamically in parallel.
  */
 async function loadSyntaxHighlightLanguages(
   languages: string[],
 ): Promise<void> {
   const PRISM_VERSION = "1.29.0";
 
-  for (const lang of languages) {
-    try {
-      await import(`npm:prismjs@${PRISM_VERSION}/components/prism-${lang}.js`);
-    } catch (error) {
-      logger.warn(
-        `Failed to load syntax highlighting for language "${lang}": ${
-          error instanceof Error ? error.message : String(error)
-        }`,
-      );
-    }
-  }
+  await Promise.all(
+    languages.map((lang) =>
+      import(`npm:prismjs@${PRISM_VERSION}/components/prism-${lang}.js`)
+        .catch((error) => {
+          logger.warn(
+            `Failed to load syntax highlighting for language "${lang}": ${
+              error instanceof Error ? error.message : String(error)
+            }`,
+          );
+        })
+    ),
+  );
 }
 
 /**
@@ -114,9 +116,34 @@ export async function build(options: BuildOptions): Promise<void> {
   const pages = await parseAllFiles(markdownFiles, assetMap);
   logger.info(`Parsed ${pages.length} pages`);
 
-  // Step 5: Build each page
+  // Check for duplicate slugs
+  const seenSlugs = new Map<string, string>();
   for (const page of pages) {
-    await buildPage(page, pages, {
+    const slug = page.frontmatter.slug;
+    if (seenSlugs.has(slug)) {
+      throw new Error(
+        `Duplicate slug "${slug}" found.\n  First seen in: ${
+          seenSlugs.get(slug)
+        }\n  Duplicate in: ${page.filepath}\n\nEach page must have a unique slug.`,
+      );
+    }
+    seenSlugs.set(slug, page.filepath);
+  }
+
+  // Step 5: Pre-compute navigation for all pages (avoids O(n²) complexity)
+  const navigationBySlug = new Map<string, NavigationData>();
+  const allFrontmatter = pages.map((p) => p.frontmatter);
+  for (const page of pages) {
+    navigationBySlug.set(
+      page.frontmatter.slug,
+      generateNavigation(allFrontmatter, page.frontmatter.slug, basePath),
+    );
+  }
+
+  // Step 6: Build each page with pre-computed navigation
+  for (const page of pages) {
+    const navigation = navigationBySlug.get(page.frontmatter.slug)!;
+    await buildPage(page, navigation, {
       outputDir,
       layoutDir,
       basePath,
@@ -124,10 +151,10 @@ export async function build(options: BuildOptions): Promise<void> {
     });
   }
 
-  // Step 6: Write GFM CSS
+  // Step 7: Write GFM CSS
   await writeGfmCss(outputDir);
 
-  // Step 7: Generate production files (sitemap, robots.txt, manifest) if siteMetadata provided
+  // Step 8: Generate production files (sitemap, robots.txt, manifest) if siteMetadata provided
   if (siteMetadata) {
     await writeProductionFiles(
       pages.map((p) => p.frontmatter),
@@ -205,7 +232,7 @@ async function parseAllFiles(
  */
 async function buildPage(
   page: ParsedPage,
-  allPages: ParsedPage[],
+  navigation: NavigationData,
   options: {
     outputDir: string;
     layoutDir: string;
@@ -215,13 +242,6 @@ async function buildPage(
 ): Promise<void> {
   const { frontmatter, content } = page;
   const { outputDir, layoutDir, basePath, dev } = options;
-
-  // Generate navigation
-  const navigation = generateNavigation(
-    allPages.map((p) => p.frontmatter),
-    frontmatter.slug,
-    basePath,
-  );
 
   // Normalize basePath for template (empty string if just "/")
   const normalizedBasePath = basePath === "/" ? "" : basePath;
@@ -236,7 +256,7 @@ async function buildPage(
 
   // Load JSX layout
   const layoutPath = resolve(
-    join(layoutDir, `_layout-${frontmatter.layout}.tsx`),
+    join(layoutDir, `${LAYOUT_PREFIX}${frontmatter.layout}${LAYOUT_SUFFIX}`),
   );
 
   let html: string;

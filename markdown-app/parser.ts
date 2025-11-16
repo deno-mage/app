@@ -61,8 +61,25 @@ export const frontmatterSchema: z.ZodType<
     .refine(
       (slug) => !slug.startsWith("/"),
       "Slug should not start with '/' (it will be added automatically)",
+    )
+    .refine(
+      (slug) => !slug.endsWith("/"),
+      "Slug cannot end with '/' (trailing slashes are not allowed)",
+    )
+    .refine(
+      (slug) => !slug.includes("//"),
+      "Slug cannot contain consecutive slashes",
     ),
-  layout: z.string().min(1, "Layout cannot be empty"),
+  layout: z.string()
+    .min(1, "Layout cannot be empty")
+    .regex(
+      /^[a-z0-9-]+$/,
+      "Layout must contain only lowercase letters, numbers, and hyphens (e.g., 'docs', 'api-reference')",
+    )
+    .refine(
+      (layout) => !layout.includes(".."),
+      "Layout cannot contain '..' for security reasons",
+    ),
   "nav-group": z.string().optional(),
   "nav-item": z.string().optional(),
   "nav-order": z.number().int().nonnegative().optional(),

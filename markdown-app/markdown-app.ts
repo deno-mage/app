@@ -111,6 +111,18 @@ export function markdownApp(options: MarkdownAppOptions): MarkdownApp {
     throw new Error("markdownApp: layoutDir is required");
   }
 
+  // Validate basePath format
+  if (basePath !== "/" && !basePath.startsWith("/")) {
+    throw new Error(
+      "markdownApp: basePath must start with '/' or be exactly '/' (e.g., '/docs' or '/')",
+    );
+  }
+  if (basePath !== "/" && basePath.endsWith("/")) {
+    throw new Error(
+      "markdownApp: basePath must not end with '/' (it will be normalized automatically)",
+    );
+  }
+
   const buildOptions = {
     sourceDir,
     outputDir,

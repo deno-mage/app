@@ -80,15 +80,39 @@ export function generateNavigation(
 /**
  * Parse nav field into section and item.
  *
- * "Middleware/CORS" => ["Middleware", "CORS"]
- * "Introduction" => [undefined, "Introduction"]
+ * Valid formats:
+ * - "Item" => [undefined, "Item"]
+ * - "Section/Item" => ["Section", "Item"]
+ * - "Section/" => ["Section", ""] (falls back to page title in caller)
+ *
+ * @throws Error if format is invalid (too many slashes, etc.)
  */
 function parseNavField(nav: string): [string | undefined, string] {
-  const parts = nav.split("/");
-  if (parts.length === 2) {
-    return [parts[0].trim(), parts[1].trim()];
+  // Trim and split by "/"
+  const trimmed = nav.trim();
+  const parts = trimmed.split("/").map((p) => p.trim());
+
+  // Handle empty or only slashes
+  if (trimmed === "" || parts.every((p) => p === "")) {
+    throw new Error(
+      `Invalid nav-item format: "${nav}". Cannot be empty or contain only slashes.`,
+    );
   }
-  return [undefined, parts[0].trim()];
+
+  // Single part: "Item" => [undefined, "Item"]
+  if (parts.length === 1) {
+    return [undefined, parts[0]];
+  }
+
+  // Two parts: "Section/Item" => ["Section", "Item"]
+  // Or "Section/" => ["Section", ""] (empty item falls back to page title)
+  if (parts.length === 2) {
+    return [parts[0], parts[1]];
+  }
+
+  throw new Error(
+    `Invalid nav-item format: "${nav}". Expected "Item" or "Section/Item", but found ${parts.length} parts.`,
+  );
 }
 
 /**

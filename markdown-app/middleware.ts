@@ -3,6 +3,7 @@ import { serveFiles } from "../serve-files/middleware.ts";
 import { registerHotReloadClient } from "./watcher.ts";
 import { resolve } from "@std/path";
 import { logger } from "./logger.ts";
+import { HOT_RELOAD_ENDPOINT } from "./constants.ts";
 
 /**
  * Options for registering markdown app middleware.
@@ -44,12 +45,12 @@ export function register(app: MageApp, options: RegisterOptions): void {
 
   // Register hot reload WebSocket (routes are auto-sorted by specificity)
   if (dev) {
-    app.get("/__hot-reload", (c) => {
+    app.get(HOT_RELOAD_ENDPOINT, (c) => {
       c.webSocket((socket) => {
         registerHotReloadClient(socket);
       });
     });
 
-    logger.info("Hot reload enabled at /__hot-reload");
+    logger.info(`Hot reload enabled at ${HOT_RELOAD_ENDPOINT}`);
   }
 }

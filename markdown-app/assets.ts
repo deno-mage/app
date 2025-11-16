@@ -1,6 +1,7 @@
 import { walk } from "@std/fs";
 import { basename, dirname, extname, join, resolve } from "@std/path";
 import { logger } from "./logger.ts";
+import { ASSETS_DIR_NAME } from "./constants.ts";
 
 /**
  * Asset hash mapping from original path to hashed path.
@@ -89,8 +90,8 @@ export async function copyAssetsWithHashing(
     // Preserve directory structure in output under __assets/
     const relativeDir = dirname(relativePath);
     const outputSubDir = relativeDir === "."
-      ? join(absoluteOutputDir, "__assets")
-      : join(absoluteOutputDir, "__assets", relativeDir);
+      ? join(absoluteOutputDir, ASSETS_DIR_NAME)
+      : join(absoluteOutputDir, ASSETS_DIR_NAME, relativeDir);
 
     // Ensure output subdirectory exists
     await Deno.mkdir(outputSubDir, { recursive: true });
@@ -119,6 +120,10 @@ export async function copyAssetsWithHashing(
 /**
  * Replace {{assets}}/path patterns in content with cache-busted URLs.
  *
+ * Note: This regex matches alphanumeric characters, hyphens, underscores, dots, and forward slashes.
+ * Query strings (e.g., ?v=1) and fragments (e.g., #section) are NOT supported.
+ * Use assets as-is without query parameters.
+ *
  * @param content - Markdown or HTML content
  * @param assetMap - Mapping of original asset paths to hashed URLs
  * @returns Content with {{assets}} replaced with actual hashed paths
@@ -127,8 +132,10 @@ export function replaceAssetPlaceholders(
   content: string,
   assetMap: AssetMap,
 ): string {
+  // Match {{assets}}/path where path contains: a-z A-Z 0-9 - _ . /
+  // Does NOT match query strings (?foo=bar) or fragments (#section)
   return content.replace(
-    /\{\{assets\}\}\/([^\s)"']+)/g,
+    /\{\{assets\}\}\/([\w\-./]+)/g,
     (_match, assetPath) => {
       const hashedPath = assetMap[assetPath];
       if (hashedPath === undefined) {
