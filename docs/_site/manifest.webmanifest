@@ -1,0 +1,9 @@
+{
+  "name": "Mage App",
+  "short_name": "Mage App",
+  "description": "A modern web framework for Deno.",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#ffffff",
+  "background_color": "#ffffff"
+}
