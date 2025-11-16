@@ -9,7 +9,7 @@ describe("markdown-app - template", () => {
       const data: TemplateData = {
         title: "Test Page",
         content: "",
-        navigation: "",
+        navigation: {},
         basePath: "",
       };
 
@@ -23,7 +23,7 @@ describe("markdown-app - template", () => {
       const data: TemplateData = {
         title: "Test Page",
         content: "<p>Hello World</p>",
-        navigation: "",
+        navigation: {},
         basePath: "",
       };
 
@@ -43,7 +43,7 @@ describe("markdown-app - template", () => {
     <link rel="stylesheet" href="{{basePath}}/styles.css">
   </head>
   <body>
-    <nav>{{navigation}}</nav>
+    <nav>{{navigation.main}}</nav>
     <main>{{content}}</main>
   </body>
 </html>
@@ -52,7 +52,7 @@ describe("markdown-app - template", () => {
       const data: TemplateData = {
         title: "My Page",
         content: "<p>Content here</p>",
-        navigation: "<ul><li>Home</li></ul>",
+        navigation: { main: "<ul><li>Home</li></ul>" },
         basePath: "/docs",
       };
 
@@ -71,7 +71,7 @@ describe("markdown-app - template", () => {
       const data: TemplateData = {
         title: "Test",
         content: "",
-        navigation: "",
+        navigation: {},
         basePath: "",
         author: "John Doe",
       };
@@ -86,7 +86,7 @@ describe("markdown-app - template", () => {
       const data: TemplateData = {
         title: "Test Page",
         content: "",
-        navigation: "",
+        navigation: {},
         basePath: "",
       };
 
@@ -100,7 +100,7 @@ describe("markdown-app - template", () => {
       const data: TemplateData = {
         title: "Test",
         content: "",
-        navigation: "",
+        navigation: {},
         basePath: "",
       };
 
@@ -114,7 +114,7 @@ describe("markdown-app - template", () => {
       const data: TemplateData = {
         title: "Test",
         content: "",
-        navigation: "",
+        navigation: {},
         basePath: "",
       };
 
@@ -128,7 +128,7 @@ describe("markdown-app - template", () => {
       const data: TemplateData = {
         title: "Test",
         content: "",
-        navigation: "",
+        navigation: {},
         basePath: "",
       };
 
@@ -142,7 +142,7 @@ describe("markdown-app - template", () => {
       const data: TemplateData = {
         title: "",
         content: "",
-        navigation: "",
+        navigation: {},
         basePath: "",
       };
 
@@ -156,7 +156,7 @@ describe("markdown-app - template", () => {
       const data: TemplateData = {
         title: "Test",
         content: "",
-        navigation: "",
+        navigation: {},
         basePath: "",
       };
 
@@ -172,7 +172,7 @@ describe("markdown-app - template", () => {
       const data1: TemplateData = {
         title: "Test",
         content: "",
-        navigation: "",
+        navigation: {},
         basePath: "",
       };
 
@@ -183,7 +183,7 @@ describe("markdown-app - template", () => {
       const data2: TemplateData = {
         title: "Test",
         content: "",
-        navigation: "",
+        navigation: {},
         basePath: "/docs",
       };
 
@@ -200,7 +200,7 @@ describe("markdown-app - template", () => {
 <p>Paragraph with <strong>bold</strong> and <em>italic</em>.</p>
 <pre><code class="language-typescript">const x = 1;</code></pre>
         `.trim(),
-        navigation: "",
+        navigation: {},
         basePath: "",
       };
 
@@ -214,11 +214,12 @@ describe("markdown-app - template", () => {
     });
 
     it("should handle navigation HTML", () => {
-      const template = "<nav>{{navigation}}</nav>";
+      const template = "<nav>{{navigation.main}}</nav>";
       const data: TemplateData = {
         title: "Test",
         content: "",
-        navigation: `
+        navigation: {
+          main: `
 <ul>
   <li><a href="/guide">Guide</a>
     <ul>
@@ -226,7 +227,8 @@ describe("markdown-app - template", () => {
     </ul>
   </li>
 </ul>
-        `.trim(),
+          `.trim(),
+        },
         basePath: "",
       };
 

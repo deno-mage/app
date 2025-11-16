@@ -11,7 +11,7 @@
 export interface TemplateData {
   title: string;
   content: string;
-  navigation: NavigationData | string; // Object for grouped nav or string for backward compat
+  navigation: NavigationData;
   basePath: string;
   [key: string]: unknown;
 }
