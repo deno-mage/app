@@ -20,34 +20,60 @@ export interface NavSection {
 }
 
 /**
- * Generate navigation HTML from page frontmatter.
+ * Navigation groups mapping group names to HTML strings.
+ */
+export interface NavigationGroups {
+  [group: string]: string;
+}
+
+/**
+ * Generate grouped navigation HTML from page frontmatter.
  *
- * Groups by section, sorts by nav-order, marks current page with data-current="true".
+ * Returns object with navigation groups, each containing HTML for that group.
+ * Groups by nav-group, then by sections within each group.
+ * Marks current page with data-current="true".
  */
 export function generateNavigation(
   pages: Frontmatter[],
   currentSlug: string,
   basePath: string,
-): string {
-  // Filter pages that have nav field
-  const navPages = pages.filter((page) => page.nav);
+): NavigationGroups {
+  // Filter pages that have nav-item field
+  const navPages = pages.filter((page) => page["nav-item"]);
 
-  // Build nav items
+  // Build nav items with group information
   const navItems = navPages.map((page) => {
-    const [section, item] = parseNavField(page.nav!);
+    const [section, item] = parseNavField(page["nav-item"]!);
     return {
       title: item || page.title,
       slug: page.slug,
       order: page["nav-order"] ?? 999,
       section,
+      group: page["nav-group"] ?? "default",
     };
   });
 
-  // Group by section
-  const sections = groupBySection(navItems);
+  // Group by nav-group first
+  const groups = new Map<string, typeof navItems>();
+  for (const item of navItems) {
+    if (!groups.has(item.group)) {
+      groups.set(item.group, []);
+    }
+    groups.get(item.group)!.push(item);
+  }
 
-  // Render HTML
-  return renderNavigationHtml(sections, currentSlug, basePath);
+  // Generate HTML for each group
+  const navigationGroups: NavigationGroups = {};
+  for (const [groupName, groupItems] of groups) {
+    const sections = groupBySection(groupItems);
+    navigationGroups[groupName] = renderNavigationHtml(
+      sections,
+      currentSlug,
+      basePath,
+    );
+  }
+
+  return navigationGroups;
 }
 
 /**

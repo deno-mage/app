@@ -2,8 +2,9 @@
 title: Getting Started
 slug: getting-started
 layout: docs
-nav: Guide/Getting Started
-nav-order: 1
+nav-item: Guide/Getting Started
+nav-group: aside
+nav-order: 2
 ---
 
 # Getting Started
@@ -31,13 +32,14 @@ docs/
 
 Every markdown file needs frontmatter:
 
-| Field       | Required | Description              |
-| ----------- | -------- | ------------------------ |
-| `title`     | Yes      | Page title               |
-| `slug`      | Yes      | URL path                 |
-| `layout`    | Yes      | Layout template name     |
-| `nav`       | No       | Navigation section/item  |
-| `nav-order` | No       | Sort order in navigation |
+| Field       | Required | Description                    |
+| ----------- | -------- | ------------------------------ |
+| `title`     | Yes      | Page title                     |
+| `slug`      | Yes      | URL path                       |
+| `layout`    | Yes      | Layout template name           |
+| `nav-item`  | No       | Navigation section/item        |
+| `nav-group` | No       | Navigation group (aside, etc.) |
+| `nav-order` | No       | Sort order in navigation       |
 
 ## Example Frontmatter
 
@@ -46,8 +48,9 @@ Every markdown file needs frontmatter:
 title: Getting Started
 slug: getting-started
 layout: docs
-nav: Guide/Getting Started
-nav-order: 1
+nav-item: Guide/Getting Started
+nav-group: aside
+nav-order: 2
 ---
 ```
 

@@ -8,7 +8,11 @@ export interface Frontmatter {
   title: string;
   slug: string;
   layout: string;
-  nav?: string;
+  /** Navigation group (e.g., "aside", "header", "footer") */
+  "nav-group"?: string;
+  /** Navigation item text (supports sections with "Section/Item") */
+  "nav-item"?: string;
+  /** Order within navigation group (lower = first, default: 999) */
   "nav-order"?: number;
   /** SEO description for meta tags and sitemap */
   description?: string;

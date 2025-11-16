@@ -120,7 +120,7 @@ Content`,
 
       await Deno.writeTextFile(
         join(layoutDir, "_layout-docs.html"),
-        `<html><body><nav>{{navigation}}</nav>{{content}}</body></html>`,
+        `<html><body><nav>{{navigation.default}}</nav>{{content}}</body></html>`,
       );
 
       await Deno.writeTextFile(
@@ -129,7 +129,8 @@ Content`,
 title: Page 1
 slug: page1
 layout: docs
-nav: Page 1
+nav-item: Page 1
+nav-group: default
 nav-order: 1
 ---
 
@@ -142,7 +143,8 @@ Content 1`,
 title: Page 2
 slug: page2
 layout: docs
-nav: Page 2
+nav-item: Page 2
+nav-group: default
 nav-order: 2
 ---
 
@@ -498,7 +500,7 @@ Nested content`,
 
       await Deno.writeTextFile(
         join(layoutDir, "_layout-docs.html"),
-        `<html><body><nav>{{navigation}}</nav></body></html>`,
+        `<html><body><nav>{{navigation.default}}</nav></body></html>`,
       );
 
       await Deno.writeTextFile(
@@ -507,7 +509,8 @@ Nested content`,
 title: Test
 slug: test
 layout: docs
-nav: Test
+nav-item: Test
+nav-group: default
 nav-order: 1
 ---
 

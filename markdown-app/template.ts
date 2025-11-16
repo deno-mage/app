@@ -1,7 +1,8 @@
 /**
- * Simple {{key}} template replacement engine.
+ * Simple {{key}} and {{key.nested}} template replacement engine.
  *
- * Replaces {{key}} patterns in template strings with values from the data object.
+ * Replaces {{key}} and {{key.nested}} patterns in template strings with values from the data object.
+ * Supports dot notation for nested object access.
  */
 
 /**
@@ -10,24 +11,51 @@
 export interface TemplateData {
   title: string;
   content: string;
-  navigation: string;
+  navigation: NavigationData | string; // Object for grouped nav or string for backward compat
   basePath: string;
-  [key: string]: string;
+  [key: string]: unknown;
 }
 
 /**
- * Render a template string by replacing {{key}} patterns with values from data.
+ * Navigation data grouped by nav-group.
+ */
+export interface NavigationData {
+  [group: string]: string;
+}
+
+/**
+ * Get a nested value from an object using dot notation.
+ */
+function getNestedValue(obj: unknown, path: string): string {
+  const parts = path.split(".");
+  let value: unknown = obj;
+
+  for (const part of parts) {
+    if (value === null || value === undefined) {
+      return "";
+    }
+    if (typeof value === "object" && part in value) {
+      value = (value as Record<string, unknown>)[part];
+    } else {
+      return "";
+    }
+  }
+
+  if (value === null || value === undefined) {
+    return "";
+  }
+
+  return String(value);
+}
+
+/**
+ * Render a template string by replacing {{key}} and {{key.nested}} patterns with values from data.
  */
 export function renderTemplate(
   template: string,
   data: TemplateData,
 ): string {
-  return template.replace(/\{\{(\w+)\}\}/g, (_match, key) => {
-    const value = data[key];
-    if (value === undefined) {
-      // Return empty string for undefined values (graceful degradation)
-      return "";
-    }
-    return value;
+  return template.replace(/\{\{([\w.]+)\}\}/g, (_match, key) => {
+    return getNestedValue(data, key);
   });
 }

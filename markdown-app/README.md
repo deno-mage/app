@@ -100,8 +100,9 @@ layout: docs               # Layout file to use (_layout-docs.html)
 title: Getting Started
 slug: getting-started
 layout: docs
-nav: Guide/Getting Started # Navigation section/item
-nav-order: 1               # Sort order (lower = first)
+nav-item: Guide/Getting Started # Navigation section/item
+nav-group: aside                # Navigation group (aside, header, footer, etc.)
+nav-order: 1                    # Sort order (lower = first)
 ---
 ```
 
@@ -127,7 +128,8 @@ Your content here...
 title: CORS Middleware
 slug: middleware/cors
 layout: docs
-nav: Middleware/CORS
+nav-item: Middleware/CORS
+nav-group: aside
 nav-order: 1
 ---
 ```
@@ -142,7 +144,8 @@ Layout files are HTML templates with `{{key}}` placeholders.
 
 - `{{title}}` - Page title from frontmatter
 - `{{content}}` - Rendered markdown HTML
-- `{{navigation}}` - Auto-generated navigation
+- `{{navigation.groupName}}` - Auto-generated navigation for a specific group
+  (e.g., `{{navigation.aside}}`, `{{navigation.header}}`)
 - `{{basePath}}` - Base path for URLs (empty string if `/`)
 
 ### Layout Example
@@ -157,7 +160,7 @@ Layout files are HTML templates with `{{key}}` placeholders.
     <link rel="stylesheet" href="{{basePath}}/gfm.css">
   </head>
   <body>
-    <nav>{{navigation}}</nav>
+    <nav>{{navigation.aside}}</nav>
     <main>{{content}}</main>
   </body>
 </html>
@@ -174,16 +177,69 @@ styled example with Pico CSS.
 
 ## Navigation
 
-Navigation is automatically generated from pages with `nav` frontmatter field.
+Navigation is automatically generated from pages with `nav-item` and `nav-group`
+frontmatter fields. This allows you to create multiple navigation areas
+(sidebar, header, footer) from the same set of markdown files.
 
-### Nav Field Format
+### Grouped Navigation
+
+Each page can specify which navigation group it belongs to:
 
 ```yaml
-nav: Introduction # Unsectioned item
-nav: Guide/Getting Started # Sectioned item (Section/Item)
+---
+title: Getting Started
+slug: getting-started
+layout: docs
+nav-item: Guide/Getting Started  # Section/Item format
+nav-group: aside                 # Which nav group this belongs to
+nav-order: 1                     # Sort order within group
+---
 ```
 
-Generates semantic HTML with `<section>`, `<h3>`, and `<ul>` elements.
+**Common navigation groups:**
+
+- `aside` - Sidebar navigation for docs
+- `header` - Top navigation links
+- `footer` - Footer links
+- `default` - Default group if not specified
+
+In your layout template, access each group using dot notation:
+
+```html
+<aside>
+  {{navigation.aside}}
+</aside>
+
+<header>
+  {{navigation.header}}
+</header>
+
+<footer>
+  {{navigation.footer}}
+</footer>
+```
+
+### Nav Item Format
+
+The `nav-item` field supports two formats:
+
+```yaml
+nav-item: Introduction # Unsectioned item
+nav-item: Guide/Getting Started # Sectioned item (Section/Item)
+```
+
+Sections generate semantic HTML with `<section>`, `<h3>`, and `<ul>` elements:
+
+```html
+<nav>
+  <section>
+    <h3>Guide</h3>
+    <ul>
+      <li><a href="/getting-started">Getting Started</a></li>
+    </ul>
+  </section>
+</nav>
+```
 
 ### Navigation Sorting
 
@@ -194,6 +250,8 @@ nav-order: 1 # First
 nav-order: 2 # Second
 # (no order)  # Defaults to 999 (last)
 ```
+
+Sections are also sorted by the lowest `nav-order` of their items.
 
 ### Current Page
 
@@ -750,15 +808,18 @@ deno test --allow-all
 
 **template.ts** - Simple template engine
 
-- Replaces `{{key}}` patterns with values
+- Replaces `{{key}}` and `{{key.nested}}` patterns with values
+- Supports dot notation for nested object access
 - Graceful degradation (undefined → empty string)
 
-**navigation.ts** - Auto-generated navigation
+**navigation.ts** - Auto-generated grouped navigation
 
-- Parses `nav: Section/Item` format
-- Groups by section
+- Parses `nav-item: Section/Item` format
+- Groups by `nav-group` first (aside, header, footer, etc.)
+- Groups by section within each group
 - Sorts by nav-order (alphabetical tie-breaking)
 - Marks current page with `data-current="true"`
+- Returns object with group names as keys
 
 **builder.ts** - Static HTML generation
 
@@ -833,9 +894,12 @@ slug: admin
 
 **Navigation not showing:**
 
-- Verify pages have `nav` field in frontmatter
+- Verify pages have `nav-item` field in frontmatter
+- Check `nav-group` matches the group used in your layout template (e.g.,
+  `{{navigation.aside}}`)
 - Check `nav-order` values
-- Inspect generated HTML (navigation may be empty if no pages have nav)
+- Inspect generated HTML (navigation groups may be empty if no pages have
+  matching nav-group)
 
 **Hot reload not working:**
 

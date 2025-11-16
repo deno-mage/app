@@ -2,7 +2,8 @@
 title: Welcome to Example Docs
 slug: index
 layout: docs
-nav: Home
+nav-item: Home
+nav-group: aside
 nav-order: 1
 ---
 

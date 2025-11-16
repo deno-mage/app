@@ -2,8 +2,9 @@
 title: API Reference
 slug: api
 layout: docs
-nav: Reference/API
-nav-order: 1
+nav-item: Reference/API
+nav-group: aside
+nav-order: 3
 ---
 
 # API Reference
@@ -84,20 +85,22 @@ await build();
 
 Available in layout templates:
 
-| Variable         | Description                 |
-| ---------------- | --------------------------- |
-| `{{title}}`      | Page title from frontmatter |
-| `{{content}}`    | Rendered markdown HTML      |
-| `{{navigation}}` | Auto-generated navigation   |
-| `{{basePath}}`   | URL prefix from config      |
+| Variable                | Description                                |
+| ----------------------- | ------------------------------------------ |
+| `{{title}}`             | Page title from frontmatter                |
+| `{{content}}`           | Rendered markdown HTML                     |
+| `{{navigation.aside}}`  | Auto-generated navigation for aside group  |
+| `{{navigation.header}}` | Auto-generated navigation for header group |
+| `{{basePath}}`          | URL prefix from config                     |
 
 ## Navigation Structure
 
 Auto-generated from frontmatter:
 
 ```yaml
-nav: Section/Item # Creates section with item
-nav: Item # Item without section
+nav-item: Section/Item # Creates section with item
+nav-item: Item # Item without section
+nav-group: aside # Which navigation group this belongs to
 nav-order: 1 # Numeric sort (alphabetical tie-break)
 ```
 

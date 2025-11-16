@@ -236,20 +236,21 @@ describe("markdown-app - template", () => {
       expect(result).toContain('data-current="true"');
     });
 
-    it("should only match word characters in keys", () => {
-      // Template with non-word characters in braces should not match
-      const template = "{{title-dashed}} {{title.dotted}} {{title:colon}}";
+    it("should only match word characters and dots in keys", () => {
+      // Template with non-word characters (except dots) should not match
+      const template = "{{title-dashed}} {{navigation.dotted}} {{title:colon}}";
       const data: TemplateData = {
         title: "Test",
         content: "",
-        navigation: "",
+        navigation: { dotted: "Dotted Value" },
         basePath: "",
       };
 
       const result = renderTemplate(template, data);
 
-      // None of these should be replaced because \w only matches [a-zA-Z0-9_]
-      expect(result).toBe("{{title-dashed}} {{title.dotted}} {{title:colon}}");
+      // {{navigation.dotted}} should be replaced (dots are supported for nested access)
+      // {{title-dashed}} and {{title:colon}} should not (hyphens and colons not supported)
+      expect(result).toBe("{{title-dashed}} Dotted Value {{title:colon}}");
     });
   });
 });
