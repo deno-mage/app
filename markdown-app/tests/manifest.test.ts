@@ -141,5 +141,41 @@ describe("markdown-app - manifest", () => {
       // Should not throw
       expect(() => JSON.parse(manifest)).not.toThrow();
     });
+
+    it("should use asset map for icon paths when provided", () => {
+      const siteMetadata: SiteMetadata = {
+        siteUrl: "https://example.com",
+        icon192Path: "icon-192.png",
+        icon512Path: "icon-512.png",
+      };
+
+      const assetMap = {
+        "icon-192.png": "/__assets/icon-192-abc12345.png",
+        "icon-512.png": "/__assets/icon-512-def67890.png",
+      };
+
+      const manifest = generateManifest(siteMetadata, "/", assetMap);
+      const parsed = JSON.parse(manifest);
+
+      expect(parsed.icons[0].src).toBe("/__assets/icon-192-abc12345.png");
+      expect(parsed.icons[1].src).toBe("/__assets/icon-512-def67890.png");
+    });
+
+    it("should fall back to direct path when asset not in map", () => {
+      const siteMetadata: SiteMetadata = {
+        siteUrl: "https://example.com",
+        icon192Path: "icon-192.png",
+      };
+
+      const assetMap = {
+        "other-icon.png": "/__assets/other-icon-abc12345.png",
+      };
+
+      const manifest = generateManifest(siteMetadata, "/", assetMap);
+      const parsed = JSON.parse(manifest);
+
+      // Should fall back to direct path since icon-192.png is not in assetMap
+      expect(parsed.icons[0].src).toBe("/icon-192.png");
+    });
   });
 });

@@ -45,14 +45,23 @@ export function generateNavigation(
 
   // Build nav items with group information
   const navItems = navPages.map((page) => {
-    const [section, item] = parseNavField(page["nav-item"]!);
-    return {
-      title: item || page.title,
-      slug: page.slug,
-      order: page["nav-order"] ?? 999,
-      section,
-      group: page["nav-group"] ?? "default",
-    };
+    try {
+      const [section, item] = parseNavField(page["nav-item"]!);
+      return {
+        title: item || page.title,
+        slug: page.slug,
+        order: page["nav-order"] ?? 999,
+        section,
+        group: page["nav-group"] ?? "default",
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error
+        ? error.message
+        : String(error);
+      throw new Error(
+        `Invalid nav-item in ${page.slug}: ${errorMessage}`,
+      );
+    }
   });
 
   // Group by nav-group first

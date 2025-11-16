@@ -30,7 +30,7 @@ This is a test.`;
 title: Test Page
 slug: test
 layout: docs
-nav: Guide/Getting Started
+nav-item: Guide/Getting Started
 nav-order: 1
 ---
 
@@ -38,7 +38,7 @@ Content here.`;
 
       const result = parseMarkdown(content, "test.md");
 
-      expect(result.frontmatter.nav).toBe("Guide/Getting Started");
+      expect(result.frontmatter["nav-item"]).toBe("Guide/Getting Started");
       expect(result.frontmatter["nav-order"]).toBe(1);
     });
 

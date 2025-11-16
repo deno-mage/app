@@ -18,6 +18,11 @@ import { LAYOUT_PREFIX, LAYOUT_SUFFIX } from "./constants.ts";
 
 /**
  * Load Prism syntax highlighting language components dynamically in parallel.
+ *
+ * Fails silently if a language component cannot be loaded, logging a warning instead.
+ * This ensures the build continues even if some language components are missing.
+ *
+ * @param languages Array of Prism language identifiers (e.g., ["typescript", "python"])
  */
 async function loadSyntaxHighlightLanguages(
   languages: string[],
@@ -217,10 +222,14 @@ async function parseAllFiles(
         content: parsed.content,
       });
     } catch (error) {
-      logger.error(
-        error instanceof Error ? error : new Error(String(error)),
+      const errorMessage = error instanceof Error
+        ? error.message
+        : String(error);
+      const enrichedError = new Error(
+        `Failed to parse ${filepath}: ${errorMessage}`,
       );
-      throw error;
+      logger.error(enrichedError);
+      throw enrichedError;
     }
   }
 

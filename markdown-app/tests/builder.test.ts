@@ -592,5 +592,51 @@ Content`,
       expect(content).toContain("<script>");
       expect(content).toContain("__hot-reload");
     });
+
+    it("should throw error for duplicate slugs", async () => {
+      const sourceDir = join(tempDir, "source");
+      const outputDir = join(tempDir, "output");
+      const layoutDir = join(tempDir, "layouts");
+
+      await Deno.mkdir(sourceDir, { recursive: true });
+      await Deno.mkdir(layoutDir, { recursive: true });
+      await copy(layoutFixture, join(layoutDir, "_layout-docs.tsx"));
+
+      // Create two files with the same slug
+      await Deno.writeTextFile(
+        join(sourceDir, "page1.md"),
+        `---
+title: Page 1
+slug: duplicate
+layout: docs
+---
+
+Content 1`,
+      );
+
+      await Deno.writeTextFile(
+        join(sourceDir, "page2.md"),
+        `---
+title: Page 2
+slug: duplicate
+layout: docs
+---
+
+Content 2`,
+      );
+
+      const options: BuildOptions = {
+        sourceDir,
+        outputDir,
+        layoutDir,
+        basePath: "/",
+        dev: false,
+        syntaxHighlightLanguages: [],
+      };
+
+      await expect(build(options)).rejects.toThrow(
+        'Duplicate slug "duplicate" found',
+      );
+    });
   });
 });
