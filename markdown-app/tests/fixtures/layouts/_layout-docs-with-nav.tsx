@@ -1,27 +1,38 @@
-import type { TemplateData } from "../../../template.ts";
+export interface LayoutProps {
+  title: string;
+  articleHtml: string;
+  description?: string;
+  navigation: {
+    default?: Array<{
+      title: string;
+      items: Array<{
+        slug: string;
+        href: string;
+        title: string;
+        isCurrent?: boolean;
+      }>;
+    }>;
+  };
+  basePath: string;
+}
 
-export function Layout({ title, content, navigation }: TemplateData) {
+export function Layout({ articleHtml, navigation }: LayoutProps) {
   return (
-    <html>
-      <head>
-        <title>{title}</title>
-      </head>
-      <body>
-        {navigation.default?.map((section) => (
-          <nav key={section.title}>
-            {section.items.map((item) => (
-              <a
-                key={item.slug}
-                href={item.href}
-                aria-current={item.isCurrent ? "page" : undefined}
-              >
-                {item.title}
-              </a>
-            ))}
-          </nav>
-        ))}
-        <main dangerouslySetInnerHTML={{ __html: content }} />
-      </body>
-    </html>
+    <>
+      {navigation.default?.map((section) => (
+        <nav key={section.title}>
+          {section.items.map((item) => (
+            <a
+              key={item.slug}
+              href={item.href}
+              aria-current={item.isCurrent ? "page" : undefined}
+            >
+              {item.title}
+            </a>
+          ))}
+        </nav>
+      ))}
+      <main dangerouslySetInnerHTML={{ __html: articleHtml }} />
+    </>
   );
 }

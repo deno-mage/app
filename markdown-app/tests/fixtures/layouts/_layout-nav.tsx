@@ -1,15 +1,21 @@
-import type { TemplateData } from "../../../template.ts";
+export interface LayoutProps {
+  title: string;
+  articleHtml: string;
+  description?: string;
+  navigation: {
+    default?: Array<unknown>;
+  };
+  basePath: string;
+}
 
-export function Layout(data: TemplateData) {
+export function Layout(data: LayoutProps) {
   const navItems = data.navigation.default || [];
   return (
-    <html>
-      <body>
-        <nav>
-          {navItems.length > 0 && <ul>{navItems.length} sections</ul>}
-        </nav>
-        <div dangerouslySetInnerHTML={{ __html: data.content }} />
-      </body>
-    </html>
+    <>
+      <nav>
+        {navItems.length > 0 && <ul>{navItems.length} sections</ul>}
+      </nav>
+      <div dangerouslySetInnerHTML={{ __html: data.articleHtml }} />
+    </>
   );
 }

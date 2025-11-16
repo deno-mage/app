@@ -1,11 +1,11 @@
-import type { TemplateData } from "../../../template.ts";
+export interface LayoutProps {
+  title: string;
+  articleHtml: string;
+  description?: string;
+  navigation: Record<string, unknown>;
+  basePath: string;
+}
 
-export function Layout(data: TemplateData) {
-  return (
-    <html>
-      <body>
-        <a href={`${data.basePath}/home`}>Home</a>
-      </body>
-    </html>
-  );
+export function Layout(data: LayoutProps) {
+  return <a href={`${data.basePath}/home`}>Home</a>;
 }
