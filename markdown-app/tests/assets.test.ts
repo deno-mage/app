@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, it } from "@std/testing/bdd";
+import { beforeEach, describe, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
 import { join } from "@std/path";
 import { copyAssetsWithHashing, replaceAssetPlaceholders } from "../assets.ts";
@@ -13,10 +13,6 @@ describe("markdown-app - assets", () => {
     outputDir = await Deno.makeTempDir({
       prefix: "markdown-app-assets-output-",
     });
-  });
-
-  afterEach(() => {
-    // Temp files are excluded from coverage, no cleanup needed
   });
 
   describe("copyAssetsWithHashing", () => {

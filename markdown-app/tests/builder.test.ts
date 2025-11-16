@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, it } from "@std/testing/bdd";
+import { beforeEach, describe, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
 import { build, type BuildOptions } from "../builder.ts";
 import { join } from "@std/path";
@@ -18,10 +18,6 @@ describe("markdown-app - builder", () => {
   beforeEach(async () => {
     // Create unique temp directory for each test
     tempDir = await Deno.makeTempDir({ prefix: "markdown-app-test-" });
-  });
-
-  afterEach(() => {
-    // Temp files are excluded from coverage, no cleanup needed
   });
 
   describe("build", () => {

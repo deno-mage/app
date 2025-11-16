@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, it } from "@std/testing/bdd";
+import { beforeEach, describe, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
 import { markdownApp } from "../mod.ts";
 import { copy } from "@std/fs";
@@ -40,10 +40,6 @@ This is the home page.`,
 
     // Create a layout file
     await copy(layoutFixture, join(sourceDir, "_layout-docs.tsx"));
-  });
-
-  afterEach(() => {
-    // Temp files are excluded from coverage, no cleanup needed
   });
 
   it("should generate all production files when siteMetadata is provided", async () => {
