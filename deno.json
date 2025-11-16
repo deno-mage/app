@@ -26,7 +26,10 @@
     "coverage": "deno coverage coverage --exclude='.*/T/.*'",
     "lint": "deno lint",
     "format": "deno fmt",
-    "check": "deno check ."
+    "check": "deno check .",
+    "docs:dev": "deno run --allow-all docs/dev.ts",
+    "docs:build": "deno run --allow-read --allow-write docs/build.ts",
+    "docs:serve": "deno run --allow-read --allow-net docs/serve.ts"
   },
   "imports": {
     "@deno/gfm": "jsr:@deno/gfm@^0.11.0",

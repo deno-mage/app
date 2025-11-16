@@ -13,12 +13,12 @@ describe("seo - sitemap.xml generation", () => {
   });
 
   it("should generate sitemap.xml with all metadata fields", async () => {
-    const { sourceDir, outputDir, layoutDir } = await setupBuildTest({
+    const { articlesDir, outputDir, layoutDir } = await setupBuildTest({
       tempDir,
     });
 
     await writeMarkdownFile(
-      join(sourceDir, "index.md"),
+      join(articlesDir, "index.md"),
       {
         title: "Home Page",
         slug: "index",
@@ -32,7 +32,7 @@ describe("seo - sitemap.xml generation", () => {
     );
 
     await writeMarkdownFile(
-      join(sourceDir, "about.md"),
+      join(articlesDir, "about.md"),
       {
         title: "About",
         slug: "about",
@@ -45,7 +45,7 @@ describe("seo - sitemap.xml generation", () => {
     );
 
     const app = markdownApp({
-      sourceDir,
+      articlesDir,
       outputDir,
       layoutDir,
       basePath: "/",
@@ -73,18 +73,18 @@ describe("seo - sitemap.xml generation", () => {
   });
 
   it("should include basePath in sitemap URLs", async () => {
-    const { sourceDir, outputDir, layoutDir } = await setupBuildTest({
+    const { articlesDir, outputDir, layoutDir } = await setupBuildTest({
       tempDir,
     });
 
     await writeMarkdownFile(
-      join(sourceDir, "index.md"),
+      join(articlesDir, "index.md"),
       { title: "Home", slug: "index", layout: "docs" },
       "# Home",
     );
 
     const app = markdownApp({
-      sourceDir,
+      articlesDir,
       outputDir,
       layoutDir,
       basePath: "/docs",
@@ -102,18 +102,18 @@ describe("seo - sitemap.xml generation", () => {
   });
 
   it("should NOT generate sitemap.xml when siteMetadata NOT provided", async () => {
-    const { sourceDir, outputDir, layoutDir } = await setupBuildTest({
+    const { articlesDir, outputDir, layoutDir } = await setupBuildTest({
       tempDir,
     });
 
     await writeMarkdownFile(
-      join(sourceDir, "index.md"),
+      join(articlesDir, "index.md"),
       { title: "Home", slug: "index", layout: "docs" },
       "# Home",
     );
 
     const app = markdownApp({
-      sourceDir,
+      articlesDir,
       outputDir,
       layoutDir,
       basePath: "/",
@@ -134,18 +134,18 @@ describe("seo - robots.txt generation", () => {
   });
 
   it("should generate robots.txt with sitemap reference", async () => {
-    const { sourceDir, outputDir, layoutDir } = await setupBuildTest({
+    const { articlesDir, outputDir, layoutDir } = await setupBuildTest({
       tempDir,
     });
 
     await writeMarkdownFile(
-      join(sourceDir, "index.md"),
+      join(articlesDir, "index.md"),
       { title: "Home", slug: "index", layout: "docs" },
       "# Home",
     );
 
     const app = markdownApp({
-      sourceDir,
+      articlesDir,
       outputDir,
       layoutDir,
       basePath: "/",
@@ -165,18 +165,18 @@ describe("seo - robots.txt generation", () => {
   });
 
   it("should include basePath in robots.txt sitemap URL", async () => {
-    const { sourceDir, outputDir, layoutDir } = await setupBuildTest({
+    const { articlesDir, outputDir, layoutDir } = await setupBuildTest({
       tempDir,
     });
 
     await writeMarkdownFile(
-      join(sourceDir, "index.md"),
+      join(articlesDir, "index.md"),
       { title: "Home", slug: "index", layout: "docs" },
       "# Home",
     );
 
     const app = markdownApp({
-      sourceDir,
+      articlesDir,
       outputDir,
       layoutDir,
       basePath: "/docs",
@@ -196,18 +196,18 @@ describe("seo - robots.txt generation", () => {
   });
 
   it("should NOT generate robots.txt when siteMetadata NOT provided", async () => {
-    const { sourceDir, outputDir, layoutDir } = await setupBuildTest({
+    const { articlesDir, outputDir, layoutDir } = await setupBuildTest({
       tempDir,
     });
 
     await writeMarkdownFile(
-      join(sourceDir, "index.md"),
+      join(articlesDir, "index.md"),
       { title: "Home", slug: "index", layout: "docs" },
       "# Home",
     );
 
     const app = markdownApp({
-      sourceDir,
+      articlesDir,
       outputDir,
       layoutDir,
       basePath: "/",
@@ -228,18 +228,18 @@ describe("seo - manifest.webmanifest generation", () => {
   });
 
   it("should generate manifest.webmanifest with all metadata fields", async () => {
-    const { sourceDir, outputDir, layoutDir } = await setupBuildTest({
+    const { articlesDir, outputDir, layoutDir } = await setupBuildTest({
       tempDir,
     });
 
     await writeMarkdownFile(
-      join(sourceDir, "index.md"),
+      join(articlesDir, "index.md"),
       { title: "Home", slug: "index", layout: "docs" },
       "# Home",
     );
 
     const app = markdownApp({
-      sourceDir,
+      articlesDir,
       outputDir,
       layoutDir,
       basePath: "/",
@@ -268,18 +268,18 @@ describe("seo - manifest.webmanifest generation", () => {
   });
 
   it("should use default values when optional fields not provided", async () => {
-    const { sourceDir, outputDir, layoutDir } = await setupBuildTest({
+    const { articlesDir, outputDir, layoutDir } = await setupBuildTest({
       tempDir,
     });
 
     await writeMarkdownFile(
-      join(sourceDir, "index.md"),
+      join(articlesDir, "index.md"),
       { title: "Home", slug: "index", layout: "docs" },
       "# Home",
     );
 
     const app = markdownApp({
-      sourceDir,
+      articlesDir,
       outputDir,
       layoutDir,
       basePath: "/",
@@ -302,18 +302,18 @@ describe("seo - manifest.webmanifest generation", () => {
   });
 
   it("should include basePath in manifest start_url", async () => {
-    const { sourceDir, outputDir, layoutDir } = await setupBuildTest({
+    const { articlesDir, outputDir, layoutDir } = await setupBuildTest({
       tempDir,
     });
 
     await writeMarkdownFile(
-      join(sourceDir, "index.md"),
+      join(articlesDir, "index.md"),
       { title: "Home", slug: "index", layout: "docs" },
       "# Home",
     );
 
     const app = markdownApp({
-      sourceDir,
+      articlesDir,
       outputDir,
       layoutDir,
       basePath: "/docs",
@@ -334,18 +334,18 @@ describe("seo - manifest.webmanifest generation", () => {
   });
 
   it("should NOT generate manifest.webmanifest when siteMetadata NOT provided", async () => {
-    const { sourceDir, outputDir, layoutDir } = await setupBuildTest({
+    const { articlesDir, outputDir, layoutDir } = await setupBuildTest({
       tempDir,
     });
 
     await writeMarkdownFile(
-      join(sourceDir, "index.md"),
+      join(articlesDir, "index.md"),
       { title: "Home", slug: "index", layout: "docs" },
       "# Home",
     );
 
     const app = markdownApp({
-      sourceDir,
+      articlesDir,
       outputDir,
       layoutDir,
       basePath: "/",

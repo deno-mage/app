@@ -75,14 +75,14 @@ describe("security - HTTP path traversal prevention", () => {
     tempDir = await Deno.makeTempDir({
       prefix: "markdown-app-security-http-",
     });
-    const sourceDir = join(tempDir, "source");
+    const articlesDir = join(tempDir, "source");
     const outputDir = join(tempDir, "output");
 
-    await Deno.mkdir(sourceDir, { recursive: true });
-    await copy(layoutFixture, join(sourceDir, "_layout-docs.tsx"));
+    await Deno.mkdir(articlesDir, { recursive: true });
+    await copy(layoutFixture, join(articlesDir, "_layout-docs.tsx"));
 
     await Deno.writeTextFile(
-      join(sourceDir, "index.md"),
+      join(articlesDir, "index.md"),
       `---
 title: Home
 slug: index
@@ -93,9 +93,9 @@ layout: docs
     );
 
     const mdApp = markdownApp({
-      sourceDir,
+      articlesDir,
       outputDir,
-      layoutDir: sourceDir,
+      layoutDir: articlesDir,
       basePath: "/docs",
       dev: false,
     });

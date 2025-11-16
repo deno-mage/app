@@ -8,9 +8,9 @@ import { register as registerImpl } from "./middleware.ts";
  */
 export interface MarkdownAppOptions {
   /**
-   * Directory containing markdown source files.
+   * Directory containing markdown article files.
    */
-  sourceDir: string;
+  articlesDir: string;
 
   /**
    * Directory where HTML files will be built.
@@ -71,7 +71,7 @@ export interface MarkdownApp {
   register: (app: MageApp) => void;
 
   /**
-   * Watch sourceDir for changes and rebuild on change.
+   * Watch articlesDir for changes and rebuild on change.
    * Notifies connected WebSocket clients to reload.
    *
    * Only useful in dev mode.
@@ -90,7 +90,7 @@ export interface MarkdownApp {
  */
 export function markdownApp(options: MarkdownAppOptions): MarkdownApp {
   const {
-    sourceDir,
+    articlesDir,
     outputDir,
     layoutDir,
     basePath = "/",
@@ -101,8 +101,8 @@ export function markdownApp(options: MarkdownAppOptions): MarkdownApp {
   } = options;
 
   // Validate required options
-  if (!sourceDir) {
-    throw new Error("markdownApp: sourceDir is required");
+  if (!articlesDir) {
+    throw new Error("markdownApp: articlesDir is required");
   }
   if (!outputDir) {
     throw new Error("markdownApp: outputDir is required");
@@ -124,7 +124,7 @@ export function markdownApp(options: MarkdownAppOptions): MarkdownApp {
   }
 
   const buildOptions = {
-    sourceDir,
+    articlesDir,
     outputDir,
     layoutDir,
     basePath,

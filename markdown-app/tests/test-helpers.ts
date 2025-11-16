@@ -24,17 +24,17 @@ export interface SetupBuildTestOptions {
 export async function setupBuildTest(options: SetupBuildTestOptions) {
   const { tempDir, withNav = false } = options;
 
-  const sourceDir = join(tempDir, "source");
+  const articlesDir = join(tempDir, "articles");
   const outputDir = join(tempDir, "output");
   const layoutDir = join(tempDir, "layouts");
 
-  await Deno.mkdir(sourceDir, { recursive: true });
+  await Deno.mkdir(articlesDir, { recursive: true });
   await Deno.mkdir(layoutDir, { recursive: true });
 
   const layout = withNav ? layoutWithNavFixture : layoutFixture;
   await copy(layout, join(layoutDir, "_layout-docs.tsx"));
 
-  return { sourceDir, outputDir, layoutDir };
+  return { articlesDir, outputDir, layoutDir };
 }
 
 /**

@@ -13,18 +13,18 @@ describe("build - basic functionality", () => {
   });
 
   it("should convert markdown files to static HTML with correct structure", async () => {
-    const { sourceDir, outputDir, layoutDir } = await setupBuildTest({
+    const { articlesDir, outputDir, layoutDir } = await setupBuildTest({
       tempDir,
     });
 
     await writeMarkdownFile(
-      join(sourceDir, "test.md"),
+      join(articlesDir, "test.md"),
       { title: "Test Page", slug: "test", layout: "docs" },
       "# Hello World",
     );
 
     await build({
-      sourceDir,
+      articlesDir,
       outputDir,
       layoutDir,
       basePath: "/",
@@ -42,18 +42,18 @@ describe("build - basic functionality", () => {
   });
 
   it("should create index.html for pages with 'index' slug", async () => {
-    const { sourceDir, outputDir, layoutDir } = await setupBuildTest({
+    const { articlesDir, outputDir, layoutDir } = await setupBuildTest({
       tempDir,
     });
 
     await writeMarkdownFile(
-      join(sourceDir, "index.md"),
+      join(articlesDir, "index.md"),
       { title: "Home", slug: "index", layout: "docs" },
       "Home page",
     );
 
     await build({
-      sourceDir,
+      articlesDir,
       outputDir,
       layoutDir,
       basePath: "/",
@@ -69,18 +69,18 @@ describe("build - basic functionality", () => {
   });
 
   it("should create directory structure for nested slugs", async () => {
-    const { sourceDir, outputDir, layoutDir } = await setupBuildTest({
+    const { articlesDir, outputDir, layoutDir } = await setupBuildTest({
       tempDir,
     });
 
     await writeMarkdownFile(
-      join(sourceDir, "guide.md"),
+      join(articlesDir, "guide.md"),
       { title: "Guide", slug: "api/router", layout: "docs" },
       "Content",
     );
 
     await build({
-      sourceDir,
+      articlesDir,
       outputDir,
       layoutDir,
       basePath: "/",
@@ -93,26 +93,26 @@ describe("build - basic functionality", () => {
   });
 
   it("should find and build markdown files recursively in subdirectories", async () => {
-    const { sourceDir, outputDir, layoutDir } = await setupBuildTest({
+    const { articlesDir, outputDir, layoutDir } = await setupBuildTest({
       tempDir,
     });
 
-    await Deno.mkdir(join(sourceDir, "nested"), { recursive: true });
+    await Deno.mkdir(join(articlesDir, "nested"), { recursive: true });
 
     await writeMarkdownFile(
-      join(sourceDir, "root.md"),
+      join(articlesDir, "root.md"),
       { title: "Root", slug: "root", layout: "docs" },
       "Root content",
     );
 
     await writeMarkdownFile(
-      join(sourceDir, "nested", "nested.md"),
+      join(articlesDir, "nested", "nested.md"),
       { title: "Nested", slug: "nested", layout: "docs" },
       "Nested content",
     );
 
     await build({
-      sourceDir,
+      articlesDir,
       outputDir,
       layoutDir,
       basePath: "/",
@@ -125,12 +125,12 @@ describe("build - basic functionality", () => {
   });
 
   it("should handle empty source directory without errors", async () => {
-    const { sourceDir, outputDir, layoutDir } = await setupBuildTest({
+    const { articlesDir, outputDir, layoutDir } = await setupBuildTest({
       tempDir,
     });
 
     await build({
-      sourceDir,
+      articlesDir,
       outputDir,
       layoutDir,
       basePath: "/",
@@ -142,18 +142,18 @@ describe("build - basic functionality", () => {
   });
 
   it("should generate GFM CSS file in output directory", async () => {
-    const { sourceDir, outputDir, layoutDir } = await setupBuildTest({
+    const { articlesDir, outputDir, layoutDir } = await setupBuildTest({
       tempDir,
     });
 
     await writeMarkdownFile(
-      join(sourceDir, "test.md"),
+      join(articlesDir, "test.md"),
       { title: "Test", slug: "test", layout: "docs" },
       "Content",
     );
 
     await build({
-      sourceDir,
+      articlesDir,
       outputDir,
       layoutDir,
       basePath: "/",
@@ -177,13 +177,13 @@ describe("build - navigation", () => {
   });
 
   it("should generate navigation links across all pages with nav-item", async () => {
-    const { sourceDir, outputDir, layoutDir } = await setupBuildTest({
+    const { articlesDir, outputDir, layoutDir } = await setupBuildTest({
       tempDir,
       withNav: true,
     });
 
     await writeMarkdownFile(
-      join(sourceDir, "page1.md"),
+      join(articlesDir, "page1.md"),
       {
         title: "Page 1",
         slug: "page1",
@@ -196,7 +196,7 @@ describe("build - navigation", () => {
     );
 
     await writeMarkdownFile(
-      join(sourceDir, "page2.md"),
+      join(articlesDir, "page2.md"),
       {
         title: "Page 2",
         slug: "page2",
@@ -209,7 +209,7 @@ describe("build - navigation", () => {
     );
 
     await build({
-      sourceDir,
+      articlesDir,
       outputDir,
       layoutDir,
       basePath: "/",
@@ -232,13 +232,13 @@ describe("build - navigation", () => {
   });
 
   it("should include basePath in all navigation URLs", async () => {
-    const { sourceDir, outputDir, layoutDir } = await setupBuildTest({
+    const { articlesDir, outputDir, layoutDir } = await setupBuildTest({
       tempDir,
       withNav: true,
     });
 
     await writeMarkdownFile(
-      join(sourceDir, "test.md"),
+      join(articlesDir, "test.md"),
       {
         title: "Test",
         slug: "test",
@@ -250,7 +250,7 @@ describe("build - navigation", () => {
     );
 
     await build({
-      sourceDir,
+      articlesDir,
       outputDir,
       layoutDir,
       basePath: "/docs",
@@ -271,18 +271,18 @@ describe("build - dev mode", () => {
   });
 
   it("should inject hot reload WebSocket script in dev mode", async () => {
-    const { sourceDir, outputDir, layoutDir } = await setupBuildTest({
+    const { articlesDir, outputDir, layoutDir } = await setupBuildTest({
       tempDir,
     });
 
     await writeMarkdownFile(
-      join(sourceDir, "test.md"),
+      join(articlesDir, "test.md"),
       { title: "Test", slug: "test", layout: "docs" },
       "Content",
     );
 
     await build({
-      sourceDir,
+      articlesDir,
       outputDir,
       layoutDir,
       basePath: "/",
@@ -297,18 +297,18 @@ describe("build - dev mode", () => {
   });
 
   it("should not inject hot reload script in production mode", async () => {
-    const { sourceDir, outputDir, layoutDir } = await setupBuildTest({
+    const { articlesDir, outputDir, layoutDir } = await setupBuildTest({
       tempDir,
     });
 
     await writeMarkdownFile(
-      join(sourceDir, "test.md"),
+      join(articlesDir, "test.md"),
       { title: "Test", slug: "test", layout: "docs" },
       "Content",
     );
 
     await build({
-      sourceDir,
+      articlesDir,
       outputDir,
       layoutDir,
       basePath: "/",
@@ -322,18 +322,18 @@ describe("build - dev mode", () => {
   });
 
   it("should inject hot reload script before closing body tag", async () => {
-    const { sourceDir, outputDir, layoutDir } = await setupBuildTest({
+    const { articlesDir, outputDir, layoutDir } = await setupBuildTest({
       tempDir,
     });
 
     await writeMarkdownFile(
-      join(sourceDir, "test.md"),
+      join(articlesDir, "test.md"),
       { title: "Test", slug: "test", layout: "docs" },
       "Content",
     );
 
     await build({
-      sourceDir,
+      articlesDir,
       outputDir,
       layoutDir,
       basePath: "/",
@@ -360,19 +360,19 @@ describe("build - error handling", () => {
   });
 
   it("should fail when layout file does not exist", async () => {
-    const { sourceDir, outputDir, layoutDir } = await setupBuildTest({
+    const { articlesDir, outputDir, layoutDir } = await setupBuildTest({
       tempDir,
     });
 
     await writeMarkdownFile(
-      join(sourceDir, "test.md"),
+      join(articlesDir, "test.md"),
       { title: "Test", slug: "test", layout: "nonexistent" },
       "Content",
     );
 
     await expect(
       build({
-        sourceDir,
+        articlesDir,
         outputDir,
         layoutDir,
         basePath: "/",
@@ -383,25 +383,25 @@ describe("build - error handling", () => {
   });
 
   it("should fail when duplicate slugs are detected", async () => {
-    const { sourceDir, outputDir, layoutDir } = await setupBuildTest({
+    const { articlesDir, outputDir, layoutDir } = await setupBuildTest({
       tempDir,
     });
 
     await writeMarkdownFile(
-      join(sourceDir, "page1.md"),
+      join(articlesDir, "page1.md"),
       { title: "Page 1", slug: "duplicate", layout: "docs" },
       "Content 1",
     );
 
     await writeMarkdownFile(
-      join(sourceDir, "page2.md"),
+      join(articlesDir, "page2.md"),
       { title: "Page 2", slug: "duplicate", layout: "docs" },
       "Content 2",
     );
 
     await expect(
       build({
-        sourceDir,
+        articlesDir,
         outputDir,
         layoutDir,
         basePath: "/",

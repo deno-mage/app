@@ -73,24 +73,30 @@ export interface SiteMetadata {
  * Options for building markdown files to static HTML.
  */
 export interface BuildOptions {
-  sourceDir: string;
-  outputDir: string;
+  /** Directory containing layout templates (_layout-*.tsx files) */
   layoutDir: string;
+  /** Directory containing markdown article files */
+  articlesDir: string;
+  /** Directory containing static assets to copy (with cache busting) @default "assets" */
+  assetsDir?: string;
+  /** Directory to write built HTML and static files */
+  outputDir: string;
+  /** Base URL path for the site (e.g., "/" or "/docs") */
   basePath: string;
+  /** Enable development mode (injects hot reload script) */
   dev: boolean;
+  /** Prism language components to load for syntax highlighting */
   syntaxHighlightLanguages: string[];
   /** Site metadata for production files (sitemap, robots.txt, manifest) */
   siteMetadata?: SiteMetadata;
-  /** Directory containing static assets to copy (with cache busting) */
-  assetsDir?: string;
 }
 
 /**
- * Build all markdown files from sourceDir to outputDir.
+ * Build all markdown files from articlesDir to outputDir.
  */
 export async function build(options: BuildOptions): Promise<void> {
   const {
-    sourceDir,
+    articlesDir,
     outputDir,
     layoutDir,
     basePath,
@@ -100,7 +106,7 @@ export async function build(options: BuildOptions): Promise<void> {
     assetsDir = "assets",
   } = options;
 
-  logger.info(`Building markdown files from ${sourceDir}...`);
+  logger.info(`Building markdown files from ${articlesDir}...`);
 
   // Step 1: Load syntax highlighting languages
   await loadSyntaxHighlightLanguages(syntaxHighlightLanguages);
@@ -109,11 +115,11 @@ export async function build(options: BuildOptions): Promise<void> {
   const assetMap = await copyAssetsWithHashing(assetsDir, outputDir, basePath);
 
   // Step 3: Find all markdown files
-  const markdownFiles = await findMarkdownFiles(sourceDir);
+  const markdownFiles = await findMarkdownFiles(articlesDir);
   logger.info(`Found ${markdownFiles.length} markdown files`);
 
   if (markdownFiles.length === 0) {
-    logger.warn(`No markdown files found in ${sourceDir}`);
+    logger.warn(`No markdown files found in ${articlesDir}`);
     return;
   }
 
