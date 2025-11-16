@@ -1,12 +1,4 @@
-export interface LayoutProps {
-  title: string;
-  articleHtml: string;
-  description?: string;
-  navigation: {
-    default?: Array<unknown>;
-  };
-  basePath: string;
-}
+import type { LayoutProps } from "../../../mod.ts";
 
 export function Layout(data: LayoutProps) {
   const navItems = data.navigation.default || [];

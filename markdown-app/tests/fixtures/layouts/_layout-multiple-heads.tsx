@@ -1,17 +1,4 @@
-import type { ComponentChildren } from "preact";
-
-// Inline Head component to avoid import issues in test fixtures
-function Head({ children }: { children?: ComponentChildren }) {
-  return <head>{children}</head>;
-}
-
-export interface LayoutProps {
-  title: string;
-  articleHtml: string;
-  description?: string;
-  navigation: Record<string, unknown>;
-  basePath: string;
-}
+import { Head, type LayoutProps } from "../../../mod.ts";
 
 export function Layout(data: LayoutProps) {
   return (

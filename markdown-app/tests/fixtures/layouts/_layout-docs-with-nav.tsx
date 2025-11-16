@@ -1,20 +1,4 @@
-export interface LayoutProps {
-  title: string;
-  articleHtml: string;
-  description?: string;
-  navigation: {
-    default?: Array<{
-      title: string;
-      items: Array<{
-        slug: string;
-        href: string;
-        title: string;
-        isCurrent?: boolean;
-      }>;
-    }>;
-  };
-  basePath: string;
-}
+import type { LayoutProps } from "../../../mod.ts";
 
 export function Layout({ articleHtml, navigation }: LayoutProps) {
   return (
