@@ -1,14 +1,5 @@
-import type { TemplateData } from "../../../template.ts";
+import type { LayoutProps } from "../../../mod.ts";
 
-export function Layout(data: TemplateData) {
-  return (
-    <html>
-      <head>
-        <title>{data.title}</title>
-      </head>
-      <body>
-        <main dangerouslySetInnerHTML={{ __html: data.content }} />
-      </body>
-    </html>
-  );
+export function Layout(data: LayoutProps) {
+  return <main dangerouslySetInnerHTML={{ __html: data.articleHtml }} />;
 }

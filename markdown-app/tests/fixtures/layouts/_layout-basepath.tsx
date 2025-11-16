@@ -1,11 +1,5 @@
-import type { TemplateData } from "../../../template.ts";
+import type { LayoutProps } from "../../../mod.ts";
 
-export function Layout(data: TemplateData) {
-  return (
-    <html>
-      <body>
-        <a href={`${data.basePath}/home`}>Home</a>
-      </body>
-    </html>
-  );
+export function Layout(data: LayoutProps) {
+  return <a href={`${data.basePath}/home`}>Home</a>;
 }

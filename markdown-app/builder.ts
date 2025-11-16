@@ -2,7 +2,7 @@ import { walk } from "@std/fs";
 import { dirname, join, resolve } from "@std/path";
 import { CSS as GFM_CSS } from "@deno/gfm";
 import { type Frontmatter, parseMarkdown } from "./parser.ts";
-import type { TemplateData } from "./template.ts";
+import type { LayoutProps } from "./template.ts";
 import { generateNavigation, type NavigationData } from "./navigation.ts";
 import { generateSitemap } from "./sitemap.ts";
 import { generateRobotsTxt } from "./robots.ts";
@@ -13,7 +13,7 @@ import {
   replaceAssetPlaceholders,
 } from "./assets.ts";
 import { logger } from "./logger.ts";
-import { renderJsxLayout } from "./jsx-renderer.ts";
+import { renderJsxLayout } from "./jsx-renderer.tsx";
 import { LAYOUT_PREFIX, LAYOUT_SUFFIX } from "./constants.ts";
 
 /**
@@ -159,6 +159,7 @@ export async function build(options: BuildOptions): Promise<void> {
       layoutDir,
       basePath,
       dev,
+      themeColor: siteMetadata?.themeColor,
     });
   }
 
@@ -242,9 +243,6 @@ async function parseAllFiles(
   return pages;
 }
 
-/**
- * Build a single page to HTML.
- */
 async function buildPage(
   page: ParsedPage,
   navigation: NavigationData,
@@ -253,30 +251,29 @@ async function buildPage(
     layoutDir: string;
     basePath: string;
     dev: boolean;
+    themeColor?: string;
   },
 ): Promise<void> {
   const { frontmatter, content } = page;
-  const { outputDir, layoutDir, basePath, dev } = options;
+  const { outputDir, layoutDir, basePath, dev, themeColor } = options;
 
-  // Normalize basePath for template (empty string if just "/")
   const normalizedBasePath = basePath === "/" ? "" : basePath;
 
-  // Prepare template data
-  const templateData: TemplateData = {
+  const layoutProps: LayoutProps = {
     title: frontmatter.title,
-    content,
+    articleHtml: content,
+    description: frontmatter.description,
     navigation,
     basePath: normalizedBasePath,
   };
 
-  // Load JSX layout
   const layoutPath = resolve(
     join(layoutDir, `${LAYOUT_PREFIX}${frontmatter.layout}${LAYOUT_SUFFIX}`),
   );
 
   let html: string;
   try {
-    html = await renderJsxLayout(layoutPath, templateData);
+    html = await renderJsxLayout(layoutPath, layoutProps, { dev, themeColor });
   } catch (error) {
     throw new Error(
       `Failed to render layout ${layoutPath} (required by ${page.filepath}): ${
@@ -285,12 +282,6 @@ async function buildPage(
     );
   }
 
-  // Inject hot reload script in dev mode
-  if (dev) {
-    html = injectHotReloadScript(html);
-  }
-
-  // Write output file
   const outputPath = getOutputPath(frontmatter.slug, outputDir);
   await ensureDir(dirname(outputPath));
   await Deno.writeTextFile(outputPath, html);
@@ -322,43 +313,6 @@ async function ensureDir(dir: string): Promise<void> {
       throw error;
     }
   }
-}
-
-/**
- * Inject hot reload WebSocket script before </body> tag.
- */
-function injectHotReloadScript(html: string): string {
-  const script = `
-<script>
-  (function() {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const host = window.location.host;
-    const ws = new WebSocket(protocol + '//' + host + '/__hot-reload');
-
-    ws.onmessage = function() {
-      console.log('[HMR] Reloading...');
-      window.location.reload();
-    };
-
-    ws.onclose = function() {
-      console.log('[HMR] Disconnected, retrying in 1s...');
-      setTimeout(function() {
-        window.location.reload();
-      }, 1000);
-    };
-
-    ws.onerror = function() {
-      console.log('[HMR] Connection error');
-    };
-  })();
-</script>`;
-
-  // Inject before </body> if it exists, otherwise append
-  if (html.includes("</body>")) {
-    return html.replace("</body>", `${script}\n</body>`);
-  }
-
-  return html + script;
 }
 
 /**
