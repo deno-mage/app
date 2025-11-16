@@ -10,3 +10,6 @@ node_modules
 
 # Example
 example/public/main.css
+
+# Docs build
+_site
