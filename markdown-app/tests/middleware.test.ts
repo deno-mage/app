@@ -33,8 +33,6 @@ describe("markdown-app - middleware", () => {
       const routeCount = (app as unknown as MageAppWithInternals)._router
         ._entries.length;
       expect(routeCount).toBeGreaterThan(0);
-
-      Deno.removeSync(tempDir, { recursive: true });
     });
 
     it("should register hot reload endpoint in dev mode", () => {
@@ -51,8 +49,6 @@ describe("markdown-app - middleware", () => {
       const routeCount = (app as unknown as MageAppWithInternals)._router
         ._entries.length;
       expect(routeCount).toBe(2);
-
-      Deno.removeSync(tempDir, { recursive: true });
     });
 
     it("should not register hot reload endpoint in production mode", () => {
@@ -69,8 +65,6 @@ describe("markdown-app - middleware", () => {
       const routeCount = (app as unknown as MageAppWithInternals)._router
         ._entries.length;
       expect(routeCount).toBe(1);
-
-      Deno.removeSync(tempDir, { recursive: true });
     });
 
     it("should normalize basePath correctly for root path", () => {
@@ -90,8 +84,6 @@ describe("markdown-app - middleware", () => {
       );
 
       expect(serveRoute).toBeDefined();
-
-      Deno.removeSync(tempDir, { recursive: true });
     });
 
     it("should normalize basePath correctly for sub-path", () => {
@@ -109,8 +101,6 @@ describe("markdown-app - middleware", () => {
       const serveRoute = entries.find((r) => r.routename?.includes("docs"));
 
       expect(serveRoute).toBeDefined();
-
-      Deno.removeSync(tempDir, { recursive: true });
     });
 
     it("should handle basePath with trailing slash", () => {
@@ -127,8 +117,6 @@ describe("markdown-app - middleware", () => {
       const routeCount = (app as unknown as MageAppWithInternals)._router
         ._entries.length;
       expect(routeCount).toBeGreaterThan(0);
-
-      Deno.removeSync(tempDir, { recursive: true });
     });
 
     it("should resolve outputDir to absolute path", async () => {
@@ -156,7 +144,6 @@ describe("markdown-app - middleware", () => {
         ).toBeGreaterThan(0);
       } finally {
         Deno.chdir(originalCwd);
-        await Deno.remove(tempDir, { recursive: true });
       }
     });
   });

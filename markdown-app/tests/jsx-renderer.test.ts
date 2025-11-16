@@ -4,32 +4,12 @@ import { renderJsxLayout } from "../jsx-renderer.ts";
 import type { TemplateData } from "../template.ts";
 import { join } from "@std/path";
 
+const fixturesDir = join(import.meta.dirname!, "fixtures", "layouts");
+
 describe("markdown-app - jsx-renderer", () => {
   describe("renderJsxLayout", () => {
     it("should render a valid JSX layout to HTML", async () => {
-      // Create a temporary layout file
-      const tempDir = await Deno.makeTempDir();
-      const layoutPath = join(tempDir, "_layout-test.tsx");
-
-      const layoutContent = `
-import type { TemplateData } from "../template.ts";
-
-export function Layout(data: TemplateData) {
-  return (
-    <html>
-      <head>
-        <title>{data.title}</title>
-      </head>
-      <body>
-        <h1>{data.title}</h1>
-        <div dangerouslySetInnerHTML={{ __html: data.content }} />
-      </body>
-    </html>
-  );
-}
-`;
-
-      await Deno.writeTextFile(layoutPath, layoutContent);
+      const layoutPath = join(fixturesDir, "_layout-test.tsx");
 
       const templateData: TemplateData = {
         title: "Test Page",
@@ -44,22 +24,10 @@ export function Layout(data: TemplateData) {
       expect(html).toContain("<title>Test Page</title>");
       expect(html).toContain("<h1>Test Page</h1>");
       expect(html).toContain("<p>Hello World</p>");
-
-      // Cleanup
-      await Deno.remove(tempDir, { recursive: true });
     });
 
     it("should throw error if Layout export is missing", async () => {
-      const tempDir = await Deno.makeTempDir();
-      const layoutPath = join(tempDir, "_layout-bad.tsx");
-
-      const layoutContent = `
-export function WrongName() {
-  return <div>Wrong</div>;
-}
-`;
-
-      await Deno.writeTextFile(layoutPath, layoutContent);
+      const layoutPath = join(fixturesDir, "_layout-bad.tsx");
 
       const templateData: TemplateData = {
         title: "Test",
@@ -68,29 +36,15 @@ export function WrongName() {
         basePath: "",
       };
 
-      try {
-        await expect(renderJsxLayout(layoutPath, templateData)).rejects.toThrow(
-          'must export a "Layout" component',
-        );
-      } finally {
-        await Deno.remove(tempDir, { recursive: true });
-      }
+      await expect(renderJsxLayout(layoutPath, templateData)).rejects.toThrow(
+        'must export a "Layout" component',
+      );
     });
 
     it("should handle file:// URLs correctly", async () => {
-      const tempDir = await Deno.makeTempDir();
-      const layoutPath = join(tempDir, "_layout-fileurl.tsx");
-
-      const layoutContent = `
-export function Layout(data: { title: string }) {
-  return <html><head><title>{data.title}</title></head><body></body></html>;
-}
-`;
-
-      await Deno.writeTextFile(layoutPath, layoutContent);
-
-      // Test with file:// URL
+      const layoutPath = join(fixturesDir, "_layout-fileurl.tsx");
       const fileUrl = `file://${layoutPath}`;
+
       const templateData: TemplateData = {
         title: "File URL Test",
         content: "",
@@ -102,33 +56,10 @@ export function Layout(data: { title: string }) {
 
       expect(html).toContain("<!DOCTYPE html>");
       expect(html).toContain("<title>File URL Test</title>");
-
-      await Deno.remove(tempDir, { recursive: true });
     });
 
     it("should pass navigation data to layout", async () => {
-      const tempDir = await Deno.makeTempDir();
-      const layoutPath = join(tempDir, "_layout-nav.tsx");
-
-      const layoutContent = `
-import type { TemplateData } from "../template.ts";
-
-export function Layout(data: TemplateData) {
-  const navItems = data.navigation.default || [];
-  return (
-    <html>
-      <body>
-        <nav>
-          {navItems.length > 0 && <ul>{navItems.length} sections</ul>}
-        </nav>
-        <div dangerouslySetInnerHTML={{ __html: data.content }} />
-      </body>
-    </html>
-  );
-}
-`;
-
-      await Deno.writeTextFile(layoutPath, layoutContent);
+      const layoutPath = join(fixturesDir, "_layout-nav.tsx");
 
       const templateData: TemplateData = {
         title: "Nav Test",
@@ -153,29 +84,10 @@ export function Layout(data: TemplateData) {
       const html = await renderJsxLayout(layoutPath, templateData);
 
       expect(html).toContain("2 sections");
-
-      await Deno.remove(tempDir, { recursive: true });
     });
 
     it("should pass basePath to layout", async () => {
-      const tempDir = await Deno.makeTempDir();
-      const layoutPath = join(tempDir, "_layout-basepath.tsx");
-
-      const layoutContent = `
-import type { TemplateData } from "../template.ts";
-
-export function Layout(data: TemplateData) {
-  return (
-    <html>
-      <body>
-        <a href={\`\${data.basePath}/home\`}>Home</a>
-      </body>
-    </html>
-  );
-}
-`;
-
-      await Deno.writeTextFile(layoutPath, layoutContent);
+      const layoutPath = join(fixturesDir, "_layout-basepath.tsx");
 
       const templateData: TemplateData = {
         title: "Base Path Test",
@@ -187,8 +99,6 @@ export function Layout(data: TemplateData) {
       const html = await renderJsxLayout(layoutPath, templateData);
 
       expect(html).toContain('href="/docs/home"');
-
-      await Deno.remove(tempDir, { recursive: true });
     });
   });
 });

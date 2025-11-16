@@ -2,41 +2,15 @@ import { afterEach, beforeEach, describe, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
 import { build, type BuildOptions } from "../builder.ts";
 import { join } from "@std/path";
-import { exists } from "@std/fs";
+import { copy, exists } from "@std/fs";
 
-// Helper to create a minimal TSX layout for tests
-const createTestLayout = (includeNav = false) =>
-  `
-import type { TemplateData } from "../template.ts";
-
-export function Layout({ title, content, navigation }: TemplateData) {
-  return (
-    <html>
-      <head><title>{title}</title></head>
-      <body>
-        ${
-    includeNav
-      ? `{navigation.default?.map((section) => (
-          <nav key={section.title}>
-            {section.items.map((item) => (
-              <a
-                key={item.slug}
-                href={item.href}
-                aria-current={item.isCurrent ? "page" : undefined}
-              >
-                {item.title}
-              </a>
-            ))}
-          </nav>
-        ))}`
-      : ""
-  }
-        <main dangerouslySetInnerHTML={{ __html: content }} />
-      </body>
-    </html>
-  );
-}
-`.trim();
+const fixturesDir = join(import.meta.dirname!, "fixtures");
+const layoutFixture = join(fixturesDir, "layouts", "_layout-docs.tsx");
+const layoutWithNavFixture = join(
+  fixturesDir,
+  "layouts",
+  "_layout-docs-with-nav.tsx",
+);
 
 describe("markdown-app - builder", () => {
   let tempDir: string;
@@ -46,13 +20,8 @@ describe("markdown-app - builder", () => {
     tempDir = await Deno.makeTempDir({ prefix: "markdown-app-test-" });
   });
 
-  afterEach(async () => {
-    // Clean up temp directory
-    try {
-      await Deno.remove(tempDir, { recursive: true });
-    } catch {
-      // Ignore errors during cleanup
-    }
+  afterEach(() => {
+    // Temp files are excluded from coverage, no cleanup needed
   });
 
   describe("build", () => {
@@ -66,10 +35,7 @@ describe("markdown-app - builder", () => {
       await Deno.mkdir(layoutDir, { recursive: true });
 
       // Create layout
-      await Deno.writeTextFile(
-        join(layoutDir, "_layout-docs.tsx"),
-        createTestLayout(),
-      );
+      await copy(layoutFixture, join(layoutDir, "_layout-docs.tsx"));
 
       // Create markdown file
       await Deno.writeTextFile(
@@ -113,10 +79,7 @@ layout: docs
       await Deno.mkdir(sourceDir, { recursive: true });
       await Deno.mkdir(layoutDir, { recursive: true });
 
-      await Deno.writeTextFile(
-        join(layoutDir, "_layout-docs.tsx"),
-        createTestLayout(),
-      );
+      await copy(layoutFixture, join(layoutDir, "_layout-docs.tsx"));
 
       await Deno.writeTextFile(
         join(sourceDir, "guide.md"),
@@ -152,10 +115,7 @@ Content`,
       await Deno.mkdir(sourceDir, { recursive: true });
       await Deno.mkdir(layoutDir, { recursive: true });
 
-      await Deno.writeTextFile(
-        join(layoutDir, "_layout-docs.tsx"),
-        createTestLayout(true),
-      );
+      await copy(layoutWithNavFixture, join(layoutDir, "_layout-docs.tsx"));
 
       await Deno.writeTextFile(
         join(sourceDir, "page1.md"),
@@ -220,10 +180,7 @@ Content 2`,
       await Deno.mkdir(sourceDir, { recursive: true });
       await Deno.mkdir(layoutDir, { recursive: true });
 
-      await Deno.writeTextFile(
-        join(layoutDir, "_layout-docs.tsx"),
-        createTestLayout(true),
-      );
+      await copy(layoutWithNavFixture, join(layoutDir, "_layout-docs.tsx"));
 
       await Deno.writeTextFile(
         join(sourceDir, "test.md"),
@@ -261,10 +218,7 @@ Content`,
       await Deno.mkdir(sourceDir, { recursive: true });
       await Deno.mkdir(layoutDir, { recursive: true });
 
-      await Deno.writeTextFile(
-        join(layoutDir, "_layout-docs.tsx"),
-        createTestLayout(),
-      );
+      await copy(layoutFixture, join(layoutDir, "_layout-docs.tsx"));
 
       await Deno.writeTextFile(
         join(sourceDir, "test.md"),
@@ -302,10 +256,7 @@ Content`,
       await Deno.mkdir(sourceDir, { recursive: true });
       await Deno.mkdir(layoutDir, { recursive: true });
 
-      await Deno.writeTextFile(
-        join(layoutDir, "_layout-docs.tsx"),
-        createTestLayout(),
-      );
+      await copy(layoutFixture, join(layoutDir, "_layout-docs.tsx"));
 
       await Deno.writeTextFile(
         join(sourceDir, "test.md"),
@@ -342,10 +293,7 @@ Content`,
       await Deno.mkdir(sourceDir, { recursive: true });
       await Deno.mkdir(layoutDir, { recursive: true });
 
-      await Deno.writeTextFile(
-        join(layoutDir, "_layout-docs.tsx"),
-        createTestLayout(),
-      );
+      await copy(layoutFixture, join(layoutDir, "_layout-docs.tsx"));
 
       await Deno.writeTextFile(
         join(sourceDir, "test.md"),
@@ -384,10 +332,7 @@ Content`,
       await Deno.mkdir(sourceDir, { recursive: true });
       await Deno.mkdir(layoutDir, { recursive: true });
 
-      await Deno.writeTextFile(
-        join(layoutDir, "_layout-docs.tsx"),
-        createTestLayout(),
-      );
+      await copy(layoutFixture, join(layoutDir, "_layout-docs.tsx"));
 
       await Deno.writeTextFile(
         join(sourceDir, "index.md"),
@@ -483,10 +428,7 @@ Content`,
       await Deno.mkdir(join(sourceDir, "nested"), { recursive: true });
       await Deno.mkdir(layoutDir, { recursive: true });
 
-      await Deno.writeTextFile(
-        join(layoutDir, "_layout-docs.tsx"),
-        createTestLayout(),
-      );
+      await copy(layoutFixture, join(layoutDir, "_layout-docs.tsx"));
 
       await Deno.writeTextFile(
         join(sourceDir, "root.md"),
@@ -533,10 +475,7 @@ Nested content`,
       await Deno.mkdir(sourceDir, { recursive: true });
       await Deno.mkdir(layoutDir, { recursive: true });
 
-      await Deno.writeTextFile(
-        join(layoutDir, "_layout-docs.tsx"),
-        createTestLayout(true),
-      );
+      await copy(layoutWithNavFixture, join(layoutDir, "_layout-docs.tsx"));
 
       await Deno.writeTextFile(
         join(sourceDir, "test.md"),
@@ -575,10 +514,7 @@ Content`,
       await Deno.mkdir(sourceDir, { recursive: true });
       await Deno.mkdir(layoutDir, { recursive: true });
 
-      await Deno.writeTextFile(
-        join(layoutDir, "_layout-docs.tsx"),
-        createTestLayout(),
-      );
+      await copy(layoutFixture, join(layoutDir, "_layout-docs.tsx"));
 
       await Deno.writeTextFile(
         join(sourceDir, "test.md"),

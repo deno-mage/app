@@ -1,14 +1,22 @@
-import { afterAll, beforeAll, describe, it } from "@std/testing/bdd";
+import { afterEach, beforeEach, describe, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
 import { markdownApp } from "../mod.ts";
+import { copy } from "@std/fs";
 import { join } from "@std/path";
 
-describe("markdown-app - production integration", () => {
-  const tempDir = Deno.makeTempDirSync({ prefix: "markdown-app-prod-test-" });
-  const sourceDir = join(tempDir, "source");
-  const outputDir = join(tempDir, "output");
+const fixturesDir = join(import.meta.dirname!, "fixtures");
+const layoutFixture = join(fixturesDir, "layouts", "_layout-docs.tsx");
 
-  beforeAll(async () => {
+describe("markdown-app - production integration", () => {
+  let tempDir: string;
+  let sourceDir: string;
+  let outputDir: string;
+
+  beforeEach(async () => {
+    tempDir = await Deno.makeTempDir({ prefix: "markdown-app-prod-test-" });
+    sourceDir = join(tempDir, "source");
+    outputDir = join(tempDir, "output");
+
     // Create source directory
     await Deno.mkdir(sourceDir, { recursive: true });
 
@@ -31,23 +39,11 @@ This is the home page.`,
     );
 
     // Create a layout file
-    await Deno.writeTextFile(
-      join(sourceDir, "_layout-docs.tsx"),
-      `import type { TemplateData } from "../template.ts";
-
-export function Layout({ title, content }: TemplateData) {
-  return (
-    <html>
-      <head><title>{title}</title></head>
-      <body dangerouslySetInnerHTML={{ __html: content }} />
-    </html>
-  );
-}`,
-    );
+    await copy(layoutFixture, join(sourceDir, "_layout-docs.tsx"));
   });
 
-  afterAll(async () => {
-    await Deno.remove(tempDir, { recursive: true });
+  afterEach(() => {
+    // Temp files are excluded from coverage, no cleanup needed
   });
 
   it("should generate all production files when siteMetadata is provided", async () => {

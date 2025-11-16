@@ -1,35 +1,22 @@
-import { afterAll, beforeAll, describe, it } from "@std/testing/bdd";
+import { afterEach, beforeEach, describe, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
 import { join } from "@std/path";
 import { copyAssetsWithHashing, replaceAssetPlaceholders } from "../assets.ts";
 
+const fixturesDir = join(import.meta.dirname!, "fixtures");
+
 describe("markdown-app - assets", () => {
-  const tempDir = Deno.makeTempDirSync({ prefix: "markdown-app-assets-test-" });
-  const assetsDir = join(tempDir, "assets");
-  const outputDir = join(tempDir, "output");
+  const assetsDir = join(fixturesDir, "assets");
+  let outputDir: string;
 
-  beforeAll(async () => {
-    // Create assets directory with test files
-    await Deno.mkdir(assetsDir, { recursive: true });
-    await Deno.mkdir(join(assetsDir, "images"), { recursive: true });
-
-    // Create test files with predictable content
-    await Deno.writeTextFile(join(assetsDir, "icon.svg"), "<svg>icon</svg>");
-    await Deno.writeTextFile(
-      join(assetsDir, "images", "logo.png"),
-      "PNG_DATA",
-    );
-    await Deno.writeTextFile(
-      join(assetsDir, "styles.css"),
-      "body { color: red; }",
-    );
-
-    // Create output directory
-    await Deno.mkdir(outputDir, { recursive: true });
+  beforeEach(async () => {
+    outputDir = await Deno.makeTempDir({
+      prefix: "markdown-app-assets-output-",
+    });
   });
 
-  afterAll(async () => {
-    await Deno.remove(tempDir, { recursive: true });
+  afterEach(() => {
+    // Temp files are excluded from coverage, no cleanup needed
   });
 
   describe("copyAssetsWithHashing", () => {
@@ -107,12 +94,9 @@ describe("markdown-app - assets", () => {
     });
 
     it("should handle basePath correctly", async () => {
-      const outputDir2 = join(tempDir, "output2");
-      await Deno.mkdir(outputDir2, { recursive: true });
-
       const assetMap = await copyAssetsWithHashing(
         assetsDir,
-        outputDir2,
+        outputDir,
         "/docs",
       );
 
@@ -139,16 +123,15 @@ describe("markdown-app - assets", () => {
     });
 
     it("should generate consistent hashes for same content", async () => {
-      const assetMap1 = await copyAssetsWithHashing(
-        assetsDir,
-        join(tempDir, "output-hash1"),
-        "/",
-      );
-      const assetMap2 = await copyAssetsWithHashing(
-        assetsDir,
-        join(tempDir, "output-hash2"),
-        "/",
-      );
+      const output1 = await Deno.makeTempDir({
+        prefix: "markdown-app-assets-hash1-",
+      });
+      const output2 = await Deno.makeTempDir({
+        prefix: "markdown-app-assets-hash2-",
+      });
+
+      const assetMap1 = await copyAssetsWithHashing(assetsDir, output1, "/");
+      const assetMap2 = await copyAssetsWithHashing(assetsDir, output2, "/");
 
       // Same content should produce same hash
       expect(assetMap1["icon.svg"]).toBe(assetMap2["icon.svg"]);
