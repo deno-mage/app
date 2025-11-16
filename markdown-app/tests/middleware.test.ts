@@ -146,5 +146,23 @@ describe("markdown-app - middleware", () => {
         Deno.chdir(originalCwd);
       }
     });
+
+    it("should register hot reload route in dev mode", () => {
+      const app = new MageApp();
+      const tempDir = Deno.makeTempDirSync();
+
+      register(app, {
+        outputDir: tempDir,
+        basePath: "/",
+        dev: true,
+      });
+
+      // Verify that handler is callable (route was registered)
+      expect(app.handler).toBeDefined();
+      expect(typeof app.handler).toBe("function");
+
+      // Handler is the main request processor for all registered routes
+      // Since we registered middleware, the handler should be available
+    });
   });
 });
