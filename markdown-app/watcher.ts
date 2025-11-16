@@ -47,21 +47,38 @@ function notifyClients(): void {
 }
 
 /**
- * Watch sourceDir for markdown file changes and rebuild on change.
+ * Watch articlesDir, layoutDir, and assetsDir for file changes and rebuild on change.
  *
  * Notifies connected WebSocket clients to reload.
  */
 export async function watch(options: BuildOptions): Promise<void> {
-  const { sourceDir } = options;
-  const absoluteSourceDir = resolve(sourceDir);
+  const { articlesDir, layoutDir, assetsDir = "assets" } = options;
+  const absoluteArticlesDir = resolve(articlesDir);
+  const absoluteLayoutDir = resolve(layoutDir);
+  const absoluteAssetsDir = resolve(assetsDir);
 
-  logger.info(`Watching ${absoluteSourceDir} for changes...`);
+  logger.info(`Watching ${absoluteArticlesDir} for changes...`);
+  logger.info(`Watching ${absoluteLayoutDir} for changes...`);
+
+  // Check if assets directory exists before watching
+  const watchPaths = [absoluteArticlesDir, absoluteLayoutDir];
+  try {
+    const stat = await Deno.stat(absoluteAssetsDir);
+    if (stat.isDirectory) {
+      watchPaths.push(absoluteAssetsDir);
+      logger.info(`Watching ${absoluteAssetsDir} for changes...`);
+    }
+  } catch (error) {
+    if (!(error instanceof Deno.errors.NotFound)) {
+      throw error;
+    }
+  }
 
   // Initial build
   await build(options);
 
-  // Watch for changes
-  const watcher = Deno.watchFs(absoluteSourceDir);
+  // Watch for changes in all directories
+  const watcher = Deno.watchFs(watchPaths);
 
   // Debounce rapid changes and prevent concurrent builds
   let rebuildTimer: number | null = null;
@@ -69,10 +86,19 @@ export async function watch(options: BuildOptions): Promise<void> {
   let needsRebuild = false; // Flag to track if rebuild is needed after current build
 
   for await (const event of watcher) {
-    // Only handle modify events for .md files
+    // Handle modify events for .md, .tsx, .ts, or any asset files
     const isMarkdownChange = event.paths.some((path) => path.endsWith(".md"));
+    const isLayoutChange = event.paths.some((path) =>
+      path.endsWith(".tsx") || path.endsWith(".ts")
+    );
+    const isAssetChange = event.paths.some((path) =>
+      path.startsWith(absoluteAssetsDir)
+    );
 
-    if (event.kind === "modify" && isMarkdownChange) {
+    if (
+      event.kind === "modify" &&
+      (isMarkdownChange || isLayoutChange || isAssetChange)
+    ) {
       // If currently building, mark that we need another rebuild after this one
       if (isBuilding) {
         needsRebuild = true;

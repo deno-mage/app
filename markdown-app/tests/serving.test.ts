@@ -14,14 +14,14 @@ describe("serving - basic HTTP behavior", () => {
 
   beforeAll(async () => {
     tempDir = await Deno.makeTempDir({ prefix: "markdown-app-serving-" });
-    const sourceDir = join(tempDir, "source");
+    const articlesDir = join(tempDir, "source");
     const outputDir = join(tempDir, "output");
 
-    await Deno.mkdir(sourceDir, { recursive: true });
-    await copy(layoutFixture, join(sourceDir, "_layout-docs.tsx"));
+    await Deno.mkdir(articlesDir, { recursive: true });
+    await copy(layoutFixture, join(articlesDir, "_layout-docs.tsx"));
 
     await Deno.writeTextFile(
-      join(sourceDir, "index.md"),
+      join(articlesDir, "index.md"),
       `---
 title: Home
 slug: index
@@ -34,7 +34,7 @@ Welcome to the site.`,
     );
 
     await Deno.writeTextFile(
-      join(sourceDir, "about.md"),
+      join(articlesDir, "about.md"),
       `---
 title: About
 slug: about
@@ -47,7 +47,7 @@ This is the about page.`,
     );
 
     await Deno.writeTextFile(
-      join(sourceDir, "guide.md"),
+      join(articlesDir, "guide.md"),
       `---
 title: Guide
 slug: guide/getting-started
@@ -60,9 +60,9 @@ This is nested.`,
     );
 
     const mdApp = markdownApp({
-      sourceDir,
+      articlesDir,
       outputDir,
-      layoutDir: sourceDir,
+      layoutDir: articlesDir,
       basePath: "/",
       dev: false,
     });
@@ -145,14 +145,14 @@ describe("serving - basePath", () => {
 
   beforeAll(async () => {
     tempDir = await Deno.makeTempDir({ prefix: "markdown-app-basepath-" });
-    const sourceDir = join(tempDir, "source");
+    const articlesDir = join(tempDir, "source");
     const outputDir = join(tempDir, "output");
 
-    await Deno.mkdir(sourceDir, { recursive: true });
-    await copy(layoutFixture, join(sourceDir, "_layout-docs.tsx"));
+    await Deno.mkdir(articlesDir, { recursive: true });
+    await copy(layoutFixture, join(articlesDir, "_layout-docs.tsx"));
 
     await Deno.writeTextFile(
-      join(sourceDir, "index.md"),
+      join(articlesDir, "index.md"),
       `---
 title: Home
 slug: index
@@ -163,7 +163,7 @@ layout: docs
     );
 
     await Deno.writeTextFile(
-      join(sourceDir, "api.md"),
+      join(articlesDir, "api.md"),
       `---
 title: API
 slug: api
@@ -174,9 +174,9 @@ layout: docs
     );
 
     const mdApp = markdownApp({
-      sourceDir,
+      articlesDir,
       outputDir,
-      layoutDir: sourceDir,
+      layoutDir: articlesDir,
       basePath: "/docs",
       dev: false,
     });
@@ -237,14 +237,14 @@ describe("serving - HTTP methods", () => {
 
   beforeAll(async () => {
     tempDir = await Deno.makeTempDir({ prefix: "markdown-app-methods-" });
-    const sourceDir = join(tempDir, "source");
+    const articlesDir = join(tempDir, "source");
     const outputDir = join(tempDir, "output");
 
-    await Deno.mkdir(sourceDir, { recursive: true });
-    await copy(layoutFixture, join(sourceDir, "_layout-docs.tsx"));
+    await Deno.mkdir(articlesDir, { recursive: true });
+    await copy(layoutFixture, join(articlesDir, "_layout-docs.tsx"));
 
     await Deno.writeTextFile(
-      join(sourceDir, "index.md"),
+      join(articlesDir, "index.md"),
       `---
 title: Home
 slug: index
@@ -255,9 +255,9 @@ layout: docs
     );
 
     const mdApp = markdownApp({
-      sourceDir,
+      articlesDir,
       outputDir,
-      layoutDir: sourceDir,
+      layoutDir: articlesDir,
       basePath: "/",
       dev: false,
     });

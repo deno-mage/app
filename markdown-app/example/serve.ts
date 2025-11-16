@@ -7,7 +7,7 @@ const logger = new MageLogger("Markdown App Example");
 const app = new MageApp();
 
 const { register, watch } = markdownApp({
-  sourceDir: "./docs",
+  articlesDir: "./docs",
   outputDir: "./docs/_site",
   layoutDir: "./docs",
   basePath: "/",

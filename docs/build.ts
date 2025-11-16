@@ -7,7 +7,7 @@ const logger = new MageLogger("Docs Build");
 const docsDir = import.meta.dirname!;
 
 const { build } = markdownApp({
-  sourceDir: resolve(docsDir, "./articles"),
+  articlesDir: resolve(docsDir, "./articles"),
   outputDir: resolve(docsDir, "./_site"),
   layoutDir: resolve(docsDir, "./layouts"),
   basePath: "/",

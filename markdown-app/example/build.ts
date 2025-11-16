@@ -4,7 +4,7 @@ import { MageLogger } from "../../logs/logger.ts";
 const logger = new MageLogger("Markdown App Example");
 
 const { build } = markdownApp({
-  sourceDir: "./docs",
+  articlesDir: "./docs",
   outputDir: "./docs/_site",
   layoutDir: "./docs",
   basePath: "/",

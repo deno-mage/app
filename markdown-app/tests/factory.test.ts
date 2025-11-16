@@ -3,20 +3,20 @@ import { expect } from "@std/expect";
 import { markdownApp } from "../markdown-app.ts";
 
 describe("factory - required options validation", () => {
-  it("should fail when sourceDir is missing", () => {
+  it("should fail when articlesDir is missing", () => {
     expect(() => {
       markdownApp({
-        sourceDir: "",
+        articlesDir: "",
         outputDir: "/output",
         layoutDir: "/layouts",
       });
-    }).toThrow("markdownApp: sourceDir is required");
+    }).toThrow("markdownApp: articlesDir is required");
   });
 
   it("should fail when outputDir is missing", () => {
     expect(() => {
       markdownApp({
-        sourceDir: "/source",
+        articlesDir: "/source",
         outputDir: "",
         layoutDir: "/layouts",
       });
@@ -26,7 +26,7 @@ describe("factory - required options validation", () => {
   it("should fail when layoutDir is missing", () => {
     expect(() => {
       markdownApp({
-        sourceDir: "/source",
+        articlesDir: "/source",
         outputDir: "/output",
         layoutDir: "",
       });
@@ -38,7 +38,7 @@ describe("factory - basePath validation", () => {
   it("should accept basePath of /", () => {
     expect(() => {
       markdownApp({
-        sourceDir: "/source",
+        articlesDir: "/source",
         outputDir: "/output",
         layoutDir: "/layouts",
         basePath: "/",
@@ -49,7 +49,7 @@ describe("factory - basePath validation", () => {
   it("should accept valid basePath like /docs", () => {
     expect(() => {
       markdownApp({
-        sourceDir: "/source",
+        articlesDir: "/source",
         outputDir: "/output",
         layoutDir: "/layouts",
         basePath: "/docs",
@@ -60,7 +60,7 @@ describe("factory - basePath validation", () => {
   it("should fail when basePath does not start with /", () => {
     expect(() => {
       markdownApp({
-        sourceDir: "/source",
+        articlesDir: "/source",
         outputDir: "/output",
         layoutDir: "/layouts",
         basePath: "docs",
@@ -73,7 +73,7 @@ describe("factory - basePath validation", () => {
   it("should fail when basePath ends with /", () => {
     expect(() => {
       markdownApp({
-        sourceDir: "/source",
+        articlesDir: "/source",
         outputDir: "/output",
         layoutDir: "/layouts",
         basePath: "/docs/",
@@ -87,7 +87,7 @@ describe("factory - basePath validation", () => {
 describe("factory - API returned", () => {
   it("should return object with register, watch, and build methods", () => {
     const app = markdownApp({
-      sourceDir: "/source",
+      articlesDir: "/source",
       outputDir: "/output",
       layoutDir: "/layouts",
     });
