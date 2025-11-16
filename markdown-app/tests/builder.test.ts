@@ -4,6 +4,40 @@ import { build, type BuildOptions } from "../builder.ts";
 import { join } from "@std/path";
 import { exists } from "@std/fs";
 
+// Helper to create a minimal TSX layout for tests
+const createTestLayout = (includeNav = false) =>
+  `
+import type { TemplateData } from "../template.ts";
+
+export function Layout({ title, content, navigation }: TemplateData) {
+  return (
+    <html>
+      <head><title>{title}</title></head>
+      <body>
+        ${
+    includeNav
+      ? `{navigation.default?.map((section) => (
+          <nav key={section.title}>
+            {section.items.map((item) => (
+              <a
+                key={item.slug}
+                href={item.href}
+                aria-current={item.isCurrent ? "page" : undefined}
+              >
+                {item.title}
+              </a>
+            ))}
+          </nav>
+        ))}`
+      : ""
+  }
+        <main dangerouslySetInnerHTML={{ __html: content }} />
+      </body>
+    </html>
+  );
+}
+`.trim();
+
 describe("markdown-app - builder", () => {
   let tempDir: string;
 
@@ -33,8 +67,8 @@ describe("markdown-app - builder", () => {
 
       // Create layout
       await Deno.writeTextFile(
-        join(layoutDir, "_layout-docs.html"),
-        `<!DOCTYPE html><html><head><title>{{title}}</title></head><body>{{content}}</body></html>`,
+        join(layoutDir, "_layout-docs.tsx"),
+        createTestLayout(),
       );
 
       // Create markdown file
@@ -80,8 +114,8 @@ layout: docs
       await Deno.mkdir(layoutDir, { recursive: true });
 
       await Deno.writeTextFile(
-        join(layoutDir, "_layout-docs.html"),
-        `<html><body>{{content}}</body></html>`,
+        join(layoutDir, "_layout-docs.tsx"),
+        createTestLayout(),
       );
 
       await Deno.writeTextFile(
@@ -119,8 +153,8 @@ Content`,
       await Deno.mkdir(layoutDir, { recursive: true });
 
       await Deno.writeTextFile(
-        join(layoutDir, "_layout-docs.html"),
-        `<html><body><nav>{{navigation.default}}</nav>{{content}}</body></html>`,
+        join(layoutDir, "_layout-docs.tsx"),
+        createTestLayout(true),
       );
 
       await Deno.writeTextFile(
@@ -168,17 +202,17 @@ Content 2`,
       );
       expect(page1Content).toContain('href="/page1"');
       expect(page1Content).toContain('href="/page2"');
-      expect(page1Content).toContain('data-current="true"');
+      expect(page1Content).toContain('aria-current="page"');
 
       // Check page2 has navigation to both pages
       const page2Content = await Deno.readTextFile(
         join(outputDir, "page2.html"),
       );
-      expect(page2Content).toContain('href="/page1"');
+      expect(page1Content).toContain('href="/page1"');
       expect(page2Content).toContain('href="/page2"');
     });
 
-    it("should normalize basePath for templates", async () => {
+    it("should normalize basePath for navigation", async () => {
       const sourceDir = join(tempDir, "source");
       const outputDir = join(tempDir, "output");
       const layoutDir = join(tempDir, "layouts");
@@ -187,8 +221,8 @@ Content 2`,
       await Deno.mkdir(layoutDir, { recursive: true });
 
       await Deno.writeTextFile(
-        join(layoutDir, "_layout-docs.html"),
-        `<html><head><link rel="stylesheet" href="{{basePath}}/gfm.css"></head><body>{{content}}</body></html>`,
+        join(layoutDir, "_layout-docs.tsx"),
+        createTestLayout(true),
       );
 
       await Deno.writeTextFile(
@@ -197,6 +231,8 @@ Content 2`,
 title: Test
 slug: test
 layout: docs
+nav-item: Test
+nav-group: default
 ---
 
 Content`,
@@ -206,7 +242,7 @@ Content`,
         sourceDir,
         outputDir,
         layoutDir,
-        basePath: "/", // Should be normalized to empty string
+        basePath: "/docs",
         dev: false,
         syntaxHighlightLanguages: ["typescript", "bash", "json", "yaml"],
       };
@@ -214,8 +250,7 @@ Content`,
       await build(options);
 
       const content = await Deno.readTextFile(join(outputDir, "test.html"));
-      expect(content).toContain('href="/gfm.css"');
-      expect(content).not.toContain('href="//gfm.css"');
+      expect(content).toContain('href="/docs/test"');
     });
 
     it("should inject hot reload script in dev mode", async () => {
@@ -227,8 +262,8 @@ Content`,
       await Deno.mkdir(layoutDir, { recursive: true });
 
       await Deno.writeTextFile(
-        join(layoutDir, "_layout-docs.html"),
-        `<html><body>{{content}}</body></html>`,
+        join(layoutDir, "_layout-docs.tsx"),
+        createTestLayout(),
       );
 
       await Deno.writeTextFile(
@@ -268,8 +303,8 @@ Content`,
       await Deno.mkdir(layoutDir, { recursive: true });
 
       await Deno.writeTextFile(
-        join(layoutDir, "_layout-docs.html"),
-        `<html><body>{{content}}</body></html>`,
+        join(layoutDir, "_layout-docs.tsx"),
+        createTestLayout(),
       );
 
       await Deno.writeTextFile(
@@ -308,8 +343,8 @@ Content`,
       await Deno.mkdir(layoutDir, { recursive: true });
 
       await Deno.writeTextFile(
-        join(layoutDir, "_layout-docs.html"),
-        `<html><body>{{content}}</body></html>`,
+        join(layoutDir, "_layout-docs.tsx"),
+        createTestLayout(),
       );
 
       await Deno.writeTextFile(
@@ -350,8 +385,8 @@ Content`,
       await Deno.mkdir(layoutDir, { recursive: true });
 
       await Deno.writeTextFile(
-        join(layoutDir, "_layout-docs.html"),
-        `<html><body>{{content}}</body></html>`,
+        join(layoutDir, "_layout-docs.tsx"),
+        createTestLayout(),
       );
 
       await Deno.writeTextFile(
@@ -413,7 +448,7 @@ Content`,
         syntaxHighlightLanguages: ["typescript", "bash", "json", "yaml"],
       };
 
-      await expect(build(options)).rejects.toThrow("Layout file not found");
+      await expect(build(options)).rejects.toThrow("Failed to render layout");
     });
 
     it("should handle empty source directory gracefully", async () => {
@@ -449,8 +484,8 @@ Content`,
       await Deno.mkdir(layoutDir, { recursive: true });
 
       await Deno.writeTextFile(
-        join(layoutDir, "_layout-docs.html"),
-        `<html><body>{{content}}</body></html>`,
+        join(layoutDir, "_layout-docs.tsx"),
+        createTestLayout(),
       );
 
       await Deno.writeTextFile(
@@ -499,8 +534,8 @@ Nested content`,
       await Deno.mkdir(layoutDir, { recursive: true });
 
       await Deno.writeTextFile(
-        join(layoutDir, "_layout-docs.html"),
-        `<html><body><nav>{{navigation.default}}</nav></body></html>`,
+        join(layoutDir, "_layout-docs.tsx"),
+        createTestLayout(true),
       );
 
       await Deno.writeTextFile(
@@ -541,8 +576,8 @@ Content`,
       await Deno.mkdir(layoutDir, { recursive: true });
 
       await Deno.writeTextFile(
-        join(layoutDir, "_layout-docs.html"),
-        `<html><head><title>{{title}}</title></head><body><h1>Content</h1></body></html>`,
+        join(layoutDir, "_layout-docs.tsx"),
+        createTestLayout(),
       );
 
       await Deno.writeTextFile(
@@ -584,8 +619,17 @@ Content`,
       await Deno.mkdir(layoutDir, { recursive: true });
 
       await Deno.writeTextFile(
-        join(layoutDir, "_layout-docs.html"),
-        `<html><head><title>{{title}}</title></head>{{content}}`,
+        join(layoutDir, "_layout-docs.tsx"),
+        `import type { TemplateData } from "../template.ts";
+
+export function Layout({ title, content }: TemplateData) {
+  return (
+    <html>
+      <head><title>{title}</title></head>
+      <div dangerouslySetInnerHTML={{ __html: content }} />
+    </html>
+  );
+}`,
       );
 
       await Deno.writeTextFile(

@@ -6,8 +6,10 @@ import type { Frontmatter } from "./parser.ts";
 export interface NavItem {
   title: string;
   slug: string;
+  href: string;
   order: number;
   section?: string;
+  isCurrent: boolean;
 }
 
 /**
@@ -20,24 +22,24 @@ export interface NavSection {
 }
 
 /**
- * Navigation groups mapping group names to HTML strings.
+ * Navigation groups mapping group names to structured data.
  */
-export interface NavigationGroups {
-  [group: string]: string;
+export interface NavigationData {
+  [group: string]: NavSection[];
 }
 
 /**
- * Generate grouped navigation HTML from page frontmatter.
+ * Generate grouped navigation data from page frontmatter.
  *
- * Returns object with navigation groups, each containing HTML for that group.
+ * Returns object with navigation groups, each containing structured sections and items.
  * Groups by nav-group, then by sections within each group.
- * Marks current page with data-current="true".
+ * Each item includes isCurrent flag and computed href.
  */
 export function generateNavigation(
   pages: Frontmatter[],
   currentSlug: string,
   basePath: string,
-): NavigationGroups {
+): NavigationData {
   // Filter pages that have nav-item field
   const navPages = pages.filter((page) => page["nav-item"]);
 
@@ -62,18 +64,17 @@ export function generateNavigation(
     groups.get(item.group)!.push(item);
   }
 
-  // Generate HTML for each group
-  const navigationGroups: NavigationGroups = {};
+  // Generate structured data for each group
+  const navigationData: NavigationData = {};
   for (const [groupName, groupItems] of groups) {
-    const sections = groupBySection(groupItems);
-    navigationGroups[groupName] = renderNavigationHtml(
-      sections,
+    navigationData[groupName] = groupBySection(
+      groupItems,
       currentSlug,
       basePath,
     );
   }
 
-  return navigationGroups;
+  return navigationData;
 }
 
 /**
@@ -91,11 +92,20 @@ function parseNavField(nav: string): [string | undefined, string] {
 }
 
 /**
- * Group navigation items by section.
+ * Group navigation items by section and compute hrefs.
  *
  * Sections sorted by lowest item order, items sorted by order (alphabetically for ties).
  */
-function groupBySection(items: NavItem[]): NavSection[] {
+function groupBySection(
+  items: Array<{
+    title: string;
+    slug: string;
+    order: number;
+    section?: string;
+  }>,
+  currentSlug: string,
+  basePath: string,
+): NavSection[] {
   const sectionMap = new Map<string, NavItem[]>();
 
   // Group items by section (undefined becomes "")
@@ -104,7 +114,19 @@ function groupBySection(items: NavItem[]): NavSection[] {
     if (!sectionMap.has(sectionKey)) {
       sectionMap.set(sectionKey, []);
     }
-    sectionMap.get(sectionKey)!.push(item);
+
+    // Create NavItem with computed href and isCurrent
+    const href = `${basePath}/${item.slug}`.replace(/\/+/g, "/");
+    const navItem: NavItem = {
+      title: item.title,
+      slug: item.slug,
+      href,
+      order: item.order,
+      section: item.section,
+      isCurrent: item.slug === currentSlug,
+    };
+
+    sectionMap.get(sectionKey)!.push(navItem);
   }
 
   // Convert to sections and sort
@@ -130,50 +152,4 @@ function groupBySection(items: NavItem[]): NavSection[] {
 
   // Sort sections by order
   return sections.sort((a, b) => a.order - b.order);
-}
-
-/**
- * Render navigation sections and items as semantic HTML.
- *
- * Marks current page with aria-current="page" for accessibility and CSS styling.
- */
-function renderNavigationHtml(
-  sections: NavSection[],
-  currentSlug: string,
-  basePath: string,
-): string {
-  if (sections.length === 0) {
-    return "<nav></nav>";
-  }
-
-  const sectionsHtml = sections.map((section) => {
-    const itemsHtml = section.items
-      .map((item) => {
-        const href = `${basePath}/${item.slug}`.replace(/\/+/g, "/");
-        const isCurrent = item.slug === currentSlug;
-        const currentAttr = isCurrent ? ' aria-current="page"' : "";
-
-        return `      <li><a href="${href}"${currentAttr}>${item.title}</a></li>`;
-      })
-      .join("\n");
-
-    // If section has a title, wrap in <section> with <h3>
-    if (section.title) {
-      return `  <section>
-    <h3>${section.title}</h3>
-    <ul>
-${itemsHtml}
-    </ul>
-  </section>`;
-    }
-
-    // No section title, just render items
-    return `  <ul>
-${itemsHtml}
-  </ul>`;
-  }).join("\n");
-
-  return `<nav>
-${sectionsHtml}
-</nav>`;
 }

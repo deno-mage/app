@@ -81,7 +81,29 @@ your-project/
 
 ## Frontmatter
 
-Every markdown file must have YAML frontmatter:
+Every markdown file must have YAML frontmatter.
+
+### Validation
+
+Frontmatter is validated at build time using Zod. Invalid frontmatter will
+produce helpful error messages:
+
+```
+Error: Invalid frontmatter in getting-started.md:
+  - slug: Slug must contain only lowercase letters, numbers, hyphens, and forward slashes
+  - nav-order: Expected number, received string
+  - changefreq: Invalid enum value. Expected 'always' | 'hourly' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'never', received 'invalid'
+
+Example valid frontmatter:
+---
+title: Page Title
+slug: page-slug
+layout: docs
+nav-item: Section/Item
+nav-group: aside
+nav-order: 1
+---
+```
 
 ### Required Fields
 
@@ -138,19 +160,61 @@ See [example/docs/](./example/docs/) for more examples.
 
 ## Layouts
 
-Layout files are HTML templates with `{{key}}` placeholders.
+Layouts can be either `.tsx` (TypeScript JSX) or `.html` (template strings). TSX
+layouts provide full type safety and intellisense.
 
-### Available Template Variables
+### TSX Layouts (Recommended)
 
-- `{{title}}` - Page title from frontmatter
-- `{{content}}` - Rendered markdown HTML
-- `{{navigation.groupName}}` - Auto-generated navigation for a specific group
-  (e.g., `{{navigation.aside}}`, `{{navigation.header}}`)
-- `{{basePath}}` - Base path for URLs (empty string if `/`)
+TSX layouts provide full TypeScript type safety and intellisense:
 
-### Layout Example
+**Create `_layout-docs.tsx`:**
 
-**Minimal layout:**
+```tsx
+import type { NavigationGroups } from "@mage/app/markdown-app/navigation.ts";
+
+export interface LayoutProps {
+  title: string;
+  content: string;
+  navigation: NavigationGroups;
+  basePath: string;
+}
+
+export function Layout({ title, content, navigation }: LayoutProps) {
+  return (
+    <html lang="en">
+      <head>
+        <meta charset="UTF-8" />
+        <title>{title}</title>
+        <link rel="stylesheet" href={`${basePath}/gfm.css`} />
+      </head>
+      <body>
+        <aside>
+          <nav dangerouslySetInnerHTML={{ __html: navigation.aside }} />
+        </aside>
+        <main>
+          <article dangerouslySetInnerHTML={{ __html: content }} />
+        </main>
+      </body>
+    </html>
+  );
+}
+```
+
+**Benefits:**
+
+- ✅ Full autocomplete for all props
+- ✅ Type errors for misspelled properties
+- ✅ Intellisense for HTML elements and attributes
+- ✅ Can reuse components across layouts
+
+**Note:** Use `dangerouslySetInnerHTML` for `content` and `navigation` HTML
+strings.
+
+### HTML Templates
+
+HTML templates use `{{key}}` placeholders:
+
+**Create `_layout-docs.html`:**
 
 ```html
 <!DOCTYPE html>
@@ -166,14 +230,25 @@ Layout files are HTML templates with `{{key}}` placeholders.
 </html>
 ```
 
-**Layout naming convention:**
+### Available Template Data
+
+All layouts (TSX or HTML) receive the same data:
+
+- `title` - Page title from frontmatter
+- `content` - Rendered markdown HTML
+- `navigation` - Object with navigation groups (e.g., `navigation.aside`,
+  `navigation.header`)
+- `basePath` - Base path for URLs (empty string if `/`)
+
+### Layout Naming Convention
 
 - Layout files start with `_layout-` prefix
-- Frontmatter `layout: docs` → `_layout-docs.html`
-- Frontmatter `layout: blog` → `_layout-blog.html`
+- Builder tries `.tsx` first, falls back to `.html`
+- Frontmatter `layout: docs` → `_layout-docs.tsx` or `_layout-docs.html`
+- Frontmatter `layout: blog` → `_layout-blog.tsx` or `_layout-blog.html`
 
-See [example/docs/_layout-docs.html](./example/docs/_layout-docs.html) for a
-styled example with Pico CSS.
+See [example/docs/_layout-docs.tsx](./example/docs/_layout-docs.tsx) for a
+complete example.
 
 ## Navigation
 

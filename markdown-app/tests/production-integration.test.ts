@@ -32,16 +32,17 @@ This is the home page.`,
 
     // Create a layout file
     await Deno.writeTextFile(
-      join(sourceDir, "_layout-docs.html"),
-      `<!DOCTYPE html>
-<html>
-<head>
-  <title>{{title}}</title>
-</head>
-<body>
-  {{content}}
-</body>
-</html>`,
+      join(sourceDir, "_layout-docs.tsx"),
+      `import type { TemplateData } from "../template.ts";
+
+export function Layout({ title, content }: TemplateData) {
+  return (
+    <html>
+      <head><title>{title}</title></head>
+      <body dangerouslySetInnerHTML={{ __html: content }} />
+    </html>
+  );
+}`,
     );
   });
 

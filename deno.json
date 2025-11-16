@@ -12,6 +12,7 @@
     "./csrf": "./csrf/mod.ts",
     "./csp": "./csp/mod.ts",
     "./logs": "./logs/mod.ts",
+    "./markdown-app": "./markdown-app/mod.ts",
     "./rate-limit": "./rate-limit/mod.ts",
     "./request-id": "./request-id/mod.ts",
     "./security-headers": "./security-headers/mod.ts",
@@ -40,6 +41,12 @@
     "@std/path": "jsr:@std/path@^1.0.8",
     "@std/testing": "jsr:@std/testing@^1.0.9",
     "@std/yaml": "jsr:@std/yaml@^1.0.10",
+    "preact": "npm:preact@^10.24.3",
+    "preact-render-to-string": "npm:preact-render-to-string@^6.5.11",
     "zod": "npm:zod@^3.24.1"
+  },
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact"
   }
 }

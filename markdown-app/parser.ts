@@ -1,36 +1,95 @@
 import { parse as parseYaml } from "@std/yaml";
 import { render as renderGfm } from "@deno/gfm";
+import { z } from "zod";
+
+/**
+ * Zod schema for frontmatter validation with helpful error messages.
+ */
+export const frontmatterSchema: z.ZodType<
+  {
+    title: string;
+    slug: string;
+    layout: string;
+    "nav-group"?: string;
+    "nav-item"?: string;
+    "nav-order"?: number;
+    description?: string;
+    lastmod?: string;
+    changefreq?:
+      | "always"
+      | "hourly"
+      | "daily"
+      | "weekly"
+      | "monthly"
+      | "yearly"
+      | "never";
+    priority?: number;
+    [key: string]: unknown;
+  },
+  z.ZodTypeDef,
+  {
+    title: string;
+    slug: string;
+    layout: string;
+    "nav-group"?: string;
+    "nav-item"?: string;
+    "nav-order"?: number;
+    description?: string;
+    lastmod?: string | Date;
+    changefreq?:
+      | "always"
+      | "hourly"
+      | "daily"
+      | "weekly"
+      | "monthly"
+      | "yearly"
+      | "never";
+    priority?: number;
+    [key: string]: unknown;
+  }
+> = z.object({
+  title: z.string().min(1, "Title cannot be empty"),
+  slug: z.string()
+    .regex(
+      /^[a-z0-9-/]+$/,
+      "Slug must contain only lowercase letters, numbers, hyphens, and forward slashes (e.g., 'getting-started' or 'api/reference')",
+    )
+    .refine(
+      (slug) => !slug.includes(".."),
+      "Slug cannot contain '..' for security reasons",
+    )
+    .refine(
+      (slug) => !slug.startsWith("/"),
+      "Slug should not start with '/' (it will be added automatically)",
+    ),
+  layout: z.string().min(1, "Layout cannot be empty"),
+  "nav-group": z.string().optional(),
+  "nav-item": z.string().optional(),
+  "nav-order": z.number().int().nonnegative().optional(),
+  description: z.string().optional(),
+  lastmod: z.union([
+    z.string().regex(
+      /^\d{4}-\d{2}-\d{2}$/,
+      "lastmod must be in YYYY-MM-DD format",
+    ),
+    z.date().transform((date) => date.toISOString().split("T")[0]),
+  ]).optional(),
+  changefreq: z.enum([
+    "always",
+    "hourly",
+    "daily",
+    "weekly",
+    "monthly",
+    "yearly",
+    "never",
+  ]).optional(),
+  priority: z.number().min(0.0).max(1.0).optional(),
+}).passthrough(); // Allow additional fields
 
 /**
  * Frontmatter metadata extracted from markdown files.
  */
-export interface Frontmatter {
-  title: string;
-  slug: string;
-  layout: string;
-  /** Navigation group (e.g., "aside", "header", "footer") */
-  "nav-group"?: string;
-  /** Navigation item text (supports sections with "Section/Item") */
-  "nav-item"?: string;
-  /** Order within navigation group (lower = first, default: 999) */
-  "nav-order"?: number;
-  /** SEO description for meta tags and sitemap */
-  description?: string;
-  /** Last modified date for sitemap (ISO 8601 format: YYYY-MM-DD) */
-  lastmod?: string;
-  /** How frequently the page changes (for sitemap) */
-  changefreq?:
-    | "always"
-    | "hourly"
-    | "daily"
-    | "weekly"
-    | "monthly"
-    | "yearly"
-    | "never";
-  /** Priority of page in sitemap (0.0 to 1.0) */
-  priority?: number;
-  [key: string]: unknown;
-}
+export type Frontmatter = z.infer<typeof frontmatterSchema>;
 
 /**
  * Parsed markdown file with frontmatter and rendered HTML content.
@@ -51,7 +110,6 @@ export function parseMarkdown(
   filepath: string,
 ): ParsedMarkdown {
   const { frontmatter, markdown } = extractFrontmatter(fileContent, filepath);
-  validateFrontmatter(frontmatter, filepath);
 
   let content = renderGfm(markdown);
 
@@ -83,45 +141,31 @@ function extractFrontmatter(
 
   const [, yamlString, markdown] = match;
 
+  let parsedYaml: unknown;
   try {
-    const frontmatter = parseYaml(yamlString) as Frontmatter;
-    return { frontmatter, markdown };
+    parsedYaml = parseYaml(yamlString);
   } catch (error) {
     throw new Error(
-      `Invalid YAML frontmatter in ${filepath}: ${
+      `Invalid YAML syntax in ${filepath}: ${
         error instanceof Error ? error.message : String(error)
       }`,
     );
   }
-}
 
-/**
- * Validate required frontmatter fields: title, slug, layout.
- *
- * @throws Error if required fields are missing
- */
-function validateFrontmatter(
-  frontmatter: Frontmatter,
-  filepath: string,
-): void {
-  const required: Array<keyof Frontmatter> = ["title", "slug", "layout"];
-  const missing = required.filter((field) => !frontmatter[field]);
+  // Validate with Zod schema
+  const result = frontmatterSchema.safeParse(parsedYaml);
+  if (!result.success) {
+    const errors = result.error.errors.map((err) => {
+      const field = err.path.join(".");
+      return `  - ${field}: ${err.message}`;
+    }).join("\n");
 
-  if (missing.length > 0) {
     throw new Error(
-      `Missing required frontmatter fields in ${filepath}: ${
-        missing.join(", ")
-      }`,
+      `Invalid frontmatter in ${filepath}:\n${errors}\n\nExample valid frontmatter:\n---\ntitle: Page Title\nslug: page-slug\nlayout: docs\nnav-item: Section/Item\nnav-group: aside\nnav-order: 1\n---`,
     );
   }
 
-  // Validate slug doesn't contain invalid characters
-  const slug = frontmatter.slug;
-  if (slug.includes("..") || slug.startsWith("/")) {
-    throw new Error(
-      `Invalid slug in ${filepath}: "${slug}". Slug cannot contain ".." or start with "/"`,
-    );
-  }
+  return { frontmatter: result.data, markdown };
 }
 
 /**

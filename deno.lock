@@ -39,6 +39,8 @@
     "npm:marked-footnote@^1.2.0": "1.4.0_marked@12.0.2",
     "npm:marked-gfm-heading-id@^3.1.0": "3.2.0_marked@12.0.2",
     "npm:marked@12": "12.0.2",
+    "npm:preact-render-to-string@^6.5.11": "6.5.13_preact@10.26.4",
+    "npm:preact@^10.24.3": "10.26.4",
     "npm:prismjs@1.29.0": "1.29.0",
     "npm:prismjs@^1.29.0": "1.29.0",
     "npm:sanitize-html@^2.13.0": "2.17.0",
@@ -257,6 +259,15 @@
         "source-map-js"
       ]
     },
+    "preact-render-to-string@6.5.13_preact@10.26.4": {
+      "integrity": "sha512-iGPd+hKPMFKsfpR2vL4kJ6ZPcFIoWZEcBf0Dpm3zOpdVvj77aY8RlLiQji5OMrngEyaxGogeakTb54uS2FvA6w==",
+      "dependencies": [
+        "preact"
+      ]
+    },
+    "preact@10.26.4": {
+      "integrity": "sha512-KJhO7LBFTjP71d83trW+Ilnjbo+ySsaAgCfXOXUlmGzJ4ygYPWmysm77yg4emwfmoz3b22yvH5IsVFHbhUaH5w=="
+    },
     "prismjs@1.29.0": {
       "integrity": "sha512-Kx/1w86q/epKcmte75LNrEoT+lX8pBpavuAbvJWRXar7Hz8jrtF+e3vY751p0R8H9HdArwaCTNDDzHg/ScJK1Q=="
     },
@@ -385,6 +396,8 @@
       "jsr:@std/path@^1.0.8",
       "jsr:@std/testing@^1.0.9",
       "jsr:@std/yaml@^1.0.10",
+      "npm:preact-render-to-string@^6.5.11",
+      "npm:preact@^10.24.3",
       "npm:zod@^3.24.1"
     ]
   }

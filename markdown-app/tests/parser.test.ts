@@ -90,7 +90,7 @@ Content`;
 
       expect(() => {
         parseMarkdown(content, "test.md");
-      }).toThrow("Invalid YAML frontmatter");
+      }).toThrow("Invalid YAML");
     });
 
     it("should throw error for missing required field: title", () => {
@@ -103,10 +103,7 @@ Content`;
 
       expect(() => {
         parseMarkdown(content, "test.md");
-      }).toThrow("Missing required frontmatter fields");
-      expect(() => {
-        parseMarkdown(content, "test.md");
-      }).toThrow("title");
+      }).toThrow("Invalid frontmatter");
     });
 
     it("should throw error for missing required field: slug", () => {
@@ -119,10 +116,7 @@ Content`;
 
       expect(() => {
         parseMarkdown(content, "test.md");
-      }).toThrow("Missing required frontmatter fields");
-      expect(() => {
-        parseMarkdown(content, "test.md");
-      }).toThrow("slug");
+      }).toThrow("Invalid frontmatter");
     });
 
     it("should throw error for missing required field: layout", () => {
@@ -135,10 +129,7 @@ Content`;
 
       expect(() => {
         parseMarkdown(content, "test.md");
-      }).toThrow("Missing required frontmatter fields");
-      expect(() => {
-        parseMarkdown(content, "test.md");
-      }).toThrow("layout");
+      }).toThrow("Invalid frontmatter");
     });
 
     it("should throw error for invalid slug with path traversal", () => {
@@ -152,10 +143,7 @@ Content`;
 
       expect(() => {
         parseMarkdown(content, "test.md");
-      }).toThrow("Invalid slug");
-      expect(() => {
-        parseMarkdown(content, "test.md");
-      }).toThrow("..");
+      }).toThrow("Invalid frontmatter");
     });
 
     it("should throw error for slug starting with /", () => {
@@ -169,10 +157,7 @@ Content`;
 
       expect(() => {
         parseMarkdown(content, "test.md");
-      }).toThrow("Invalid slug");
-      expect(() => {
-        parseMarkdown(content, "test.md");
-      }).toThrow("cannot");
+      }).toThrow("Invalid frontmatter");
     });
 
     it("should allow valid nested slugs", () => {

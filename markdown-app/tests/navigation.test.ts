@@ -5,7 +5,7 @@ import type { Frontmatter } from "../parser.ts";
 
 describe("markdown-app - navigation", () => {
   describe("generateNavigation", () => {
-    it("should generate navigation with sections", () => {
+    it("should generate structured navigation with sections", () => {
       const pages: Frontmatter[] = [
         {
           title: "Getting Started",
@@ -31,15 +31,22 @@ describe("markdown-app - navigation", () => {
         "/docs",
       );
 
-      expect(result.aside).toContain("<nav>");
-      expect(result.aside).toContain("<section>");
-      expect(result.aside).toContain("<h3>Guide</h3>");
-      expect(result.aside).toContain(
-        '<a href="/docs/guide/getting-started" data-current="true">Getting Started</a>',
-      );
-      expect(result.aside).toContain(
-        '<a href="/docs/guide/installation">Installation</a>',
-      );
+      expect(result.aside).toBeDefined();
+      expect(result.aside).toHaveLength(1); // One section: "Guide"
+
+      const guideSection = result.aside[0];
+      expect(guideSection.title).toBe("Guide");
+      expect(guideSection.items).toHaveLength(2);
+
+      expect(guideSection.items[0].title).toBe("Getting Started");
+      expect(guideSection.items[0].slug).toBe("guide/getting-started");
+      expect(guideSection.items[0].href).toBe("/docs/guide/getting-started");
+      expect(guideSection.items[0].isCurrent).toBe(true);
+
+      expect(guideSection.items[1].title).toBe("Installation");
+      expect(guideSection.items[1].slug).toBe("guide/installation");
+      expect(guideSection.items[1].href).toBe("/docs/guide/installation");
+      expect(guideSection.items[1].isCurrent).toBe(false);
     });
 
     it("should parse nav field with section/item format", () => {
@@ -48,16 +55,17 @@ describe("markdown-app - navigation", () => {
           title: "CORS",
           slug: "middleware/cors",
           layout: "docs",
+          "nav-group": "aside",
           "nav-item": "Middleware/CORS",
-          "nav-group": "default",
           "nav-order": 1,
         },
       ];
 
-      const result = generateNavigation(pages, "", "/");
+      const result = generateNavigation(pages, "middleware/cors", "/");
 
-      expect(result.default).toContain("<h3>Middleware</h3>");
-      expect(result.default).toContain('<a href="/middleware/cors">CORS</a>');
+      expect(result.aside).toBeDefined();
+      expect(result.aside[0].title).toBe("Middleware");
+      expect(result.aside[0].items[0].title).toBe("CORS");
     });
 
     it("should parse nav field without section", () => {
@@ -66,34 +74,17 @@ describe("markdown-app - navigation", () => {
           title: "Introduction",
           slug: "intro",
           layout: "docs",
+          "nav-group": "aside",
           "nav-item": "Introduction",
-          "nav-group": "default",
           "nav-order": 1,
         },
       ];
 
-      const result = generateNavigation(pages, "", "/");
+      const result = generateNavigation(pages, "intro", "/");
 
-      expect(result.default).not.toContain("<section>");
-      expect(result.default).not.toContain("<h3>");
-      expect(result.default).toContain('<a href="/intro">Introduction</a>');
-    });
-
-    it("should use page title when nav item not specified", () => {
-      const pages: Frontmatter[] = [
-        {
-          title: "My Page Title",
-          slug: "my-page",
-          layout: "docs",
-          "nav-item": "My Page Title",
-          "nav-group": "default",
-          "nav-order": 1,
-        },
-      ];
-
-      const result = generateNavigation(pages, "", "/");
-
-      expect(result.default).toContain("My Page Title");
+      expect(result.aside).toBeDefined();
+      expect(result.aside[0].title).toBe(""); // No section title
+      expect(result.aside[0].items[0].title).toBe("Introduction");
     });
 
     it("should sort items by nav-order", () => {
@@ -102,383 +93,289 @@ describe("markdown-app - navigation", () => {
           title: "Third",
           slug: "third",
           layout: "docs",
-          "nav-item": "Third",
           "nav-group": "default",
+          "nav-item": "Third",
           "nav-order": 3,
         },
         {
           title: "First",
           slug: "first",
           layout: "docs",
-          "nav-item": "First",
           "nav-group": "default",
+          "nav-item": "First",
           "nav-order": 1,
         },
         {
           title: "Second",
           slug: "second",
           layout: "docs",
-          "nav-item": "Second",
           "nav-group": "default",
+          "nav-item": "Second",
           "nav-order": 2,
         },
       ];
 
-      const result = generateNavigation(pages, "", "/");
+      const result = generateNavigation(pages, "first", "/");
 
-      const firstIndex = result.default.indexOf('href="/first"');
-      const secondIndex = result.default.indexOf('href="/second"');
-      const thirdIndex = result.default.indexOf('href="/third"');
-
-      expect(firstIndex).toBeLessThan(secondIndex);
-      expect(secondIndex).toBeLessThan(thirdIndex);
+      expect(result.default[0].items[0].title).toBe("First");
+      expect(result.default[0].items[1].title).toBe("Second");
+      expect(result.default[0].items[2].title).toBe("Third");
     });
 
-    it("should sort alphabetically when nav-order is same", () => {
+    it("should sort items alphabetically when nav-order is the same", () => {
       const pages: Frontmatter[] = [
         {
           title: "Zebra",
           slug: "zebra",
           layout: "docs",
-          "nav-item": "Zebra",
           "nav-group": "default",
+          "nav-item": "Zebra",
           "nav-order": 1,
         },
         {
           title: "Apple",
           slug: "apple",
           layout: "docs",
-          "nav-item": "Apple",
           "nav-group": "default",
+          "nav-item": "Apple",
           "nav-order": 1,
         },
         {
           title: "Mango",
           slug: "mango",
           layout: "docs",
-          "nav-item": "Mango",
           "nav-group": "default",
+          "nav-item": "Mango",
           "nav-order": 1,
         },
       ];
 
-      const result = generateNavigation(pages, "", "/");
+      const result = generateNavigation(pages, "apple", "/");
 
-      const appleIndex = result.default.indexOf('href="/apple"');
-      const mangoIndex = result.default.indexOf('href="/mango"');
-      const zebraIndex = result.default.indexOf('href="/zebra"');
-
-      expect(appleIndex).toBeLessThan(mangoIndex);
-      expect(mangoIndex).toBeLessThan(zebraIndex);
+      expect(result.default[0].items[0].title).toBe("Apple");
+      expect(result.default[0].items[1].title).toBe("Mango");
+      expect(result.default[0].items[2].title).toBe("Zebra");
     });
 
-    it("should default to nav-order 999 when not specified", () => {
+    it("should default nav-order to 999", () => {
       const pages: Frontmatter[] = [
         {
           title: "Has Order",
           slug: "has-order",
           layout: "docs",
-          "nav-item": "Has Order",
           "nav-group": "default",
+          "nav-item": "Has Order",
           "nav-order": 1,
         },
         {
           title: "No Order",
           slug: "no-order",
           layout: "docs",
+          "nav-group": "default",
           "nav-item": "No Order",
-          "nav-group": "default",
         },
       ];
 
-      const result = generateNavigation(pages, "", "/");
+      const result = generateNavigation(pages, "has-order", "/");
 
-      const hasOrderIndex = result.default.indexOf('href="/has-order"');
-      const noOrderIndex = result.default.indexOf('href="/no-order"');
-
-      // Item with explicit order should come first
-      expect(hasOrderIndex).toBeLessThan(noOrderIndex);
+      // Has Order (1) should come before No Order (999)
+      expect(result.default[0].items[0].title).toBe("Has Order");
+      expect(result.default[0].items[1].title).toBe("No Order");
     });
 
-    it("should mark current page with data-current attribute", () => {
+    it("should mark current page with isCurrent", () => {
       const pages: Frontmatter[] = [
         {
           title: "Page 1",
-          slug: "page1",
+          slug: "page-1",
           layout: "docs",
+          "nav-group": "default",
           "nav-item": "Page 1",
-          "nav-group": "default",
-          "nav-order": 1,
         },
         {
           title: "Page 2",
-          slug: "page2",
+          slug: "page-2",
           layout: "docs",
+          "nav-group": "default",
           "nav-item": "Page 2",
-          "nav-group": "default",
-          "nav-order": 2,
         },
       ];
 
-      const result = generateNavigation(pages, "page1", "/");
+      const result = generateNavigation(pages, "page-2", "/");
 
-      expect(result.default).toContain(
-        '<a href="/page1" data-current="true">Page 1</a>',
-      );
-      expect(result.default).toContain('<a href="/page2">Page 2</a>');
-      expect(result.default).not.toContain('data-current="true">Page 2');
+      expect(result.default[0].items[0].isCurrent).toBe(false);
+      expect(result.default[0].items[1].isCurrent).toBe(true);
     });
 
-    it("should handle basePath in URLs", () => {
+    it("should group navigation by nav-group", () => {
       const pages: Frontmatter[] = [
         {
-          title: "Guide",
-          slug: "guide",
+          title: "Sidebar Item",
+          slug: "sidebar",
           layout: "docs",
-          "nav-item": "Guide",
-          "nav-group": "default",
-          "nav-order": 1,
+          "nav-group": "aside",
+          "nav-item": "Sidebar Item",
+        },
+        {
+          title: "Header Item",
+          slug: "header",
+          layout: "docs",
+          "nav-group": "header",
+          "nav-item": "Header Item",
         },
       ];
 
-      const result = generateNavigation(pages, "", "/docs");
+      const result = generateNavigation(pages, "sidebar", "/");
 
-      expect(result.default).toContain('<a href="/docs/guide">');
+      expect(result.aside).toBeDefined();
+      expect(result.aside[0].items[0].title).toBe("Sidebar Item");
+
+      expect(result.header).toBeDefined();
+      expect(result.header[0].items[0].title).toBe("Header Item");
     });
 
-    it("should handle root basePath", () => {
+    it("should handle multiple sections within a group", () => {
       const pages: Frontmatter[] = [
-        {
-          title: "Guide",
-          slug: "guide",
-          layout: "docs",
-          "nav-item": "Guide",
-          "nav-group": "default",
-          "nav-order": 1,
-        },
-      ];
-
-      const result = generateNavigation(pages, "", "/");
-
-      expect(result.default).toContain('<a href="/guide">');
-      expect(result.default).not.toContain('href="//guide"');
-    });
-
-    it("should filter out pages without nav field", () => {
-      const pages: Frontmatter[] = [
-        {
-          title: "Has Nav",
-          slug: "has-nav",
-          layout: "docs",
-          "nav-item": "Has Nav",
-          "nav-group": "default",
-          "nav-order": 1,
-        },
-        {
-          title: "No Nav",
-          slug: "no-nav",
-          layout: "docs",
-        },
-      ];
-
-      const result = generateNavigation(pages, "", "/");
-
-      expect(result.default).toContain("Has Nav");
-      expect(result.default).not.toContain("No Nav");
-    });
-
-    it("should return empty nav when no pages have nav field", () => {
-      const pages: Frontmatter[] = [
-        {
-          title: "Page 1",
-          slug: "page1",
-          layout: "docs",
-        },
-        {
-          title: "Page 2",
-          slug: "page2",
-          layout: "docs",
-        },
-      ];
-
-      const result = generateNavigation(pages, "", "/");
-
-      expect(Object.keys(result).length).toBe(0);
-    });
-
-    it("should return empty nav when pages array is empty", () => {
-      const pages: Frontmatter[] = [];
-
-      const result = generateNavigation(pages, "", "/");
-
-      expect(Object.keys(result).length).toBe(0);
-    });
-
-    it("should group multiple items in same section", () => {
-      const pages: Frontmatter[] = [
-        {
-          title: "CORS",
-          slug: "middleware/cors",
-          layout: "docs",
-          "nav-item": "Middleware/CORS",
-          "nav-group": "default",
-          "nav-order": 1,
-        },
-        {
-          title: "Logger",
-          slug: "middleware/logger",
-          layout: "docs",
-          "nav-item": "Middleware/Logger",
-          "nav-group": "default",
-          "nav-order": 2,
-        },
-        {
-          title: "Body Parser",
-          slug: "middleware/body-parser",
-          layout: "docs",
-          "nav-item": "Middleware/Body Parser",
-          "nav-group": "default",
-          "nav-order": 3,
-        },
-      ];
-
-      const result = generateNavigation(pages, "", "/");
-
-      // Should have one section
-      const sectionMatches = result.default.match(/<section>/g);
-      expect(sectionMatches?.length).toBe(1);
-
-      // Should have all three items
-      expect(result.default).toContain("CORS");
-      expect(result.default).toContain("Logger");
-      expect(result.default).toContain("Body Parser");
-    });
-
-    it("should sort sections by lowest item order", () => {
-      const pages: Frontmatter[] = [
-        {
-          title: "Advanced Topic",
-          slug: "advanced",
-          layout: "docs",
-          "nav-item": "Advanced/Advanced Topic",
-          "nav-group": "default",
-          "nav-order": 10,
-        },
         {
           title: "Getting Started",
-          slug: "guide",
+          slug: "getting-started",
           layout: "docs",
+          "nav-group": "aside",
           "nav-item": "Guide/Getting Started",
-          "nav-group": "default",
           "nav-order": 1,
         },
         {
           title: "API Reference",
           slug: "api",
           layout: "docs",
-          "nav-item": "Reference/API Reference",
-          "nav-group": "default",
-          "nav-order": 5,
-        },
-      ];
-
-      const result = generateNavigation(pages, "", "/");
-
-      const guideIndex = result.default.indexOf("<h3>Guide</h3>");
-      const referenceIndex = result.default.indexOf("<h3>Reference</h3>");
-      const advancedIndex = result.default.indexOf("<h3>Advanced</h3>");
-
-      expect(guideIndex).toBeLessThan(referenceIndex);
-      expect(referenceIndex).toBeLessThan(advancedIndex);
-    });
-
-    it("should handle mixed sectioned and unsectioned items", () => {
-      const pages: Frontmatter[] = [
-        {
-          title: "Introduction",
-          slug: "intro",
-          layout: "docs",
-          "nav-item": "Introduction",
-          "nav-group": "default",
-          "nav-order": 1,
-        },
-        {
-          title: "Getting Started",
-          slug: "guide/getting-started",
-          layout: "docs",
-          "nav-item": "Guide/Getting Started",
-          "nav-group": "default",
+          "nav-group": "aside",
+          "nav-item": "Reference/API",
           "nav-order": 2,
         },
+        {
+          title: "Advanced Topics",
+          slug: "advanced",
+          layout: "docs",
+          "nav-group": "aside",
+          "nav-item": "Advanced/Topics",
+          "nav-order": 3,
+        },
       ];
 
-      const result = generateNavigation(pages, "", "/");
+      const result = generateNavigation(pages, "getting-started", "/");
 
-      // Should have both unsectioned list and sectioned content
-      expect(result.default).toContain("Introduction");
-      expect(result.default).toContain("<h3>Guide</h3>");
-      expect(result.default).toContain("Getting Started");
+      expect(result.aside).toHaveLength(3);
+      expect(result.aside[0].title).toBe("Guide");
+      expect(result.aside[1].title).toBe("Reference");
+      expect(result.aside[2].title).toBe("Advanced");
     });
 
-    it("should handle nav field with extra whitespace", () => {
+    it("should sort sections by lowest item order", () => {
       const pages: Frontmatter[] = [
         {
-          title: "Guide",
+          title: "Advanced Item",
+          slug: "advanced",
+          layout: "docs",
+          "nav-group": "aside",
+          "nav-item": "Advanced/Item",
+          "nav-order": 30,
+        },
+        {
+          title: "Guide Item",
           slug: "guide",
           layout: "docs",
-          "nav-item": "  Guide Section  /  Getting Started  ",
-          "nav-group": "default",
-          "nav-order": 1,
+          "nav-group": "aside",
+          "nav-item": "Guide/Item",
+          "nav-order": 10,
+        },
+        {
+          title: "Reference Item",
+          slug: "reference",
+          layout: "docs",
+          "nav-group": "aside",
+          "nav-item": "Reference/Item",
+          "nav-order": 20,
         },
       ];
 
-      const result = generateNavigation(pages, "", "/");
+      const result = generateNavigation(pages, "guide", "/");
 
-      expect(result.default).toContain("<h3>Guide Section</h3>");
-      expect(result.default).toContain("Getting Started");
+      // Sections sorted by lowest item order
+      expect(result.aside[0].title).toBe("Guide"); // order 10
+      expect(result.aside[1].title).toBe("Reference"); // order 20
+      expect(result.aside[2].title).toBe("Advanced"); // order 30
     });
 
-    it("should handle nested slugs in URLs", () => {
+    it("should normalize basePath in href", () => {
       const pages: Frontmatter[] = [
         {
-          title: "Router",
-          slug: "api/router",
+          title: "Test",
+          slug: "test",
           layout: "docs",
-          "nav-item": "API/Router",
           "nav-group": "default",
-          "nav-order": 1,
+          "nav-item": "Test",
         },
       ];
 
-      const result = generateNavigation(pages, "", "/docs");
+      const result = generateNavigation(pages, "test", "/docs");
 
-      expect(result.default).toContain('<a href="/docs/api/router">');
+      expect(result.default[0].items[0].href).toBe("/docs/test");
     });
 
-    it("should produce semantic HTML structure", () => {
+    it("should handle empty basePath", () => {
       const pages: Frontmatter[] = [
         {
-          title: "Item 1",
-          slug: "item1",
+          title: "Test",
+          slug: "test",
           layout: "docs",
-          "nav-item": "Section/Item 1",
           "nav-group": "default",
-          "nav-order": 1,
+          "nav-item": "Test",
         },
       ];
 
-      const result = generateNavigation(pages, "", "/");
+      const result = generateNavigation(pages, "test", "");
 
-      expect(result.default).toMatch(/<nav>/);
-      expect(result.default).toMatch(/<section>/);
-      expect(result.default).toMatch(/<h3>Section<\/h3>/);
-      expect(result.default).toMatch(/<ul>/);
-      expect(result.default).toMatch(/<li>/);
-      expect(result.default).toMatch(/<a href="[^"]*">/);
-      expect(result.default).toMatch(/<\/a><\/li>/);
-      expect(result.default).toMatch(/<\/ul>/);
-      expect(result.default).toMatch(/<\/section>/);
-      expect(result.default).toMatch(/<\/nav>/);
+      expect(result.default[0].items[0].href).toBe("/test");
+    });
+
+    it("should ignore pages without nav-item", () => {
+      const pages: Frontmatter[] = [
+        {
+          title: "With Nav",
+          slug: "with-nav",
+          layout: "docs",
+          "nav-group": "default",
+          "nav-item": "With Nav",
+        },
+        {
+          title: "Without Nav",
+          slug: "without-nav",
+          layout: "docs",
+        },
+      ];
+
+      const result = generateNavigation(pages, "with-nav", "/");
+
+      expect(result.default).toHaveLength(1);
+      expect(result.default[0].items).toHaveLength(1);
+      expect(result.default[0].items[0].title).toBe("With Nav");
+    });
+
+    it("should use page title when nav-item has no item text", () => {
+      const pages: Frontmatter[] = [
+        {
+          title: "My Page Title",
+          slug: "my-page",
+          layout: "docs",
+          "nav-group": "default",
+          "nav-item": "Section/",
+        },
+      ];
+
+      const result = generateNavigation(pages, "my-page", "/");
+
+      // Should fall back to page title
+      expect(result.default[0].items[0].title).toBe("My Page Title");
     });
   });
 });

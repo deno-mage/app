@@ -2,7 +2,7 @@ import { walk } from "@std/fs";
 import { dirname, join, resolve } from "@std/path";
 import { CSS as GFM_CSS } from "@deno/gfm";
 import { type Frontmatter, parseMarkdown } from "./parser.ts";
-import { renderTemplate, type TemplateData } from "./template.ts";
+import type { TemplateData } from "./template.ts";
 import { generateNavigation } from "./navigation.ts";
 import { generateSitemap } from "./sitemap.ts";
 import { generateRobotsTxt } from "./robots.ts";
@@ -13,6 +13,7 @@ import {
   replaceAssetPlaceholders,
 } from "./assets.ts";
 import { logger } from "./logger.ts";
+import { renderJsxLayout } from "./jsx-renderer.ts";
 
 /**
  * Load Prism syntax highlighting language components dynamically.
@@ -215,18 +216,6 @@ async function buildPage(
   const { frontmatter, content } = page;
   const { outputDir, layoutDir, basePath, dev } = options;
 
-  // Load layout template
-  const layoutPath = join(layoutDir, `_layout-${frontmatter.layout}.html`);
-  let layoutTemplate: string;
-
-  try {
-    layoutTemplate = await Deno.readTextFile(layoutPath);
-  } catch {
-    throw new Error(
-      `Layout file not found: ${layoutPath} (required by ${page.filepath})`,
-    );
-  }
-
   // Generate navigation
   const navigation = generateNavigation(
     allPages.map((p) => p.frontmatter),
@@ -245,8 +234,21 @@ async function buildPage(
     basePath: normalizedBasePath,
   };
 
-  // Render template
-  let html = renderTemplate(layoutTemplate, templateData);
+  // Load JSX layout
+  const layoutPath = resolve(
+    join(layoutDir, `_layout-${frontmatter.layout}.tsx`),
+  );
+
+  let html: string;
+  try {
+    html = await renderJsxLayout(layoutPath, templateData);
+  } catch (error) {
+    throw new Error(
+      `Failed to render layout ${layoutPath} (required by ${page.filepath}): ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
+  }
 
   // Inject hot reload script in dev mode
   if (dev) {
