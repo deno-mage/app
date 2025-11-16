@@ -377,5 +377,63 @@ describe("markdown-app - navigation", () => {
       // Should fall back to page title
       expect(result.default[0].items[0].title).toBe("My Page Title");
     });
+
+    it("should ignore pages with empty nav-item", () => {
+      const pages: Frontmatter[] = [
+        {
+          title: "No Nav",
+          slug: "no-nav",
+          layout: "docs",
+          "nav-item": "",
+          "nav-group": "default",
+        },
+        {
+          title: "With Nav",
+          slug: "with-nav",
+          layout: "docs",
+          "nav-item": "Item",
+          "nav-group": "default",
+        },
+      ];
+
+      const result = generateNavigation(pages, "with-nav", "");
+
+      // Empty nav-item is filtered out (truthy check)
+      expect(result.default).toBeDefined();
+      expect(result.default[0].items).toHaveLength(1);
+      expect(result.default[0].items[0].slug).toBe("with-nav");
+    });
+
+    it("should fail when nav-item has too many slashes", () => {
+      const pages: Frontmatter[] = [
+        {
+          title: "Bad Page",
+          slug: "bad",
+          layout: "docs",
+          "nav-item": "Section/Item/Extra",
+          "nav-group": "default",
+        },
+      ];
+
+      expect(() => {
+        generateNavigation(pages, "bad", "");
+      }).toThrow("Invalid nav-item in bad");
+    });
+
+    it("should fail when nav-item is only slashes", () => {
+      const pages: Frontmatter[] = [
+        {
+          title: "Bad Page",
+          slug: "bad",
+          layout: "docs",
+          "nav-item": "///",
+          "nav-group": "default",
+        },
+      ];
+
+      expect(() => {
+        generateNavigation(pages, "bad", "");
+      }).toThrow("Invalid nav-item in bad");
+    });
   });
 });
