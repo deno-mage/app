@@ -53,7 +53,11 @@ export function parseMarkdown(
   const { frontmatter, markdown } = extractFrontmatter(fileContent, filepath);
   validateFrontmatter(frontmatter, filepath);
 
-  const content = renderGfm(markdown);
+  let content = renderGfm(markdown);
+
+  // Remove anchor links from headings
+  content = removeHeaderAnchors(content);
+
   const rawMarkdown = markdown;
 
   return { frontmatter, content, rawMarkdown };
@@ -118,4 +122,17 @@ function validateFrontmatter(
       `Invalid slug in ${filepath}: "${slug}". Slug cannot contain ".." or start with "/"`,
     );
   }
+}
+
+/**
+ * Remove anchor links from heading tags.
+ * GFM adds anchor links with SVG icons to all headings, which can be visually distracting.
+ */
+function removeHeaderAnchors(html: string): string {
+  // Remove the entire <a class="anchor">...</a> element from headings
+  // Pattern matches: <a class="anchor" aria-hidden="true" tabindex="-1" href="#...">...</a>
+  return html.replace(
+    /<a class="anchor"[^>]*>.*?<\/a>/g,
+    "",
+  );
 }

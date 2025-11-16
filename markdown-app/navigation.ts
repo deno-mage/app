@@ -135,7 +135,7 @@ function groupBySection(items: NavItem[]): NavSection[] {
 /**
  * Render navigation sections and items as semantic HTML.
  *
- * Marks current page with data-current="true".
+ * Marks current page with aria-current="page" for accessibility and CSS styling.
  */
 function renderNavigationHtml(
   sections: NavSection[],
@@ -151,7 +151,7 @@ function renderNavigationHtml(
       .map((item) => {
         const href = `${basePath}/${item.slug}`.replace(/\/+/g, "/");
         const isCurrent = item.slug === currentSlug;
-        const currentAttr = isCurrent ? ' data-current="true"' : "";
+        const currentAttr = isCurrent ? ' aria-current="page"' : "";
 
         return `      <li><a href="${href}"${currentAttr}>${item.title}</a></li>`;
       })

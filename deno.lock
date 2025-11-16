@@ -2,6 +2,7 @@
   "version": "5",
   "specifiers": {
     "jsr:@deno/gfm@0.11": "0.11.0",
+    "jsr:@deno/gfm@0.11.0": "0.11.0",
     "jsr:@denosaurs/emoji@~0.3.1": "0.3.1",
     "jsr:@standard-schema/spec@1": "1.0.0",
     "jsr:@std/assert@^1.0.10": "1.0.11",
