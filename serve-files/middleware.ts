@@ -1,4 +1,3 @@
-import { exists } from "@std/fs";
 import { resolve } from "@std/path";
 import type { MageMiddleware } from "../app/mod.ts";
 import { MageError } from "../app/mod.ts";
@@ -37,7 +36,7 @@ export const serveFiles = (
     const serveIndex = options.serveIndex ?? true;
 
     // Resolve filepath
-    let filepath = resolve(options.directory, c.req.wildcard);
+    const filepath = resolve(options.directory, c.req.wildcard);
 
     // Ensure the resolved path is within the allowed directory (prevent path traversal)
     const normalizedBase = resolve(options.directory);
@@ -47,22 +46,54 @@ export const serveFiles = (
       return;
     }
 
-    // If the requested path is a directory, check if we should serve
-    // index.html and update the filepath accordingly.
-    const directoryExists = await exists(filepath, { isDirectory: true });
-    if (directoryExists && serveIndex) {
-      filepath = resolve(filepath, "index.html");
-    }
+    // Try to find a file to serve with the following priority:
+    // 1. Exact match
+    // 2. Directory with index.html (if serveIndex enabled)
+    // 3. File with .html extension appended
 
-    // If the file exists serve it
-    const fileExists = await exists(filepath, { isFile: true });
+    // Helper to check if path is a file
+    const isFile = async (path: string): Promise<boolean> => {
+      try {
+        const stat = await Deno.stat(path);
+        return stat.isFile;
+      } catch {
+        return false;
+      }
+    };
 
-    if (fileExists) {
+    // Helper to check if path is a directory
+    const isDirectory = async (path: string): Promise<boolean> => {
+      try {
+        const stat = await Deno.stat(path);
+        return stat.isDirectory;
+      } catch {
+        return false;
+      }
+    };
+
+    // Check if exact file exists
+    if (await isFile(filepath)) {
       await c.file(filepath);
       return;
     }
 
-    // If the file does not exist, return a 404.
+    // Check if it's a directory with index.html
+    if (serveIndex && await isDirectory(filepath)) {
+      const indexPath = resolve(filepath, "index.html");
+      if (await isFile(indexPath)) {
+        await c.file(indexPath);
+        return;
+      }
+    }
+
+    // Check if file exists with .html extension
+    const htmlPath = `${normalizedPath}.html`;
+    if (htmlPath.startsWith(normalizedBase) && await isFile(htmlPath)) {
+      await c.file(htmlPath);
+      return;
+    }
+
+    // If no file found, return a 404.
     c.notFound();
   };
 };

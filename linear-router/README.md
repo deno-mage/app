@@ -9,6 +9,10 @@ The Linear Router is the **default router** for Mage applications. It uses a
 straightforward array-based linear search algorithm to match routes, making it
 ideal for most use cases, especially serverless and edge deployments.
 
+Routes are automatically sorted by specificity when matching, so static routes
+always take precedence over parameterized routes, which take precedence over
+wildcards - regardless of registration order.
+
 ## When to Use
 
 **✅ Best for:**
@@ -342,9 +346,11 @@ app.get("/files/:filename", (c) => {
    - Check if routename pattern matches
    - Extract parameters if route has `:param`
    - Extract wildcard if route has `*`
+   - Calculate specificity score (static=3, param=2, wildcard=1)
    - Check if HTTP method matches
-3. Collect all matching middleware
-4. Return MatchResult with middleware and params
+3. Sort matched routes by specificity (highest first)
+4. Collect middleware from sorted matches
+5. Return MatchResult with middleware and params
 ```
 
 ### Data Structure

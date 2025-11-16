@@ -40,13 +40,14 @@ describe("LinearRouter - wildcard", () => {
     expect(result.wildcard).toBe("js/index.js");
   });
 
-  it("should prioritize specific routes over wildcards when registered first", () => {
+  it("should prioritize specific routes over wildcards regardless of registration order", () => {
     const router = new LinearRouter();
     const specificMiddleware = () => {};
     const wildcardMiddleware = () => {};
 
-    router.get("/public/specific", specificMiddleware);
+    // Register wildcard FIRST, specific SECOND
     router.get("/public/*", wildcardMiddleware);
+    router.get("/public/specific", specificMiddleware);
 
     const result = router.match(
       new URL("http://localhost/public/specific"),
@@ -54,8 +55,8 @@ describe("LinearRouter - wildcard", () => {
     );
 
     expect(result.matchedRoutename).toBe(true);
-    expect(result.middleware.length).toBe(2); // Both match, but specific is first
-    expect(result.middleware[0]).toBe(specificMiddleware);
+    expect(result.middleware.length).toBe(2); // Both match
+    expect(result.middleware[0]).toBe(specificMiddleware); // Specific is first due to higher specificity
   });
 
   it("should match wildcard and extract params together", () => {

@@ -143,8 +143,39 @@ interface RouterEntry {
 }
 
 /**
+ * Calculate route specificity score for sorting.
+ * Higher scores = more specific = higher priority.
+ *
+ * Scoring:
+ * - Static segment: 3 points (most specific)
+ * - Parameter segment: 2 points (medium specific)
+ * - Wildcard segment: 1 point (least specific)
+ */
+function calculateRouteSpecificity(routename: string): number {
+  const segments = routename.split("/").filter((s) => s !== "");
+  let score = 0;
+
+  for (const segment of segments) {
+    if (segment === "*") {
+      score += 1; // Wildcard: lowest priority
+    } else if (segment.startsWith(":")) {
+      score += 2; // Parameter: medium priority
+    } else {
+      score += 3; // Static: highest priority
+    }
+  }
+
+  return score;
+}
+
+/**
  * LinearRouter uses linear search (O(n)) to match routes.
  * Simple, proven implementation suitable for most applications.
+ *
+ * Routes are automatically sorted by specificity when matching:
+ * 1. Static routes (exact matches) - highest priority
+ * 2. Parameterized routes (:param) - medium priority
+ * 3. Wildcard routes (*) - lowest priority
  *
  * Best for:
  * - Serverless functions with frequent cold starts
@@ -163,31 +194,83 @@ export class LinearRouter implements MageRouter {
     let params: { [key: string]: string } = {};
     let wildcard: string | undefined;
 
-    const middleware = this._entries
-      .filter((entry) => {
-        if (entry.routename) {
-          const result = matchRoutename(entry.routename, url.pathname);
+    // Collect all matching entries (globals + route matches)
+    const matchedEntries: Array<{
+      entry: RouterEntry;
+      entryParams: { [key: string]: string };
+      entryWildcard: string | undefined;
+      specificity: number;
+      isGlobal: boolean;
+    }> = [];
 
-          if (!result.match) {
-            return false;
-          }
+    for (const entry of this._entries) {
+      if (entry.routename) {
+        // Route-specific middleware
+        const result = matchRoutename(entry.routename, url.pathname);
 
-          params = result.params;
-          wildcard = result.wildcard;
-          matchedRoutename = true;
+        if (!result.match) {
+          continue; // Skip non-matching routes
         }
 
+        matchedRoutename = true;
+
+        // Check method matching
         if (entry.methods && !entry.methods.includes(method)) {
-          return false;
+          continue; // Skip method mismatches
         }
 
         if (entry.methods) {
           matchedMethod = true;
         }
 
-        return true;
-      })
-      .flatMap((entry) => entry.middleware);
+        const specificity = calculateRouteSpecificity(entry.routename);
+        matchedEntries.push({
+          entry,
+          entryParams: result.params,
+          entryWildcard: result.wildcard,
+          specificity,
+          isGlobal: false,
+        });
+      } else {
+        // Global middleware (always matches)
+        // Check method matching
+        if (entry.methods && !entry.methods.includes(method)) {
+          continue; // Skip method mismatches
+        }
+
+        if (entry.methods) {
+          matchedMethod = true;
+        }
+
+        matchedEntries.push({
+          entry,
+          entryParams: {},
+          entryWildcard: undefined,
+          specificity: 0,
+          isGlobal: true,
+        });
+      }
+    }
+
+    // Separate globals from route matches
+    const globals = matchedEntries.filter((item) => item.isGlobal);
+    const routeMatches = matchedEntries.filter((item) => !item.isGlobal);
+
+    // Sort route matches by specificity (most specific first)
+    routeMatches.sort((a, b) => b.specificity - a.specificity);
+
+    // Use params/wildcard from the most specific route match
+    if (routeMatches.length > 0) {
+      const mostSpecific = routeMatches[0];
+      params = mostSpecific.entryParams;
+      wildcard = mostSpecific.entryWildcard;
+    }
+
+    // Extract middleware: globals in registration order, then all route matches by specificity
+    const middleware = [
+      ...globals.flatMap((item) => item.entry.middleware),
+      ...routeMatches.flatMap((item) => item.entry.middleware),
+    ];
 
     return {
       middleware,

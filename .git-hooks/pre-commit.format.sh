@@ -1,11 +1,16 @@
 #!/bin/sh
 
-# Run deno format
-deno task format
+# Get list of staged files that are supported by deno fmt
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ts|tsx|js|jsx|json|md)$')
 
-# Add formatted files back to staging only if there are any
-# Use git update-index instead of git add to avoid index lock conflicts
-STAGED_FILES=$(git diff --name-only --cached --diff-filter=ACM | grep -E '\.(ts|tsx|js|jsx|json)$')
-if [ -n "$STAGED_FILES" ]; then
-    echo "$STAGED_FILES" | xargs git add
+if [ -z "$STAGED_FILES" ]; then
+  exit 0
 fi
+
+# Run deno fmt on staged files only
+deno fmt $STAGED_FILES
+
+# Re-add the formatted files to the commit
+for file in $STAGED_FILES; do
+  git add "$file"
+done

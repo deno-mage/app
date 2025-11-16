@@ -83,9 +83,37 @@ Deno.serve(app.handler);
 
 - `new MageError(message, status?)` - Create error with HTTP status code
 
+## WebSocket Support
+
+Upgrade HTTP connections to WebSocket:
+
+```typescript
+app.get("/ws", (c) => {
+  c.webSocket((socket) => {
+    socket.onmessage = (event) => {
+      socket.send(`Echo: ${event.data}`);
+    };
+
+    socket.onclose = () => {
+      console.log("Client disconnected");
+    };
+  });
+});
+```
+
+The `webSocket()` method:
+
+- Checks for `upgrade: websocket` header
+- Returns `501 Not Implemented` if not a WebSocket request
+- Uses Deno's standard `WebSocket` API
+- Handler receives a `WebSocket` instance with standard events: `onmessage`,
+  `onopen`, `onclose`, `onerror`
+
 ## Notes
 
 - Request body can only be read once; `MageRequest` memoizes it for multiple
   middleware access
 - Middleware executes in order; use `await next()` to pass control to the next
   handler
+- Routes are automatically matched by specificity (static > params > wildcards);
+  registration order doesn't matter

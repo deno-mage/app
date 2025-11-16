@@ -156,4 +156,44 @@ describe("serve file", () => {
     expect(response.status).toBe(404);
     expect(await response.text()).toEqual("Not Found");
   });
+
+  it("should serve file when requesting without .html extension", async () => {
+    const response = await fetch(server.url("/public/index"), {
+      method: "GET",
+    });
+
+    const data = await Deno.readTextFile(
+      resolve(Deno.cwd(), "test-utils/files/index.html"),
+    );
+    expect(response.status).toBe(200);
+    expect(await response.text()).toEqual(data);
+    expect(response.headers.get("content-type")).toEqual(
+      "text/html; charset=UTF-8",
+    );
+  });
+
+  it("should prioritize exact match over .html extension", async () => {
+    // If both "hello.json" and "hello.json.html" existed, "hello.json" should be served
+    const response = await fetch(server.url("/public/hello.json"), {
+      method: "GET",
+    });
+
+    expect(response.status).toBe(200);
+    await response.text(); // Consume response body
+    expect(response.headers.get("content-type")).toEqual(
+      "application/json; charset=UTF-8",
+    );
+  });
+
+  it("should prevent path traversal with .html extension", async () => {
+    const response = await fetch(
+      server.url("/public/../../../deno"),
+      {
+        method: "GET",
+      },
+    );
+
+    expect(response.status).toBe(404);
+    expect(await response.text()).toEqual("Not Found");
+  });
 });
