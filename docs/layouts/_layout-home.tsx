@@ -5,33 +5,42 @@ export function Layout({ articleHtml, navigation, asset }: LayoutProps) {
     <>
       <Head>
         <link rel="icon" href={asset("favicon.svg")} />
-        <link rel="stylesheet" href={asset("main.css")} />
+        <link
+          rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"
+        />
       </Head>
       <header>
-        <nav>
-          {navigation.header && (
-            <ul>
-              {navigation.header.map((section) =>
-                section.items.map((item) => (
-                  <li key={item.slug}>
-                    <a
-                      href={item.href}
-                      aria-current={item.isCurrent ? "page" : undefined}
-                    >
-                      {item.title}
-                    </a>
-                  </li>
-                ))
-              )}
-            </ul>
-          )}
-        </nav>
+        <div className="container">
+          <nav>
+            {navigation.header && (
+              <ul>
+                {navigation.header.map((section) =>
+                  section.items.map((item) => (
+                    <li key={item.slug}>
+                      <a
+                        href={item.href}
+                        aria-current={item.isCurrent ? "page" : undefined}
+                      >
+                        {item.title}
+                      </a>
+                    </li>
+                  ))
+                )}
+              </ul>
+            )}
+          </nav>
+        </div>
       </header>
       <main>
-        <article dangerouslySetInnerHTML={{ __html: articleHtml }} />
+        <div className="container">
+          <article dangerouslySetInnerHTML={{ __html: articleHtml }} />
+        </div>
       </main>
       <footer>
-        <p>Built with Mage App</p>
+        <div className="container">
+          <p>Built with Mage App</p>
+        </div>
       </footer>
     </>
   );

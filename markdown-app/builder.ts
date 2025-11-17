@@ -2,7 +2,7 @@ import { walk } from "@std/fs";
 import { dirname, join, resolve } from "@std/path";
 import { CSS as GFM_CSS } from "@deno/gfm";
 import { type Frontmatter, parseMarkdown } from "./parser.ts";
-import type { LayoutProps } from "./template.ts";
+import type { LayoutProps } from "./layout.ts";
 import { generateNavigation, type NavigationData } from "./navigation.ts";
 import { generateSitemap } from "./sitemap.ts";
 import { generateRobotsTxt } from "./robots.ts";

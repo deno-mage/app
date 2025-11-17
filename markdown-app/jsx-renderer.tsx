@@ -1,5 +1,5 @@
 import { render } from "preact-render-to-string";
-import type { LayoutProps } from "./template.ts";
+import type { LayoutProps } from "./layout.ts";
 
 export interface RenderOptions {
   dev?: boolean;
