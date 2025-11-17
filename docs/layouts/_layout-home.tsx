@@ -1,10 +1,11 @@
 import { Head, type LayoutProps } from "../../markdown-app/mod.ts";
 
-export function Layout({ articleHtml, navigation }: LayoutProps) {
+export function Layout({ articleHtml, navigation, asset }: LayoutProps) {
   return (
     <>
       <Head>
-        <link rel="icon" href="/favicon.ico" />
+        <link rel="icon" href={asset("favicon.svg")} />
+        <link rel="stylesheet" href={asset("main.css")} />
       </Head>
       <header>
         <nav>

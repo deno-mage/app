@@ -1,10 +1,10 @@
 import type { LayoutProps } from "../../../mod.ts";
 
-export function Layout(data: LayoutProps) {
+export function Layout(props: LayoutProps) {
   return (
     <>
-      <h1>{data.title}</h1>
-      <div dangerouslySetInnerHTML={{ __html: data.articleHtml }} />
+      <h1>{props.title}</h1>
+      <div dangerouslySetInnerHTML={{ __html: props.articleHtml }} />
     </>
   );
 }

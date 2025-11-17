@@ -160,6 +160,7 @@ export async function build(options: BuildOptions): Promise<void> {
       basePath,
       dev,
       themeColor: siteMetadata?.themeColor,
+      assetMap,
     });
   }
 
@@ -252,10 +253,11 @@ async function buildPage(
     basePath: string;
     dev: boolean;
     themeColor?: string;
+    assetMap: AssetMap;
   },
 ): Promise<void> {
   const { frontmatter, content } = page;
-  const { outputDir, layoutDir, basePath, dev, themeColor } = options;
+  const { outputDir, layoutDir, basePath, dev, themeColor, assetMap } = options;
 
   const normalizedBasePath = basePath === "/" ? "" : basePath;
 
@@ -265,6 +267,15 @@ async function buildPage(
     description: frontmatter.description,
     navigation,
     basePath: normalizedBasePath,
+    asset: (path: string) => {
+      // Check if this is a cache-busted asset in the asset map
+      const hashedPath = assetMap[path];
+      if (hashedPath !== undefined) {
+        return hashedPath;
+      }
+      // Otherwise, just combine basePath with path
+      return `${normalizedBasePath}/${path}`.replace(/\/\/+/g, "/");
+    },
   };
 
   const layoutPath = resolve(

@@ -10,6 +10,7 @@ const { build } = markdownApp({
   articlesDir: resolve(docsDir, "./articles"),
   outputDir: resolve(docsDir, "./_site"),
   layoutDir: resolve(docsDir, "./layouts"),
+  assetsDir: resolve(docsDir, "./assets"),
   basePath: "/",
   dev: false,
   siteMetadata: {

@@ -6,6 +6,23 @@ import { join } from "@std/path";
 
 const fixturesDir = join(import.meta.dirname!, "fixtures", "layouts");
 
+/**
+ * Create a mock asset function for tests.
+ */
+function createAssetFunction(
+  basePath: string,
+  assetMap: Record<string, string> = {},
+): (path: string) => string {
+  const normalizedBasePath = basePath === "/" ? "" : basePath;
+  return (path: string) => {
+    const hashedPath = assetMap[path];
+    if (hashedPath !== undefined) {
+      return hashedPath;
+    }
+    return `${normalizedBasePath}/${path}`.replace(/\/\/+/g, "/");
+  };
+}
+
 describe("templates - basic rendering", () => {
   it("should render JSX layout to HTML", async () => {
     const layoutPath = join(fixturesDir, "_layout-test.tsx");
@@ -15,6 +32,7 @@ describe("templates - basic rendering", () => {
       articleHtml: "<p>Hello World</p>",
       navigation: {},
       basePath: "",
+      asset: createAssetFunction(""),
     };
 
     const html = await renderJsxLayout(layoutPath, layoutProps);
@@ -34,6 +52,7 @@ describe("templates - basic rendering", () => {
       articleHtml: "",
       navigation: {},
       basePath: "",
+      asset: createAssetFunction(""),
     };
 
     const html = await renderJsxLayout(fileUrl, layoutProps);
@@ -52,6 +71,7 @@ describe("templates - data passing", () => {
       articleHtml: "<p>Content</p>",
       navigation: {},
       basePath: "",
+      asset: createAssetFunction(""),
     };
 
     const html = await renderJsxLayout(layoutPath, layoutProps);
@@ -68,6 +88,7 @@ describe("templates - data passing", () => {
       articleHtml: "<h2>Subheading</h2><p>Paragraph text</p>",
       navigation: {},
       basePath: "",
+      asset: createAssetFunction(""),
     };
 
     const html = await renderJsxLayout(layoutPath, layoutProps);
@@ -97,6 +118,7 @@ describe("templates - data passing", () => {
         ],
       },
       basePath: "",
+      asset: createAssetFunction(""),
     };
 
     const html = await renderJsxLayout(layoutPath, layoutProps);
@@ -104,7 +126,7 @@ describe("templates - data passing", () => {
     expect(html).toContain("2 sections");
   });
 
-  it("should receive basePath", async () => {
+  it("should receive basePath and asset function", async () => {
     const layoutPath = join(fixturesDir, "_layout-basepath.tsx");
 
     const layoutProps: LayoutProps = {
@@ -112,11 +134,30 @@ describe("templates - data passing", () => {
       articleHtml: "",
       navigation: {},
       basePath: "/docs",
+      asset: createAssetFunction("/docs"),
     };
 
     const html = await renderJsxLayout(layoutPath, layoutProps);
 
     expect(html).toContain('href="/docs/home"');
+  });
+
+  it("should use cache-busted asset URLs when available", async () => {
+    const layoutPath = join(fixturesDir, "_layout-basepath.tsx");
+
+    const layoutProps: LayoutProps = {
+      title: "Asset Test",
+      articleHtml: "",
+      navigation: {},
+      basePath: "/docs",
+      asset: createAssetFunction("/docs", {
+        "home": "/__assets/home-abc123.html",
+      }),
+    };
+
+    const html = await renderJsxLayout(layoutPath, layoutProps);
+
+    expect(html).toContain('href="/__assets/home-abc123.html"');
   });
 });
 
@@ -129,6 +170,7 @@ describe("templates - auto-injection", () => {
       articleHtml: "<p>Content</p>",
       navigation: {},
       basePath: "",
+      asset: createAssetFunction(""),
     };
 
     const html = await renderJsxLayout(layoutPath, layoutProps);
@@ -145,6 +187,7 @@ describe("templates - auto-injection", () => {
       description: "This is a test description",
       navigation: {},
       basePath: "",
+      asset: createAssetFunction(""),
     };
 
     const html = await renderJsxLayout(layoutPath, layoutProps);
@@ -162,6 +205,7 @@ describe("templates - auto-injection", () => {
       articleHtml: "<p>Content</p>",
       navigation: {},
       basePath: "",
+      asset: createAssetFunction(""),
     };
 
     const html = await renderJsxLayout(layoutPath, layoutProps);
@@ -177,6 +221,7 @@ describe("templates - auto-injection", () => {
       articleHtml: "<p>Content</p>",
       navigation: {},
       basePath: "",
+      asset: createAssetFunction(""),
     };
 
     const html = await renderJsxLayout(layoutPath, layoutProps);
@@ -192,6 +237,7 @@ describe("templates - auto-injection", () => {
       articleHtml: "<p>Content</p>",
       navigation: {},
       basePath: "",
+      asset: createAssetFunction(""),
     };
 
     const html = await renderJsxLayout(layoutPath, layoutProps);
@@ -210,6 +256,7 @@ describe("templates - auto-injection", () => {
       articleHtml: "<p>Article content</p>",
       navigation: {},
       basePath: "",
+      asset: createAssetFunction(""),
     };
 
     const html = await renderJsxLayout(layoutPath, layoutProps);
@@ -237,6 +284,7 @@ describe("templates - error handling", () => {
       articleHtml: "<p>Content</p>",
       navigation: {},
       basePath: "",
+      asset: createAssetFunction(""),
     };
 
     await expect(renderJsxLayout(layoutPath, layoutProps)).rejects.toThrow(
@@ -252,6 +300,7 @@ describe("templates - error handling", () => {
       articleHtml: "",
       navigation: {},
       basePath: "",
+      asset: createAssetFunction(""),
     };
 
     await expect(renderJsxLayout(layoutPath, layoutProps)).rejects.toThrow();
