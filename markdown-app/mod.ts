@@ -39,5 +39,5 @@ export {
   type NavItem,
   type NavSection,
 } from "./navigation.ts";
-export { type LayoutProps } from "./template.ts";
+export { type LayoutProps } from "./layout.ts";
 export { Head } from "./components.tsx";

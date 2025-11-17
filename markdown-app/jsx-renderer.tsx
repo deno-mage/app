@@ -1,5 +1,5 @@
 import { render } from "preact-render-to-string";
-import type { LayoutProps } from "./template.ts";
+import type { LayoutProps } from "./layout.ts";
 
 export interface RenderOptions {
   dev?: boolean;
@@ -21,7 +21,10 @@ export async function renderJsxLayout(
   const layoutUrl = layoutPath.startsWith("file://")
     ? layoutPath
     : `file://${layoutPath}`;
-  const layoutModule = await import(layoutUrl);
+  // Bust module cache by adding timestamp query param
+  // This ensures layout changes are picked up on rebuild (both dev and production)
+  const cacheBustedUrl = `${layoutUrl}?t=${Date.now()}`;
+  const layoutModule = await import(cacheBustedUrl);
 
   if (!layoutModule.Layout) {
     throw new Error(

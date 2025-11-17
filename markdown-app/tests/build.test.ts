@@ -350,6 +350,210 @@ describe("build - dev mode", () => {
   });
 });
 
+describe("build - layout cache busting", () => {
+  let tempDir: string;
+
+  beforeEach(async () => {
+    tempDir = await Deno.makeTempDir({
+      prefix: "markdown-app-layout-cache-",
+    });
+  });
+
+  it("should load fresh layout in dev mode when layout file changes", async () => {
+    const { articlesDir, outputDir, layoutDir } = await setupBuildTest({
+      tempDir,
+    });
+
+    await writeMarkdownFile(
+      join(articlesDir, "test.md"),
+      { title: "Test", slug: "test", layout: "docs" },
+      "Content",
+    );
+
+    // Write initial layout with a marker
+    const layoutPath = join(layoutDir, "_layout-docs.tsx");
+    await Deno.writeTextFile(
+      layoutPath,
+      `import type { LayoutProps } from "../../../mod.ts";
+
+export function Layout(props: LayoutProps) {
+  return <div data-version="v1"><main dangerouslySetInnerHTML={{ __html: props.articleHtml }} /></div>;
+}`,
+    );
+
+    // First build
+    await build({
+      articlesDir,
+      outputDir,
+      layoutDir,
+      basePath: "/",
+      dev: true,
+      syntaxHighlightLanguages: [],
+    });
+
+    let content = await Deno.readTextFile(join(outputDir, "test.html"));
+    expect(content).toContain('data-version="v1"');
+
+    // Wait a bit to ensure timestamp changes
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    // Update layout with different marker
+    await Deno.writeTextFile(
+      layoutPath,
+      `import type { LayoutProps } from "../../../mod.ts";
+
+export function Layout(props: LayoutProps) {
+  return <div data-version="v2"><main dangerouslySetInnerHTML={{ __html: props.articleHtml }} /></div>;
+}`,
+    );
+
+    // Second build - should pick up new layout
+    await build({
+      articlesDir,
+      outputDir,
+      layoutDir,
+      basePath: "/",
+      dev: true,
+      syntaxHighlightLanguages: [],
+    });
+
+    content = await Deno.readTextFile(join(outputDir, "test.html"));
+    expect(content).toContain('data-version="v2"');
+    expect(content).not.toContain('data-version="v1"');
+  });
+
+  it("should load fresh layout in production mode when layout file changes", async () => {
+    const { articlesDir, outputDir, layoutDir } = await setupBuildTest({
+      tempDir,
+    });
+
+    await writeMarkdownFile(
+      join(articlesDir, "test.md"),
+      { title: "Test", slug: "test", layout: "docs" },
+      "Content",
+    );
+
+    // Write initial layout with a marker
+    const layoutPath = join(layoutDir, "_layout-docs.tsx");
+    await Deno.writeTextFile(
+      layoutPath,
+      `import type { LayoutProps } from "../../../mod.ts";
+
+export function Layout(props: LayoutProps) {
+  return <div data-version="prod-v1"><main dangerouslySetInnerHTML={{ __html: props.articleHtml }} /></div>;
+}`,
+    );
+
+    // First build
+    await build({
+      articlesDir,
+      outputDir,
+      layoutDir,
+      basePath: "/",
+      dev: false,
+      syntaxHighlightLanguages: [],
+    });
+
+    let content = await Deno.readTextFile(join(outputDir, "test.html"));
+    expect(content).toContain('data-version="prod-v1"');
+
+    // Update layout with different marker
+    await Deno.writeTextFile(
+      layoutPath,
+      `import type { LayoutProps } from "../../../mod.ts";
+
+export function Layout(props: LayoutProps) {
+  return <div data-version="prod-v2"><main dangerouslySetInnerHTML={{ __html: props.articleHtml }} /></div>;
+}`,
+    );
+
+    // Second build - should pick up new layout
+    await build({
+      articlesDir,
+      outputDir,
+      layoutDir,
+      basePath: "/",
+      dev: false,
+      syntaxHighlightLanguages: [],
+    });
+
+    content = await Deno.readTextFile(join(outputDir, "test.html"));
+    expect(content).toContain('data-version="prod-v2"');
+    expect(content).not.toContain('data-version="prod-v1"');
+  });
+
+  it("should reload layout with updated component structure", async () => {
+    const { articlesDir, outputDir, layoutDir } = await setupBuildTest({
+      tempDir,
+    });
+
+    await writeMarkdownFile(
+      join(articlesDir, "test.md"),
+      { title: "Test", slug: "test", layout: "docs" },
+      "# Test Content",
+    );
+
+    const layoutPath = join(layoutDir, "_layout-docs.tsx");
+
+    // Initial layout - simple structure
+    await Deno.writeTextFile(
+      layoutPath,
+      `import type { LayoutProps } from "../../../mod.ts";
+
+export function Layout(props: LayoutProps) {
+  return <main dangerouslySetInnerHTML={{ __html: props.articleHtml }} />;
+}`,
+    );
+
+    await build({
+      articlesDir,
+      outputDir,
+      layoutDir,
+      basePath: "/",
+      dev: true,
+      syntaxHighlightLanguages: [],
+    });
+
+    let content = await Deno.readTextFile(join(outputDir, "test.html"));
+    expect(content).not.toContain("<header>");
+    expect(content).not.toContain("<footer>");
+
+    // Wait for timestamp to change
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    // Updated layout - with header and footer
+    await Deno.writeTextFile(
+      layoutPath,
+      `import type { LayoutProps } from "../../../mod.ts";
+
+export function Layout(props: LayoutProps) {
+  return (
+    <>
+      <header><h1>Site Header</h1></header>
+      <main dangerouslySetInnerHTML={{ __html: props.articleHtml }} />
+      <footer>Site Footer</footer>
+    </>
+  );
+}`,
+    );
+
+    await build({
+      articlesDir,
+      outputDir,
+      layoutDir,
+      basePath: "/",
+      dev: true,
+      syntaxHighlightLanguages: [],
+    });
+
+    content = await Deno.readTextFile(join(outputDir, "test.html"));
+    expect(content).toContain("<header>");
+    expect(content).toContain("Site Header");
+    expect(content).toContain("<footer>");
+    expect(content).toContain("Site Footer");
+  });
+});
+
 describe("build - error handling", () => {
   let tempDir: string;
 

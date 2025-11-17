@@ -1,7 +1,7 @@
 import { describe, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
 import { renderJsxLayout } from "../jsx-renderer.tsx";
-import type { LayoutProps } from "../template.ts";
+import type { LayoutProps } from "../layout.ts";
 import { join } from "@std/path";
 
 const fixturesDir = join(import.meta.dirname!, "fixtures", "layouts");
