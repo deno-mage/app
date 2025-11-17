@@ -10,11 +10,8 @@ import type { Frontmatter, LayoutComponent, LayoutProps } from "./types.ts";
 /**
  * Resolves a layout name to a file path.
  *
- * Layout names resolve to `layouts/{name}.tsx` relative to rootDir.
- * If no layout is specified, uses "default".
- *
- * @param layoutName Layout name from frontmatter (or undefined for default)
- * @param rootDir Root directory containing layouts/ folder
+ * Maps layout name to `layouts/{name}.tsx` relative to rootDir.
+ * Defaults to "default" if no layout specified.
  */
 export function resolveLayoutPath(
   layoutName: string | undefined,
@@ -59,12 +56,10 @@ export async function loadLayout(
 }
 
 /**
- * Resolves and loads a layout component based on frontmatter.
+ * Resolves and loads a layout component from frontmatter.
  *
- * Combines layout path resolution and loading into a single operation.
+ * Combines path resolution and loading in one operation.
  *
- * @param frontmatter Frontmatter containing optional layout field
- * @param rootDir Root directory containing layouts/ folder
  * @throws Error if layout cannot be resolved or loaded
  */
 export async function resolveLayout(
