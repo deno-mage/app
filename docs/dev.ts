@@ -13,6 +13,7 @@ const { register, watch } = markdownApp({
   articlesDir: resolve(docsDir, "./articles"),
   outputDir: resolve(docsDir, "./_site"),
   layoutDir: resolve(docsDir, "./layouts"),
+  assetsDir: resolve(docsDir, "./assets"),
   basePath: "/",
   dev: true,
   siteMetadata: {

@@ -48,23 +48,40 @@ nav-order: 1                        # Optional: sort order (default: 999)
 Create `_layout-{name}.tsx` files:
 
 ```tsx
-import type { TemplateData } from "@mage/app/markdown-app/template.ts";
+import type { LayoutProps } from "@mage/app/markdown-app";
 
-export function Layout({ title, content, navigation, basePath }: TemplateData) {
+export function Layout({ title, articleHtml, navigation, asset }: LayoutProps) {
   return (
     <html>
       <head>
         <title>{title}</title>
-        <link rel="stylesheet" href={`${basePath}/gfm.css`} />
+        <link rel="stylesheet" href={asset("gfm.css")} />
+        <link rel="stylesheet" href={asset("main.css")} />
       </head>
       <body>
         <nav dangerouslySetInnerHTML={{ __html: navigation.aside }} />
-        <main dangerouslySetInnerHTML={{ __html: content }} />
+        <main dangerouslySetInnerHTML={{ __html: articleHtml }} />
       </body>
     </html>
   );
 }
 ```
+
+### asset() Function
+
+The `asset(path)` function generates URLs for static assets with automatic
+cache-busting. All assets in the `assets/` directory are hashed:
+
+- `asset("main.css")` → `/__assets/main-a3f2b1c8.css`
+- `asset("logo.svg")` → `/__assets/logo-f4e3d2a1.svg`
+- `asset("js/app.js")` → `/__assets/js/app-b2c4e6f8.js`
+
+For generated files (like `gfm.css`), it combines with basePath:
+
+- `asset("gfm.css")` → `/gfm.css` (or `/docs/gfm.css` with basePath)
+
+Always use `asset()` for all asset references to ensure correct paths and
+cache-busting.
 
 ## Assets
 

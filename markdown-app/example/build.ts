@@ -7,6 +7,7 @@ const { build } = markdownApp({
   articlesDir: "./docs",
   outputDir: "./docs/_site",
   layoutDir: "./docs",
+  assetsDir: "./docs/assets",
   basePath: "/",
   dev: false,
 });

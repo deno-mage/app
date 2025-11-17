@@ -15,7 +15,7 @@ export interface RenderOptions {
  */
 export async function renderJsxLayout(
   layoutPath: string,
-  data: LayoutProps,
+  props: LayoutProps,
   options: RenderOptions = {},
 ): Promise<string> {
   const layoutUrl = layoutPath.startsWith("file://")
@@ -29,13 +29,13 @@ export async function renderJsxLayout(
     );
   }
 
-  const rendered = render(layoutModule.Layout(data));
+  const rendered = render(layoutModule.Layout(props));
   const { customHeadContent, bodyContent } = extractHeadAndBody(rendered);
 
   // Build complete HTML document
   const html = buildDocument({
-    title: data.title,
-    description: data.description,
+    title: props.title,
+    description: props.description,
     themeColor: options.themeColor,
     customHeadContent,
     bodyContent,
