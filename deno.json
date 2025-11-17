@@ -13,6 +13,7 @@
     "./csp": "./csp/mod.ts",
     "./logs": "./logs/mod.ts",
     "./markdown-app": "./markdown-app/mod.ts",
+    "./pages": "./pages/mod.ts",
     "./rate-limit": "./rate-limit/mod.ts",
     "./request-id": "./request-id/mod.ts",
     "./security-headers": "./security-headers/mod.ts",
