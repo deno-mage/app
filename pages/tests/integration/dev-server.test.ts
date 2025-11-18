@@ -12,12 +12,12 @@ const FIXTURES_DIR = join(
 let server: MageTestServer;
 let cleanup: (() => void) | undefined;
 
-beforeAll(() => {
+beforeAll(async () => {
   server = new MageTestServer();
 
   const { registerDevServer } = pages();
 
-  cleanup = registerDevServer(server.app, {
+  cleanup = await registerDevServer(server.app, {
     rootDir: FIXTURES_DIR,
     route: "/",
   });
@@ -305,12 +305,12 @@ describe("dev server - custom base route", () => {
   let customServer: MageTestServer;
   let customCleanup: (() => void) | undefined;
 
-  beforeAll(() => {
+  beforeAll(async () => {
     customServer = new MageTestServer();
 
     const { registerDevServer } = pages();
 
-    customCleanup = registerDevServer(customServer.app, {
+    customCleanup = await registerDevServer(customServer.app, {
       rootDir: FIXTURES_DIR,
       route: "/docs/",
     });

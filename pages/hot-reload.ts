@@ -46,10 +46,6 @@ export function notifyClients(): void {
       hotReloadClients.delete(client);
     }
   }
-
-  if (hotReloadClients.size > 0) {
-    logger.info(`Notified ${hotReloadClients.size} hot reload clients`);
-  }
 }
 
 /**

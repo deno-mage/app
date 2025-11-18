@@ -4,7 +4,7 @@
  * @module
  */
 
-import { join, relative } from "@std/path";
+import { join } from "@std/path";
 import type { MageApp } from "../app/mod.ts";
 import { scanPages } from "./scanner.ts";
 import { renderPageFromFile } from "./renderer.ts";
@@ -42,10 +42,10 @@ interface DevServerState {
  * @param options Dev server configuration
  * @returns Cleanup function to stop watchers
  */
-export function registerDevServer(
+export async function registerDevServer(
   app: MageApp,
   options: DevServerOptions = {},
-): () => void {
+): Promise<() => void> {
   const rootDir = options.rootDir ?? "./";
   const baseRoute = options.route ?? "/";
 
@@ -60,16 +60,10 @@ export function registerDevServer(
   };
 
   // Build initial asset map
-  buildAssetMap(publicDir, baseRoute).then((map) => {
-    state.assetMap = map;
-  });
+  state.assetMap = await buildAssetMap(publicDir, baseRoute);
 
   // Watch directories for changes
-  const watchCallback = async (path: string, kind: Deno.FsEvent["kind"]) => {
-    // Show path relative to rootDir for cleaner logs
-    const relativePath = relative(rootDir, path);
-    logger.info(`${kind}: ${relativePath}`);
-
+  const watchCallback = async (path: string) => {
     // Rebuild asset map if public/ changed
     if (path.startsWith(publicDir)) {
       state.assetMap = await buildAssetMap(publicDir, baseRoute);
