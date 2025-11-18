@@ -1,12 +1,3 @@
-/**
- * Core Mage application module.
- *
- * Exports the main MageApp class, context types, middleware types,
- * default router, and error handling for building web applications.
- *
- * @module
- */
-
 import type { MageContext as PrivateMageContext } from "./context.ts";
 import type { MageRequest as PrivateMageRequest } from "./request.ts";
 import type { PublicOf } from "../type-utils/utils.ts";
