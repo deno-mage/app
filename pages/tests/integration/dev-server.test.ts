@@ -174,63 +174,77 @@ describe("dev server - asset serving", () => {
     // Wait for watcher to detect change and rebuild asset map
     await new Promise((resolve) => setTimeout(resolve, 100));
 
-    // The new file should now be in the asset map and servable
-    // We can't easily get the hash, but we can verify the watcher was triggered
-    // by checking the reload endpoint
-    const response = await fetch(server.url("/__reload"));
-    const data = await response.json();
-    expect(data.reload).toBe(true);
-
     // Cleanup
     await Deno.remove(tempAsset);
   });
 });
 
 describe("dev server - hot reload endpoint", () => {
-  it("should respond to hot reload checks", async () => {
-    const response = await fetch(server.url("/__reload"));
-
-    expect(response.status).toBe(200);
-    expect(response.headers.get("content-type")).toContain(
-      "application/json",
+  it("should upgrade to WebSocket connection", async () => {
+    const wsUrl = server.url("/__reload").toString().replace(
+      "http://",
+      "ws://",
     );
 
-    const data = await response.json();
-    expect(data).toHaveProperty("reload");
-    expect(typeof data.reload).toBe("boolean");
+    const ws = new WebSocket(wsUrl);
+
+    // Wait for connection
+    await new Promise<void>((resolve, reject) => {
+      const timeout = setTimeout(
+        () => reject(new Error("Connection timeout")),
+        1000,
+      );
+      ws.onopen = () => {
+        clearTimeout(timeout);
+        resolve();
+      };
+      ws.onerror = () => {
+        clearTimeout(timeout);
+        reject(new Error("Failed to connect"));
+      };
+    });
+
+    expect(ws.readyState).toBe(WebSocket.OPEN);
+
+    ws.close();
   });
 
-  it("should return reload: false when no changes", async () => {
-    const response = await fetch(server.url("/__reload"));
-    const data = await response.json();
+  it("should send reload message when files change", async () => {
+    const wsUrl = server.url("/__reload").toString().replace(
+      "http://",
+      "ws://",
+    );
+    const ws = new WebSocket(wsUrl);
 
-    expect(data.reload).toBe(false);
-  });
+    // Wait for connection
+    await new Promise<void>((resolve) => {
+      ws.onopen = () => resolve();
+    });
 
-  it("should trigger reload when files change", async () => {
-    // First check - should be false
-    const response1 = await fetch(server.url("/__reload"));
-    const data1 = await response1.json();
-    expect(data1.reload).toBe(false);
+    // Set up message handler with timeout
+    let timeoutId: number | undefined;
+    const messagePromise = new Promise<string>((resolve, reject) => {
+      ws.onmessage = (event) => {
+        if (timeoutId !== undefined) clearTimeout(timeoutId);
+        resolve(event.data);
+      };
+      timeoutId = setTimeout(
+        () => reject(new Error("Timeout waiting for message")),
+        2000,
+      );
+    });
 
-    // Trigger a file change by touching a file in pages/
+    // Trigger a file change
     const tempFile = join(FIXTURES_DIR, "pages", "_temp.md");
     await Deno.writeTextFile(tempFile, "---\ntitle: Temp\n---\n\n# Temp");
 
-    // Wait for watcher to detect change
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    // Wait for reload message
+    const message = await messagePromise;
 
-    // Second check - should be true
-    const response2 = await fetch(server.url("/__reload"));
-    const data2 = await response2.json();
-    expect(data2.reload).toBe(true);
-
-    // Third check - should be false again (reset after check)
-    const response3 = await fetch(server.url("/__reload"));
-    const data3 = await response3.json();
-    expect(data3.reload).toBe(false);
+    expect(message).toBe("reload");
 
     // Cleanup
+    ws.close();
     await Deno.remove(tempFile);
   });
 });
@@ -268,10 +282,30 @@ describe("dev server - custom base route", () => {
   });
 
   it("should serve hot reload endpoint under custom base route", async () => {
-    const response = await fetch(customServer.url("/docs/__reload"));
+    const wsUrl = customServer.url("/docs/__reload").toString().replace(
+      "http://",
+      "ws://",
+    );
+    const ws = new WebSocket(wsUrl);
 
-    expect(response.status).toBe(200);
-    const data = await response.json();
-    expect(data).toHaveProperty("reload");
+    // Wait for connection
+    await new Promise<void>((resolve, reject) => {
+      const timeout = setTimeout(
+        () => reject(new Error("Connection timeout")),
+        1000,
+      );
+      ws.onopen = () => {
+        clearTimeout(timeout);
+        resolve();
+      };
+      ws.onerror = () => {
+        clearTimeout(timeout);
+        reject(new Error("Failed to connect"));
+      };
+    });
+
+    expect(ws.readyState).toBe(WebSocket.OPEN);
+
+    ws.close();
   });
 });

@@ -10,7 +10,12 @@ import { scanPages } from "./scanner.ts";
 import { renderPageFromFile } from "./renderer.ts";
 import { buildAssetMap, resolveAssetPath } from "./assets.ts";
 import { watchDirectories } from "./watcher.ts";
-import { injectHotReload, ReloadManager } from "./hot-reload.ts";
+import {
+  injectHotReload,
+  notifyClients,
+  registerHotReloadClient,
+} from "./hot-reload.ts";
+import { logger } from "./logger.ts";
 import type { DevServerOptions } from "./types.ts";
 
 /**
@@ -21,8 +26,6 @@ interface DevServerState {
   assetMap: Map<string, string>;
   /** Watcher abort controllers */
   watchers: AbortController[];
-  /** Reload manager for hot reload */
-  reloadManager: ReloadManager;
 }
 
 /**
@@ -54,7 +57,6 @@ export function registerDevServer(
   const state: DevServerState = {
     assetMap: new Map(),
     watchers: [],
-    reloadManager: new ReloadManager(),
   };
 
   // Build initial asset map
@@ -64,15 +66,15 @@ export function registerDevServer(
 
   // Watch directories for changes
   const watchCallback = async (path: string, kind: Deno.FsEvent["kind"]) => {
-    console.log(`[pages] ${kind}: ${path}`);
+    logger.info(`${kind}: ${path}`);
 
     // Rebuild asset map if public/ changed
     if (path.startsWith(publicDir)) {
       state.assetMap = await buildAssetMap(publicDir, baseRoute);
     }
 
-    // Trigger hot reload
-    state.reloadManager.triggerReload();
+    // Notify WebSocket clients to reload
+    notifyClients();
   };
 
   state.watchers = watchDirectories(
@@ -161,10 +163,11 @@ export function registerDevServer(
     }
   });
 
-  // Register hot reload endpoint
+  // Register hot reload WebSocket endpoint
   app.get(`${baseRoute}__reload`, (c) => {
-    const shouldReload = state.reloadManager.checkAndReset();
-    c.json({ reload: shouldReload });
+    c.webSocket((socket) => {
+      registerHotReloadClient(socket);
+    });
   });
 
   // Register routes for assets

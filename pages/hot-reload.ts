@@ -1,40 +1,86 @@
 /**
  * Hot reload utilities for development mode.
  *
- * Injects a script that polls for changes and reloads the page.
+ * Injects a script that connects via WebSocket and reloads on changes.
  *
  * @module
  */
 
+import { logger } from "./logger.ts";
+
+/**
+ * WebSocket clients connected for hot reload.
+ */
+const hotReloadClients = new Set<WebSocket>();
+
+/**
+ * Register a WebSocket client for hot reload notifications.
+ */
+export function registerHotReloadClient(socket: WebSocket): void {
+  hotReloadClients.add(socket);
+
+  socket.onclose = () => {
+    hotReloadClients.delete(socket);
+  };
+
+  socket.onerror = () => {
+    hotReloadClients.delete(socket);
+  };
+}
+
+/**
+ * Notify all connected clients to reload.
+ */
+export function notifyClients(): void {
+  const message = "reload";
+
+  for (const client of hotReloadClients) {
+    try {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(message);
+      }
+    } catch (error) {
+      logger.error(
+        error instanceof Error ? error : new Error(String(error)),
+      );
+      hotReloadClients.delete(client);
+    }
+  }
+
+  if (hotReloadClients.size > 0) {
+    logger.info(`Notified ${hotReloadClients.size} hot reload clients`);
+  }
+}
+
 /**
  * Generates hot reload script to inject into HTML.
  *
- * The script polls a reload endpoint every second and reloads the page
- * when the server signals a change.
+ * The script connects via WebSocket and reloads the page when the server
+ * signals a change.
  */
 export function generateHotReloadScript(reloadEndpoint: string): string {
   return `
 <script>
 (function() {
-  let lastCheck = Date.now();
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const host = window.location.host;
+  const ws = new WebSocket(protocol + '//' + host + '${reloadEndpoint}');
 
-  function checkForUpdates() {
-    fetch('${reloadEndpoint}?t=' + lastCheck)
-      .then(res => res.json())
-      .then(data => {
-        if (data.reload) {
-          console.log('[pages] Reloading page...');
-          window.location.reload();
-        }
-        lastCheck = Date.now();
-      })
-      .catch(err => {
-        // Silently ignore errors (dev server might be restarting)
-      });
-  }
+  ws.onmessage = function() {
+    console.log('[pages] Reloading...');
+    window.location.reload();
+  };
 
-  // Check every second
-  setInterval(checkForUpdates, 1000);
+  ws.onclose = function() {
+    console.log('[pages] Disconnected, retrying in 1s...');
+    setTimeout(function() {
+      window.location.reload();
+    }, 1000);
+  };
+
+  ws.onerror = function() {
+    console.log('[pages] Connection error');
+  };
 
   console.log('[pages] Hot reload enabled');
 })();
@@ -54,27 +100,4 @@ export function injectHotReload(html: string, reloadEndpoint: string): string {
 
   // Fallback: append at end
   return html + script;
-}
-
-/**
- * Manages reload state for hot reload endpoint.
- */
-export class ReloadManager {
-  private shouldReload = false;
-
-  /**
-   * Signals that a reload should occur.
-   */
-  triggerReload(): void {
-    this.shouldReload = true;
-  }
-
-  /**
-   * Checks if reload is needed and resets the flag.
-   */
-  checkAndReset(): boolean {
-    const result = this.shouldReload;
-    this.shouldReload = false;
-    return result;
-  }
 }

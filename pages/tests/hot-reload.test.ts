@@ -3,7 +3,8 @@ import { expect } from "@std/expect";
 import {
   generateHotReloadScript,
   injectHotReload,
-  ReloadManager,
+  notifyClients,
+  registerHotReloadClient,
 } from "../hot-reload.ts";
 
 describe("hot-reload - script generation", () => {
@@ -13,20 +14,29 @@ describe("hot-reload - script generation", () => {
     expect(script).toContain("<script>");
     expect(script).toContain("</script>");
     expect(script).toContain("/__reload");
-    expect(script).toContain("fetch");
+    expect(script).toContain("WebSocket");
   });
 
-  it("should include polling logic", () => {
+  it("should include WebSocket connection logic", () => {
     const script = generateHotReloadScript("/__reload");
 
-    expect(script).toContain("setInterval");
-    expect(script).toContain("1000");
+    expect(script).toContain("new WebSocket");
+    expect(script).toContain("ws.onmessage");
+    expect(script).toContain("ws.onclose");
+    expect(script).toContain("ws.onerror");
   });
 
   it("should include reload logic", () => {
     const script = generateHotReloadScript("/__reload");
 
     expect(script).toContain("window.location.reload");
+  });
+
+  it("should handle both ws and wss protocols", () => {
+    const script = generateHotReloadScript("/__reload");
+
+    expect(script).toContain("wss:");
+    expect(script).toContain("ws:");
   });
 });
 
@@ -60,37 +70,50 @@ describe("hot-reload - HTML injection", () => {
   });
 });
 
-describe("hot-reload - ReloadManager", () => {
-  it("should start with no reload needed", () => {
-    const manager = new ReloadManager();
+describe("hot-reload - WebSocket client management", () => {
+  it("should register WebSocket client", () => {
+    const mockSocket = {
+      onclose: null as (() => void) | null,
+      onerror: null as (() => void) | null,
+      readyState: WebSocket.OPEN,
+      send: () => {},
+    } as unknown as WebSocket;
 
-    expect(manager.checkAndReset()).toBe(false);
+    registerHotReloadClient(mockSocket);
+
+    // Should set up handlers
+    expect(mockSocket.onclose).not.toBeNull();
+    expect(mockSocket.onerror).not.toBeNull();
   });
 
-  it("should trigger reload", () => {
-    const manager = new ReloadManager();
+  it("should notify clients", () => {
+    const messages: string[] = [];
+    const mockSocket = {
+      onclose: null as (() => void) | null,
+      onerror: null as (() => void) | null,
+      readyState: WebSocket.OPEN,
+      send: (msg: string) => messages.push(msg),
+    } as unknown as WebSocket;
 
-    manager.triggerReload();
+    registerHotReloadClient(mockSocket);
+    notifyClients();
 
-    expect(manager.checkAndReset()).toBe(true);
+    expect(messages).toContain("reload");
   });
 
-  it("should reset after check", () => {
-    const manager = new ReloadManager();
+  it("should handle socket errors gracefully", () => {
+    const mockSocket = {
+      onclose: null as (() => void) | null,
+      onerror: null as (() => void) | null,
+      readyState: WebSocket.OPEN,
+      send: () => {
+        throw new Error("Socket error");
+      },
+    } as unknown as WebSocket;
 
-    manager.triggerReload();
-    expect(manager.checkAndReset()).toBe(true);
-    expect(manager.checkAndReset()).toBe(false);
-  });
+    registerHotReloadClient(mockSocket);
 
-  it("should handle multiple triggers before check", () => {
-    const manager = new ReloadManager();
-
-    manager.triggerReload();
-    manager.triggerReload();
-    manager.triggerReload();
-
-    expect(manager.checkAndReset()).toBe(true);
-    expect(manager.checkAndReset()).toBe(false);
+    // Should not throw
+    expect(() => notifyClients()).not.toThrow();
   });
 });
