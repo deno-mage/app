@@ -55,8 +55,8 @@ export interface SiteMetadata {
  * Options for the pages module.
  */
 export interface PagesOptions {
-  /** Site-wide metadata */
-  siteMetadata: SiteMetadata;
+  /** Site-wide metadata (only required for build, not dev server) */
+  siteMetadata?: SiteMetadata;
 }
 
 /**

@@ -1,0 +1,159 @@
+/**
+ * Development server for pages module with hot reload.
+ *
+ * @module
+ */
+
+import { join } from "@std/path";
+import type { MageApp } from "../app/mod.ts";
+import { scanPages } from "./scanner.ts";
+import { renderPageFromFile } from "./renderer.ts";
+import { buildAssetMap, resolveAssetPath } from "./assets.ts";
+import { watchDirectories } from "./watcher.ts";
+import { injectHotReload, ReloadManager } from "./hot-reload.ts";
+import type { DevServerOptions } from "./types.ts";
+
+/**
+ * State for the dev server.
+ */
+interface DevServerState {
+  /** Asset map rebuilt on asset changes */
+  assetMap: Map<string, string>;
+  /** Watcher abort controllers */
+  watchers: AbortController[];
+  /** Reload manager for hot reload */
+  reloadManager: ReloadManager;
+}
+
+/**
+ * Registers development server routes with hot reload.
+ *
+ * Behavior:
+ * - Watches pages/, layouts/, and public/ for changes
+ * - Rebuilds asset map when public/ changes
+ * - Renders pages on-demand from disk
+ * - Serves assets from public/ with hashed URLs
+ * - Triggers page reload on file changes
+ *
+ * @param app Mage application instance
+ * @param options Dev server configuration
+ * @returns Cleanup function to stop watchers
+ */
+export function registerDevServer(
+  app: MageApp,
+  options: DevServerOptions = {},
+): () => void {
+  const rootDir = options.rootDir ?? "./";
+  const baseRoute = options.route ?? "/";
+
+  const pagesDir = join(rootDir, "pages");
+  const layoutsDir = join(rootDir, "layouts");
+  const publicDir = join(rootDir, "public");
+
+  // Initialize dev server state
+  const state: DevServerState = {
+    assetMap: new Map(),
+    watchers: [],
+    reloadManager: new ReloadManager(),
+  };
+
+  // Build initial asset map
+  buildAssetMap(publicDir).then((map) => {
+    state.assetMap = map;
+  });
+
+  // Watch directories for changes
+  const watchCallback = async (path: string, kind: Deno.FsEvent["kind"]) => {
+    console.log(`[pages] ${kind}: ${path}`);
+
+    // Rebuild asset map if public/ changed
+    if (path.startsWith(publicDir)) {
+      state.assetMap = await buildAssetMap(publicDir);
+    }
+
+    // Trigger hot reload
+    state.reloadManager.triggerReload();
+  };
+
+  state.watchers = watchDirectories(
+    [pagesDir, layoutsDir, publicDir],
+    watchCallback,
+  );
+
+  // Register routes for pages
+  app.get(`${baseRoute}*`, async (c) => {
+    let urlPath = c.req.url.pathname.replace(baseRoute, "");
+    // Ensure urlPath starts with /
+    if (!urlPath.startsWith("/")) {
+      urlPath = "/" + urlPath;
+    }
+
+    // Find matching page
+    const pages = await scanPages(pagesDir);
+    const page = pages.find((p) => p.urlPath === urlPath);
+
+    if (!page) {
+      c.notFound();
+      return;
+    }
+
+    // Render page on-demand
+    try {
+      const rendered = await renderPageFromFile(
+        page.filePath,
+        rootDir,
+        state.assetMap,
+      );
+
+      // Inject hot reload script
+      const reloadEndpoint = `${baseRoute}__reload`;
+      const htmlWithReload = injectHotReload(rendered.html, reloadEndpoint);
+
+      c.html(htmlWithReload);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      c.html(
+        `<html><body><h1>Error rendering page</h1><pre>${message}</pre></body></html>`,
+        500,
+      );
+    }
+  });
+
+  // Register hot reload endpoint
+  app.get(`${baseRoute}__reload`, (c) => {
+    const shouldReload = state.reloadManager.checkAndReset();
+    c.json({ reload: shouldReload });
+  });
+
+  // Register routes for assets
+  app.get("/__public/*", async (c) => {
+    const hashedUrl = c.req.url.pathname;
+
+    // Resolve hashed URL to clean file path
+    const cleanPath = resolveAssetPath(hashedUrl, state.assetMap);
+
+    if (!cleanPath) {
+      c.notFound();
+      return;
+    }
+
+    const filePath = join(publicDir, cleanPath);
+
+    try {
+      await c.file(filePath);
+    } catch (error) {
+      if (error instanceof Deno.errors.NotFound) {
+        c.notFound();
+      } else {
+        throw error;
+      }
+    }
+  });
+
+  // Return cleanup function
+  return () => {
+    for (const watcher of state.watchers) {
+      watcher.abort();
+    }
+  };
+}

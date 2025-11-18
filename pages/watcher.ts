@@ -25,18 +25,22 @@ export function watchDirectory(
   callback: WatchCallback,
 ): AbortController {
   const abortController = new AbortController();
+  let watcher: Deno.FsWatcher | null = null;
+
+  // Set up abort handler to close watcher
+  abortController.signal.addEventListener("abort", () => {
+    if (watcher) {
+      watcher.close();
+    }
+  });
 
   (async () => {
     try {
-      const watcher = Deno.watchFs(dirPath, {
+      watcher = Deno.watchFs(dirPath, {
         recursive: true,
       });
 
       for await (const event of watcher) {
-        if (abortController.signal.aborted) {
-          break;
-        }
-
         // Ignore access events, only handle modifications
         if (
           event.kind === "create" ||
@@ -54,6 +58,10 @@ export function watchDirectory(
         error instanceof Deno.errors.NotFound ||
         error instanceof Deno.errors.PermissionDenied
       ) {
+        return;
+      }
+      // Ignore interrupted errors from watcher.close()
+      if (error instanceof Error && error.message.includes("Interrupted")) {
         return;
       }
       throw error;
