@@ -29,8 +29,8 @@
     "format": "deno fmt",
     "check": "deno check .",
     "docs:dev": "deno run --allow-all docs/dev.ts",
-    "docs:build": "deno run --allow-read --allow-write docs/build.ts",
-    "docs:serve": "deno run --allow-read --allow-net docs/serve.ts"
+    "docs:build": "deno run --allow-read --allow-write --allow-env docs/build.ts",
+    "docs:serve": "deno run --allow-read --allow-net --allow-env docs/serve.ts"
   },
   "imports": {
     "@deno/gfm": "jsr:@deno/gfm@^0.11.0",
