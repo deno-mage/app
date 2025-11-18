@@ -4,7 +4,7 @@
  * @module
  */
 
-import { join } from "@std/path";
+import { join, relative } from "@std/path";
 import type { MageApp } from "../app/mod.ts";
 import { scanPages } from "./scanner.ts";
 import { renderPageFromFile } from "./renderer.ts";
@@ -66,7 +66,9 @@ export function registerDevServer(
 
   // Watch directories for changes
   const watchCallback = async (path: string, kind: Deno.FsEvent["kind"]) => {
-    logger.info(`${kind}: ${path}`);
+    // Show path relative to rootDir for cleaner logs
+    const relativePath = relative(rootDir, path);
+    logger.info(`${kind}: ${relativePath}`);
 
     // Rebuild asset map if public/ changed
     if (path.startsWith(publicDir)) {
@@ -112,10 +114,11 @@ export function registerDevServer(
         return;
       } catch {
         // Fall back to simple 404 if _not-found.md doesn't exist or fails to render
-        c.html(
-          `<html><body><h1>404 Not Found</h1><p>Page not found: ${urlPath}</p></body></html>`,
-          404,
-        );
+        const reloadEndpoint = `${baseRoute}__reload`;
+        const fallbackHtml =
+          `<html><body><h1>404 Not Found</h1><p>Page not found: ${urlPath}</p></body></html>`;
+        const htmlWithReload = injectHotReload(fallbackHtml, reloadEndpoint);
+        c.html(htmlWithReload, 404);
         return;
       }
     }
@@ -134,6 +137,11 @@ export function registerDevServer(
 
       c.html(htmlWithReload);
     } catch (error) {
+      // Log the error for debugging
+      logger.error(
+        error instanceof Error ? error : new Error(String(error)),
+      );
+
       // Try to render _error.md
       const errorPath = join(pagesDir, "_error.md");
       try {
@@ -154,10 +162,11 @@ export function registerDevServer(
         const message = error instanceof Error
           ? error.message
           : "Unknown error";
-        c.html(
-          `<html><body><h1>Error rendering page</h1><pre>${message}</pre></body></html>`,
-          500,
-        );
+        const reloadEndpoint = `${baseRoute}__reload`;
+        const fallbackHtml =
+          `<html><body><h1>Error rendering page</h1><pre>${message}</pre></body></html>`;
+        const htmlWithReload = injectHotReload(fallbackHtml, reloadEndpoint);
+        c.html(htmlWithReload, 500);
         return;
       }
     }

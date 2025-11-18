@@ -10,6 +10,7 @@ import { scanPages } from "./scanner.ts";
 import type { PageInfo } from "./scanner.ts";
 import { renderPageFromFile } from "./renderer.ts";
 import { buildAssetMap } from "./assets.ts";
+import { logger } from "./logger.ts";
 import type { BuildOptions, SiteMetadata } from "./types.ts";
 
 /**
@@ -39,6 +40,8 @@ export async function build(
   const pagesDir = join(rootDir, "pages");
   const publicDir = join(rootDir, "public");
 
+  logger.info(`Building static site from ${rootDir}...`);
+
   // Clean and recreate output directory for fresh build
   await Deno.remove(outDir, { recursive: true }).catch(() => {});
   await ensureDir(outDir);
@@ -48,24 +51,40 @@ export async function build(
 
   // Scan for all markdown pages
   const pages = await scanPages(pagesDir);
+  logger.info(`Found ${pages.length} pages to build`);
 
   // Render and write each page
+  let successCount = 0;
+  let errorCount = 0;
+
   for (const page of pages) {
-    const rendered = await renderPageFromFile(
-      page.filePath,
-      rootDir,
-      assetMap,
-    );
+    try {
+      const rendered = await renderPageFromFile(
+        page.filePath,
+        rootDir,
+        assetMap,
+      );
 
-    // Determine output file path
-    const outputPath = urlPathToFilePath(page.urlPath, outDir);
+      // Determine output file path
+      const outputPath = urlPathToFilePath(page.urlPath, outDir);
 
-    // Ensure parent directory exists
-    const parentDir = join(outputPath, "..");
-    await ensureDir(parentDir);
+      // Ensure parent directory exists
+      const parentDir = join(outputPath, "..");
+      await ensureDir(parentDir);
 
-    // Write HTML file
-    await Deno.writeTextFile(outputPath, rendered.html);
+      // Write HTML file
+      await Deno.writeTextFile(outputPath, rendered.html);
+      successCount++;
+    } catch (error) {
+      errorCount++;
+      logger.error(
+        new Error(
+          `Failed to render ${page.urlPath}: ${
+            error instanceof Error ? error.message : String(error)
+          }`,
+        ),
+      );
+    }
   }
 
   // Render _not-found.md to 404.html (if it exists)
@@ -102,6 +121,12 @@ export async function build(
 
   // Generate robots.txt
   await generateRobotsTxt(siteMetadata, outDir);
+
+  // Log summary
+  if (errorCount > 0) {
+    logger.error(new Error(`Build completed with ${errorCount} error(s)`));
+  }
+  logger.info(`✓ Built ${successCount} pages to ${outDir}`);
 }
 
 /**

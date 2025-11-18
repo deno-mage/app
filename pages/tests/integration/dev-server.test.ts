@@ -82,6 +82,27 @@ describe("dev server - page serving", () => {
     expect(html).toContain("window.location.reload");
   });
 
+  it("should inject hot reload script into fallback 404 page", async () => {
+    // Temporarily rename _not-found.md so fallback is used
+    const notFoundPath = join(FIXTURES_DIR, "pages", "_not-found.md");
+    const notFoundBackup = join(FIXTURES_DIR, "pages", "_not-found.md.backup");
+    await Deno.rename(notFoundPath, notFoundBackup);
+
+    try {
+      const response = await fetch(server.url("/page-without-custom-404"));
+
+      expect(response.status).toBe(404);
+      const html = await response.text();
+      expect(html).toContain("404 Not Found");
+      expect(html).toContain("<script>");
+      expect(html).toContain("/__reload");
+      expect(html).toContain("WebSocket");
+    } finally {
+      // Restore _not-found.md
+      await Deno.rename(notFoundBackup, notFoundPath);
+    }
+  });
+
   it("should return 500 when page rendering fails", async () => {
     // Create a page with invalid frontmatter to trigger rendering error
     const tempFile = join(FIXTURES_DIR, "pages", "broken.md");
@@ -119,6 +140,37 @@ describe("dev server - page serving", () => {
 
     // Cleanup
     await Deno.remove(tempFile);
+  });
+
+  it("should inject hot reload script into fallback 500 error page", async () => {
+    // Temporarily rename _error.md so fallback is used
+    const errorMdPath = join(FIXTURES_DIR, "pages", "_error.md");
+    const errorMdBackup = join(FIXTURES_DIR, "pages", "_error.md.backup");
+    await Deno.rename(errorMdPath, errorMdBackup);
+
+    try {
+      // Create a page with invalid frontmatter to trigger rendering error
+      const tempFile = join(FIXTURES_DIR, "pages", "broken3.md");
+      await Deno.writeTextFile(
+        tempFile,
+        "---\ntitle: Test\ninvalid: [unclosed\n---\n\n# Content",
+      );
+
+      const response = await fetch(server.url("/broken3"));
+
+      expect(response.status).toBe(500);
+      const html = await response.text();
+      expect(html).toContain("Error rendering page");
+      expect(html).toContain("<script>");
+      expect(html).toContain("/__reload");
+      expect(html).toContain("WebSocket");
+
+      // Cleanup
+      await Deno.remove(tempFile);
+    } finally {
+      // Restore _error.md
+      await Deno.rename(errorMdBackup, errorMdPath);
+    }
   });
 });
 

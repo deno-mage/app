@@ -5,6 +5,7 @@
  */
 
 import { join } from "@std/path";
+import { toFileUrl } from "@std/path/to-file-url";
 import type { Frontmatter, LayoutComponent, LayoutProps } from "./types.ts";
 
 /**
@@ -32,7 +33,11 @@ export async function loadLayout(
   layoutPath: string,
 ): Promise<LayoutComponent> {
   try {
-    const module = await import(layoutPath);
+    // Convert to absolute file URL for dynamic import
+    const absolutePath = toFileUrl(Deno.realPathSync(layoutPath)).href;
+    // Add cache-busting query parameter to force reload on every import
+    const cacheBustedUrl = `${absolutePath}?t=${Date.now()}`;
+    const module = await import(cacheBustedUrl);
 
     if (!module.default) {
       throw new Error(
