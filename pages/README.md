@@ -19,12 +19,17 @@ This will add the following to your `deno.json`:
     "@mage/app": "jsr:@mage/app@^0.7.0",
     "preact": "npm:preact@^10.24.3",
     "preact-render-to-string": "npm:preact-render-to-string@^6.5.11"
+  },
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact"
   }
 }
 ```
 
 **Note:** Preact and preact-render-to-string are required peer dependencies. The
-pages module uses your project's Preact installation for rendering layouts.
+pages module uses your project's Preact installation for rendering layouts. The
+compiler options configure TypeScript to use Preact's JSX runtime.
 
 ## Quick Start
 
