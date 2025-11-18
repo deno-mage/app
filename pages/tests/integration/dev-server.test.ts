@@ -12,12 +12,12 @@ const FIXTURES_DIR = join(
 let server: MageTestServer;
 let cleanup: (() => void) | undefined;
 
-beforeAll(() => {
+beforeAll(async () => {
   server = new MageTestServer();
 
   const { registerDevServer } = pages();
 
-  cleanup = registerDevServer(server.app, {
+  cleanup = await registerDevServer(server.app, {
     rootDir: FIXTURES_DIR,
     route: "/",
   });
@@ -261,7 +261,7 @@ describe("dev server - hot reload endpoint", () => {
     ws.close();
   });
 
-  it("should send reload message when files change", async () => {
+  it("should send reload message when page files change", async () => {
     const wsUrl = server.url("/__reload").toString().replace(
       "http://",
       "ws://",
@@ -299,18 +299,67 @@ describe("dev server - hot reload endpoint", () => {
     ws.close();
     await Deno.remove(tempFile);
   });
+
+  it("should send reload message when any file in rootDir changes", async () => {
+    const wsUrl = server.url("/__reload").toString().replace(
+      "http://",
+      "ws://",
+    );
+    const ws = new WebSocket(wsUrl);
+
+    // Wait for connection
+    await new Promise<void>((resolve) => {
+      ws.onopen = () => resolve();
+    });
+
+    // Set up message handler with timeout
+    let timeoutId: number | undefined;
+    const messagePromise = new Promise<string>((resolve, reject) => {
+      ws.onmessage = (event) => {
+        if (timeoutId !== undefined) clearTimeout(timeoutId);
+        resolve(event.data);
+      };
+      timeoutId = setTimeout(
+        () => reject(new Error("Timeout waiting for message")),
+        2000,
+      );
+    });
+
+    // Create a components directory and file (simulating a component change)
+    const componentsDir = join(FIXTURES_DIR, "components");
+    await Deno.mkdir(componentsDir, { recursive: true });
+    const tempFile = join(componentsDir, "test-component.tsx");
+    await Deno.writeTextFile(
+      tempFile,
+      "export const Test = () => <div>Test</div>;",
+    );
+
+    // Wait for reload message
+    const message = await messagePromise;
+
+    expect(message).toBe("reload");
+
+    // Cleanup
+    ws.close();
+    await Deno.remove(tempFile);
+    try {
+      await Deno.remove(componentsDir);
+    } catch {
+      // Ignore if directory not empty
+    }
+  });
 });
 
 describe("dev server - custom base route", () => {
   let customServer: MageTestServer;
   let customCleanup: (() => void) | undefined;
 
-  beforeAll(() => {
+  beforeAll(async () => {
     customServer = new MageTestServer();
 
     const { registerDevServer } = pages();
 
-    customCleanup = registerDevServer(customServer.app, {
+    customCleanup = await registerDevServer(customServer.app, {
       rootDir: FIXTURES_DIR,
       route: "/docs/",
     });

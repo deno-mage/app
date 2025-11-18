@@ -4,7 +4,7 @@
  * @module
  */
 
-import { join, relative } from "@std/path";
+import { join } from "@std/path";
 import type { MageApp } from "../app/mod.ts";
 import { scanPages } from "./scanner.ts";
 import { renderPageFromFile } from "./renderer.ts";
@@ -32,7 +32,7 @@ interface DevServerState {
  * Registers development server routes with hot reload.
  *
  * Behavior:
- * - Watches pages/, layouts/, and public/ for changes
+ * - Watches entire rootDir for changes (pages/, layouts/, components/, public/, etc.)
  * - Rebuilds asset map when public/ changes
  * - Renders pages on-demand from disk
  * - Serves assets from public/ with hashed URLs
@@ -42,15 +42,14 @@ interface DevServerState {
  * @param options Dev server configuration
  * @returns Cleanup function to stop watchers
  */
-export function registerDevServer(
+export async function registerDevServer(
   app: MageApp,
   options: DevServerOptions = {},
-): () => void {
+): Promise<() => void> {
   const rootDir = options.rootDir ?? "./";
   const baseRoute = options.route ?? "/";
 
   const pagesDir = join(rootDir, "pages");
-  const layoutsDir = join(rootDir, "layouts");
   const publicDir = join(rootDir, "public");
 
   // Initialize dev server state
@@ -60,16 +59,10 @@ export function registerDevServer(
   };
 
   // Build initial asset map
-  buildAssetMap(publicDir, baseRoute).then((map) => {
-    state.assetMap = map;
-  });
+  state.assetMap = await buildAssetMap(publicDir, baseRoute);
 
-  // Watch directories for changes
-  const watchCallback = async (path: string, kind: Deno.FsEvent["kind"]) => {
-    // Show path relative to rootDir for cleaner logs
-    const relativePath = relative(rootDir, path);
-    logger.info(`${kind}: ${relativePath}`);
-
+  // Watch entire rootDir for changes
+  const watchCallback = async (path: string) => {
     // Rebuild asset map if public/ changed
     if (path.startsWith(publicDir)) {
       state.assetMap = await buildAssetMap(publicDir, baseRoute);
@@ -80,7 +73,7 @@ export function registerDevServer(
   };
 
   state.watchers = watchDirectories(
-    [pagesDir, layoutsDir, publicDir],
+    [rootDir],
     watchCallback,
   );
 
@@ -130,6 +123,8 @@ export function registerDevServer(
         rootDir,
         state.assetMap,
       );
+
+      logger.info(`Rendered page: ${urlPath}`);
 
       // Inject hot reload script
       const reloadEndpoint = `${baseRoute}__reload`;

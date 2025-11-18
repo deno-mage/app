@@ -35,7 +35,7 @@ describe("api - pages factory function", () => {
     const instance = pages();
     const app = new MageApp();
 
-    const cleanup = instance.registerDevServer(app, {
+    const cleanup = await instance.registerDevServer(app, {
       rootDir: FIXTURES_DIR,
     });
 
@@ -52,7 +52,7 @@ describe("api - pages factory function", () => {
     const instance = pages();
     const app = new MageApp();
 
-    const cleanup = instance.registerDevServer(app);
+    const cleanup = await instance.registerDevServer(app);
 
     expect(typeof cleanup).toBe("function");
     cleanup();

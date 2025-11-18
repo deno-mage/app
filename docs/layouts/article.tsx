@@ -1,33 +1,33 @@
-export default function DefaultLayout({
-  html,
-  title,
-  description,
-}: {
-  html: string;
-  title: string;
-  description?: string;
-}) {
+import type { LayoutProps } from "../../pages/mod.ts";
+
+const cacheBuster = Date.now();
+
+const { Head, ColorMode } = (await import(
+  `../components/index.ts?t=${cacheBuster}`
+)) as typeof import("../components/index.ts");
+
+export default function ArticleLayout(props: LayoutProps) {
   return (
     <html lang="en">
-      <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>{title}</title>
-        {description && <meta name="description" content={description} />}
-      </head>
+      <Head title={props.title} description={props.description} />
       <body>
         <header>
-          <nav>
-            <a href="/">Home</a>
-            {" | "}
-            <a href="/installation">Installation</a>
-            {" | "}
-            <a href="/getting-started">Getting Started</a>
-          </nav>
+          <div>
+            <nav>
+              <a href="/">Home</a>
+              {" | "}
+              <a href="/installation">Installation</a>
+              {" | "}
+              <a href="/getting-started">Getting Started</a>
+            </nav>
+            <ColorMode />
+          </div>
         </header>
-        <main dangerouslySetInnerHTML={{ __html: html }} />
+        <main dangerouslySetInnerHTML={{ __html: props.html }} />
         <footer>
-          <p>Mage - Simple, Fast Web Framework for Deno</p>
+          <div>
+            <p>Mage - Simple, Fast Web Framework for Deno</p>
+          </div>
         </footer>
       </body>
     </html>

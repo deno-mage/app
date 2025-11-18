@@ -28,7 +28,7 @@ import type {
  * const { registerDevServer } = pages();
  *
  * const app = new MageApp();
- * registerDevServer(app, { rootDir: "./docs" });
+ * await registerDevServer(app, { rootDir: "./docs" });
  *
  * Deno.serve({ port: 3000 }, app.handler);
  * ```
@@ -51,7 +51,7 @@ export function pages(options: PagesOptions = {}): {
   registerDevServer: (
     app: MageApp,
     devOptions?: DevServerOptions,
-  ) => () => void;
+  ) => Promise<() => void>;
   build: (buildOptions?: BuildOptions) => Promise<void>;
   registerStaticServer: (
     app: MageApp,
@@ -69,13 +69,13 @@ export function pages(options: PagesOptions = {}): {
      *
      * @param app Mage application instance
      * @param devOptions Dev server configuration
-     * @returns Cleanup function to stop watchers
+     * @returns Promise resolving to cleanup function to stop watchers
      */
-    registerDevServer(
+    async registerDevServer(
       app: MageApp,
       devOptions: DevServerOptions = {},
-    ): () => void {
-      return registerDev(app, devOptions);
+    ): Promise<() => void> {
+      return await registerDev(app, devOptions);
     },
 
     /**
