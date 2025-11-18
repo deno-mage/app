@@ -167,6 +167,53 @@ title: Test
 
     expect(await exists(join(testOutputDir, "index.html"))).toBe(true);
   });
+
+  it("should generate 404.html from _not-found.md", async () => {
+    const testOutputDir = await Deno.makeTempDir();
+
+    await build(siteMetadata, {
+      rootDir: FIXTURES_DIR,
+      outDir: testOutputDir,
+    });
+
+    const notFoundPath = join(testOutputDir, "404.html");
+    expect(await exists(notFoundPath)).toBe(true);
+
+    const html = await Deno.readTextFile(notFoundPath);
+    expect(html).toContain("<title>Page Not Found</title>");
+    expect(html).toContain("404 - Page Not Found");
+  });
+
+  it("should generate 500.html from _error.md", async () => {
+    const testOutputDir = await Deno.makeTempDir();
+
+    await build(siteMetadata, {
+      rootDir: FIXTURES_DIR,
+      outDir: testOutputDir,
+    });
+
+    const errorPath = join(testOutputDir, "500.html");
+    expect(await exists(errorPath)).toBe(true);
+
+    const html = await Deno.readTextFile(errorPath);
+    expect(html).toContain("<title>Error</title>");
+    expect(html).toContain("Something Went Wrong");
+  });
+
+  it("should not include _not-found.md and _error.md in regular pages", async () => {
+    const testOutputDir = await Deno.makeTempDir();
+
+    await build(siteMetadata, {
+      rootDir: FIXTURES_DIR,
+      outDir: testOutputDir,
+    });
+
+    const notFoundAsPagePath = join(testOutputDir, "_not-found", "index.html");
+    expect(await exists(notFoundAsPagePath)).toBe(false);
+
+    const errorAsPagePath = join(testOutputDir, "_error", "index.html");
+    expect(await exists(errorAsPagePath)).toBe(false);
+  });
 });
 
 describe("build - sitemap generation", () => {
@@ -250,6 +297,21 @@ describe("build - sitemap generation", () => {
 
     expect(sitemap).toContain("https://custom-domain.com/");
     expect(sitemap).not.toContain("https://example.com/");
+  });
+
+  it("should not include special pages (_not-found, _error) in sitemap", async () => {
+    const testOutputDir = await Deno.makeTempDir();
+
+    await build(siteMetadata, {
+      rootDir: FIXTURES_DIR,
+      outDir: testOutputDir,
+    });
+
+    const sitemapPath = join(testOutputDir, "sitemap.xml");
+    const sitemap = await Deno.readTextFile(sitemapPath);
+
+    expect(sitemap).not.toContain("_not-found");
+    expect(sitemap).not.toContain("_error");
   });
 });
 

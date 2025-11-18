@@ -63,6 +63,16 @@ describe("dev server - page serving", () => {
     await response.body?.cancel(); // Consume body to prevent leak
   });
 
+  it("should serve custom _not-found.md page for 404s", async () => {
+    const response = await fetch(server.url("/does-not-exist"));
+
+    expect(response.status).toBe(404);
+    const html = await response.text();
+    expect(html).toContain("<title>Page Not Found</title>");
+    expect(html).toContain("404 - Page Not Found");
+    expect(html).toContain("Sorry, the page you're looking for doesn't exist");
+  });
+
   it("should inject hot reload script into pages", async () => {
     const response = await fetch(server.url("/"));
 
@@ -72,7 +82,7 @@ describe("dev server - page serving", () => {
     expect(html).toContain("window.location.reload");
   });
 
-  it("should return 500 with error message when page rendering fails", async () => {
+  it("should return 500 when page rendering fails", async () => {
     // Create a page with invalid frontmatter to trigger rendering error
     const tempFile = join(FIXTURES_DIR, "pages", "broken.md");
     await Deno.writeTextFile(
@@ -83,8 +93,29 @@ describe("dev server - page serving", () => {
     const response = await fetch(server.url("/broken"));
 
     expect(response.status).toBe(500);
+    // Just verify we get some HTML back (could be custom _error.md or fallback)
     const html = await response.text();
-    expect(html).toContain("Error rendering page");
+    expect(html.length).toBeGreaterThan(0);
+
+    // Cleanup
+    await Deno.remove(tempFile);
+  });
+
+  it("should serve custom _error.md page for rendering errors", async () => {
+    // Create a page with invalid frontmatter to trigger rendering error
+    const tempFile = join(FIXTURES_DIR, "pages", "broken2.md");
+    await Deno.writeTextFile(
+      tempFile,
+      "---\ntitle: Test\ninvalid: [unclosed\n---\n\n# Content",
+    );
+
+    const response = await fetch(server.url("/broken2"));
+
+    expect(response.status).toBe(500);
+    const html = await response.text();
+    expect(html).toContain("<title>Error</title>");
+    expect(html).toContain("Something Went Wrong");
+    expect(html).toContain("An error occurred while rendering this page");
 
     // Cleanup
     await Deno.remove(tempFile);

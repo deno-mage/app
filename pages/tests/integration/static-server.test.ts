@@ -80,6 +80,16 @@ describe("static server - page serving", () => {
     await response.body?.cancel();
   });
 
+  it("should serve custom 404.html for non-existent pages", async () => {
+    const response = await fetch(server.url("/does-not-exist"));
+
+    expect(response.status).toBe(404);
+    const html = await response.text();
+    expect(html).toContain("<title>Page Not Found</title>");
+    expect(html).toContain("404 - Page Not Found");
+    expect(html).toContain("Sorry, the page you're looking for doesn't exist");
+  });
+
   it("should NOT inject hot reload script into pages", async () => {
     const response = await fetch(server.url("/"));
 
@@ -281,5 +291,69 @@ describe("static server - file path resolution", () => {
     expect(response.status).toBe(200);
     const html = await response.text();
     expect(html).toContain("<title>Introduction</title>");
+  });
+});
+
+describe("static server - fallback 404 when no custom 404.html", () => {
+  let fallbackServer: MageTestServer;
+  let fallbackDistDir: string;
+
+  beforeAll(async () => {
+    // Create temp directory and build WITHOUT _not-found.md
+    const tempFixturesDir = await Deno.makeTempDir();
+    fallbackDistDir = await Deno.makeTempDir();
+
+    // Copy fixtures but exclude _not-found.md
+    const tempPagesDir = join(tempFixturesDir, "pages");
+    const tempLayoutsDir = join(tempFixturesDir, "layouts");
+    const tempPublicDir = join(tempFixturesDir, "public");
+
+    await Deno.mkdir(tempPagesDir, { recursive: true });
+    await Deno.mkdir(tempLayoutsDir, { recursive: true });
+    await Deno.mkdir(tempPublicDir, { recursive: true });
+
+    // Copy only index.md (not _not-found.md)
+    await Deno.copyFile(
+      join(FIXTURES_DIR, "pages", "index.md"),
+      join(tempPagesDir, "index.md"),
+    );
+
+    // Copy layout
+    await Deno.copyFile(
+      join(FIXTURES_DIR, "layouts", "default.tsx"),
+      join(tempLayoutsDir, "default.tsx"),
+    );
+
+    // Build static site (without _not-found.md, so no 404.html)
+    await build(siteMetadata, {
+      rootDir: tempFixturesDir,
+      outDir: fallbackDistDir,
+    });
+
+    // Setup static server
+    fallbackServer = new MageTestServer();
+
+    const { registerStaticServer } = pages();
+
+    registerStaticServer(fallbackServer.app, {
+      rootDir: fallbackDistDir,
+      route: "/",
+    });
+
+    fallbackServer.start();
+  });
+
+  afterAll(async () => {
+    await fallbackServer.stop();
+    await Deno.remove(fallbackDistDir, { recursive: true });
+  });
+
+  it("should fall back to default 404 when no 404.html exists", async () => {
+    const response = await fetch(fallbackServer.url("/does-not-exist"));
+
+    expect(response.status).toBe(404);
+    const text = await response.text();
+    // Should get the default "Not Found" text response
+    expect(text).toContain("Not Found");
   });
 });

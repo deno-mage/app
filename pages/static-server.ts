@@ -6,6 +6,7 @@
  * @module
  */
 
+import { join } from "@std/path";
 import type { MageApp } from "../app/mod.ts";
 import { serveFiles } from "../serve-files/mod.ts";
 import type { StaticServerOptions } from "./types.ts";
@@ -16,6 +17,7 @@ import type { StaticServerOptions } from "./types.ts";
  * Behavior:
  * - Serves pre-built HTML files from dist/
  * - Serves hashed assets from dist/__public/
+ * - Falls back to 404.html if it exists
  * - No building, watching, or rendering
  * - Production serving mode
  *
@@ -31,12 +33,28 @@ export function registerStaticServer(
   const rootDir = options.rootDir ?? "./";
   const baseRoute = options.route ?? "/";
 
-  // Everything (pages and assets) is served under the base route
-  app.get(
-    `${baseRoute}*`,
-    serveFiles({
+  // Wrap serveFiles to handle custom 404 page
+  app.get(`${baseRoute}*`, async (c, next) => {
+    // Store the original notFound function
+    const originalNotFound = c.notFound.bind(c);
+
+    // Override notFound to serve custom 404.html (synchronously)
+    c.notFound = (text?: string) => {
+      const notFoundPath = join(rootDir, "404.html");
+      try {
+        // Read file synchronously to maintain sync interface
+        const html = Deno.readTextFileSync(notFoundPath);
+        c.html(html, 404);
+      } catch {
+        // Fall back to original notFound if 404.html doesn't exist
+        originalNotFound(text);
+      }
+    };
+
+    // Call serveFiles middleware
+    await serveFiles({
       directory: rootDir,
       serveIndex: true,
-    }),
-  );
+    })(c, next);
+  });
 }

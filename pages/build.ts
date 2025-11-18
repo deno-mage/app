@@ -63,6 +63,32 @@ export async function build(
     await Deno.writeTextFile(outputPath, rendered.html);
   }
 
+  // Render _not-found.md to 404.html (if it exists)
+  const notFoundPath = join(pagesDir, "_not-found.md");
+  try {
+    const rendered = await renderPageFromFile(
+      notFoundPath,
+      rootDir,
+      assetMap,
+    );
+    await Deno.writeTextFile(join(outDir, "404.html"), rendered.html);
+  } catch {
+    // _not-found.md doesn't exist, skip
+  }
+
+  // Render _error.md to 500.html (if it exists)
+  const errorPath = join(pagesDir, "_error.md");
+  try {
+    const rendered = await renderPageFromFile(
+      errorPath,
+      rootDir,
+      assetMap,
+    );
+    await Deno.writeTextFile(join(outDir, "500.html"), rendered.html);
+  } catch {
+    // _error.md doesn't exist, skip
+  }
+
   // Copy assets to dist/__public/ with hashed filenames
   await copyHashedAssets(publicDir, outDir, assetMap);
 

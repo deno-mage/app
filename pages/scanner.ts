@@ -25,6 +25,10 @@ export interface PageInfo {
  * - `pages/docs/api.md` → `/docs/api`
  * - `pages/guide/intro.md` → `/guide/intro`
  *
+ * Excludes special pages that start with underscore:
+ * - `pages/_not-found.md` - Not included in regular page list
+ * - `pages/_error.md` - Not included in regular page list
+ *
  * @param pagesDir Path to the pages/ directory
  * @returns Array of page information
  */
@@ -40,6 +44,12 @@ export async function scanPages(pagesDir: string): Promise<PageInfo[]> {
     ) {
       if (entry.isFile) {
         const relativePath = relative(pagesDir, entry.path);
+
+        // Skip special pages (files starting with underscore)
+        if (relativePath.startsWith("_")) {
+          continue;
+        }
+
         const urlPath = filePathToUrlPath(relativePath);
 
         pages.push({

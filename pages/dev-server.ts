@@ -93,8 +93,29 @@ export function registerDevServer(
     const page = pages.find((p) => p.urlPath === urlPath);
 
     if (!page) {
-      c.notFound();
-      return;
+      // Try to render _not-found.md
+      const notFoundPath = join(pagesDir, "_not-found.md");
+      try {
+        const rendered = await renderPageFromFile(
+          notFoundPath,
+          rootDir,
+          state.assetMap,
+        );
+
+        // Inject hot reload script
+        const reloadEndpoint = `${baseRoute}__reload`;
+        const htmlWithReload = injectHotReload(rendered.html, reloadEndpoint);
+
+        c.html(htmlWithReload, 404);
+        return;
+      } catch {
+        // Fall back to simple 404 if _not-found.md doesn't exist or fails to render
+        c.html(
+          `<html><body><h1>404 Not Found</h1><p>Page not found: ${urlPath}</p></body></html>`,
+          404,
+        );
+        return;
+      }
     }
 
     // Render page on-demand
@@ -111,11 +132,32 @@ export function registerDevServer(
 
       c.html(htmlWithReload);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      c.html(
-        `<html><body><h1>Error rendering page</h1><pre>${message}</pre></body></html>`,
-        500,
-      );
+      // Try to render _error.md
+      const errorPath = join(pagesDir, "_error.md");
+      try {
+        const rendered = await renderPageFromFile(
+          errorPath,
+          rootDir,
+          state.assetMap,
+        );
+
+        // Inject hot reload script
+        const reloadEndpoint = `${baseRoute}__reload`;
+        const htmlWithReload = injectHotReload(rendered.html, reloadEndpoint);
+
+        c.html(htmlWithReload, 500);
+        return;
+      } catch {
+        // Fall back to simple error page if _error.md doesn't exist or fails to render
+        const message = error instanceof Error
+          ? error.message
+          : "Unknown error";
+        c.html(
+          `<html><body><h1>Error rendering page</h1><pre>${message}</pre></body></html>`,
+          500,
+        );
+        return;
+      }
     }
   });
 
