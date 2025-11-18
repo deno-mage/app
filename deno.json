@@ -1,6 +1,6 @@
 {
   "name": "@mage/app",
-  "version": "0.8.1",
+  "version": "0.8.2",
   "license": "MIT",
   "publish": {
     "include": [
@@ -27,11 +27,7 @@
       "README.md",
       "LICENSE"
     ],
-    "exclude": [
-      "**/tests/",
-      "**/*.test.ts",
-      "**/README.md"
-    ]
+    "exclude": ["**/tests/", "**/*.test.ts", "**/README.md"]
   },
   "exports": {
     ".": "./app/mod.ts",
