@@ -11,31 +11,46 @@ import { pages } from "@mage/app/pages";
 
 ## Quick Start
 
-**Project structure:**
+### 1. Project Structure
 
 ```
 docs/
+├── dev.ts           # Development server
+├── build.ts         # Static build script
+├── serve.ts         # Production server
 ├── pages/           # Markdown files
 │   ├── index.md
 │   └── guide.md
 ├── layouts/         # Preact components
 │   └── default.tsx
-└── public/          # Static assets
+└── public/          # Static assets (optional)
     └── styles.css
 ```
 
-**Development server:**
+### 2. Install Dependencies
+
+```json
+{
+  "imports": {
+    "@mage/app": "jsr:@mage/app@^0.7.0"
+  },
+  "tasks": {
+    "docs:dev": "deno run --allow-all docs/dev.ts",
+    "docs:build": "deno run --allow-read --allow-write --allow-env docs/build.ts",
+    "docs:serve": "deno run --allow-read --allow-net --allow-env docs/serve.ts"
+  }
+}
+```
+
+### 3. Create Scripts
+
+**`docs/dev.ts`** - Development server with hot reload:
 
 ```typescript
 import { MageApp } from "@mage/app";
 import { pages } from "@mage/app/pages";
 
-const { registerDevServer } = pages({
-  siteMetadata: {
-    title: "My Site",
-    description: "A simple static site",
-  },
-});
+const { registerDevServer } = pages();
 
 const app = new MageApp();
 registerDevServer(app, { rootDir: "./docs" });
@@ -43,19 +58,47 @@ registerDevServer(app, { rootDir: "./docs" });
 Deno.serve({ port: 3000 }, app.handler);
 ```
 
-**Production build:**
+**`docs/build.ts`** - Build static site:
 
 ```typescript
 import { pages } from "@mage/app/pages";
 
 const { build } = pages({
   siteMetadata: {
+    baseUrl: "https://example.com",
     title: "My Site",
     description: "A simple static site",
   },
 });
 
 await build({ rootDir: "./docs" });
+```
+
+**`docs/serve.ts`** - Serve built site:
+
+```typescript
+import { MageApp } from "@mage/app";
+import { pages } from "@mage/app/pages";
+
+const { registerStaticServer } = pages();
+
+const app = new MageApp();
+registerStaticServer(app, { rootDir: "./docs/dist" });
+
+Deno.serve({ port: 8000 }, app.handler);
+```
+
+### 4. Run Your Site
+
+```bash
+# Development (with hot reload)
+deno task docs:dev
+
+# Build static files
+deno task docs:build
+
+# Serve built files
+deno task docs:serve
 ```
 
 ## File-Based Routing
@@ -113,9 +156,11 @@ interface LayoutProps {
 ```tsx
 import type { LayoutProps } from "@mage/app/pages";
 
-export default function DefaultLayout(
-  { html, title, description }: LayoutProps,
-) {
+export default function DefaultLayout({
+  html,
+  title,
+  description,
+}: LayoutProps) {
   return (
     <html lang="en">
       <head>
@@ -236,86 +281,6 @@ Serve pre-built static files.
 - Serves pre-built static files
 - No building or watching
 - Production serving
-
-## Usage Patterns
-
-### Development Workflow
-
-```typescript
-import { MageApp } from "@mage/app";
-import { pages } from "@mage/app/pages";
-
-const { registerDevServer } = pages({
-  siteMetadata: { title: "My Docs" },
-});
-
-const app = new MageApp();
-registerDevServer(app, { rootDir: "./docs" });
-
-Deno.serve({ port: 3000 }, app.handler);
-```
-
-Start server, edit markdown/layouts, see changes instantly.
-
-### CI/CD Build
-
-```typescript
-import { pages } from "@mage/app/pages";
-
-const { build } = pages({
-  siteMetadata: { title: "My Docs" },
-});
-
-await build({
-  rootDir: "./docs",
-  outDir: "./dist",
-});
-```
-
-Run in CI to generate static files for deployment.
-
-### Production Server
-
-```typescript
-import { MageApp } from "@mage/app";
-import { pages } from "@mage/app/pages";
-
-const { registerStaticServer } = pages({
-  siteMetadata: { title: "My Docs" },
-});
-
-const app = new MageApp();
-registerStaticServer(app, { rootDir: "./dist" });
-
-Deno.serve({ port: 8000 }, app.handler);
-```
-
-Serve pre-built static files in production.
-
-### Mixed Application
-
-Combine with other Mage routes:
-
-```typescript
-import { MageApp } from "@mage/app";
-import { pages } from "@mage/app/pages";
-
-const app = new MageApp();
-
-// API routes
-app.get("/api/users", (c) => c.json({ users: [] }));
-
-// Docs site
-const { registerStaticServer } = pages({
-  siteMetadata: { title: "API Docs" },
-});
-registerStaticServer(app, {
-  rootDir: "./docs/dist",
-  route: "/docs",
-});
-
-Deno.serve(app.handler);
-```
 
 ## Notes
 
