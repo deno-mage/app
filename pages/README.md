@@ -5,9 +5,26 @@ from Markdown with Preact layouts and file-based routing.
 
 ## Installation
 
-```typescript
-import { pages } from "@mage/app/pages";
+Install the pages module and its required peer dependencies:
+
+```bash
+deno add jsr:@mage/app npm:preact npm:preact-render-to-string
 ```
+
+This will add the following to your `deno.json`:
+
+```json
+{
+  "imports": {
+    "@mage/app": "jsr:@mage/app@^0.7.0",
+    "preact": "npm:preact@^10.24.3",
+    "preact-render-to-string": "npm:preact-render-to-string@^6.5.11"
+  }
+}
+```
+
+**Note:** Preact and preact-render-to-string are required peer dependencies. The
+pages module uses your project's Preact installation for rendering layouts.
 
 ## Quick Start
 
@@ -27,13 +44,12 @@ docs/
     └── styles.css
 ```
 
-### 2. Install Dependencies
+### 2. Configure Tasks
+
+Add these tasks to your `deno.json`:
 
 ```json
 {
-  "imports": {
-    "@mage/app": "jsr:@mage/app@^0.7.0"
-  },
   "tasks": {
     "docs:dev": "deno run --allow-all docs/dev.ts",
     "docs:build": "deno run --allow-read --allow-write --allow-env docs/build.ts",
