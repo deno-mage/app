@@ -416,4 +416,35 @@ describe("build - URL path to file path conversion", () => {
     const introDir = join(testOutputDir, "docs", "intro");
     expect(await exists(introDir)).toBe(true);
   });
+
+  it("should clean output directory before building", async () => {
+    const testOutputDir = await Deno.makeTempDir();
+
+    // First build
+    await build(siteMetadata, {
+      rootDir: FIXTURES_DIR,
+      outDir: testOutputDir,
+    });
+
+    // Create a stale file that shouldn't exist after rebuild
+    const stalePath = join(testOutputDir, "stale-page", "index.html");
+    await Deno.mkdir(join(testOutputDir, "stale-page"), { recursive: true });
+    await Deno.writeTextFile(stalePath, "<html>Stale content</html>");
+
+    // Verify stale file exists before rebuild
+    expect(await exists(stalePath)).toBe(true);
+
+    // Second build (should clean everything first)
+    await build(siteMetadata, {
+      rootDir: FIXTURES_DIR,
+      outDir: testOutputDir,
+    });
+
+    // Stale file should be gone
+    expect(await exists(stalePath)).toBe(false);
+
+    // Real files should still exist
+    const indexPath = join(testOutputDir, "index.html");
+    expect(await exists(indexPath)).toBe(true);
+  });
 });

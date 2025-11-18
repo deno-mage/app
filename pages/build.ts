@@ -16,11 +16,15 @@ import type { BuildOptions, SiteMetadata } from "./types.ts";
  * Builds a static site from markdown files.
  *
  * Process:
- * 1. Scans pages/ directory for markdown files
- * 2. Builds asset map from public/ directory
- * 3. Renders each page with layout and asset URL replacement
- * 4. Writes HTML files to outDir
- * 5. Copies assets to outDir/__public/ with hashed filenames
+ * 1. Cleans output directory (removes all existing files)
+ * 2. Scans pages/ directory for markdown files
+ * 3. Builds asset map from public/ directory
+ * 4. Renders each page with layout and asset URL replacement
+ * 5. Writes HTML files to outDir
+ * 6. Copies assets to outDir/__public/ with hashed filenames
+ *
+ * Note: The output directory is completely cleaned before each build
+ * to ensure no stale files remain from previous builds.
  *
  * @param siteMetadata Site-wide metadata
  * @param options Build configuration
@@ -35,7 +39,8 @@ export async function build(
   const pagesDir = join(rootDir, "pages");
   const publicDir = join(rootDir, "public");
 
-  // Ensure output directory exists
+  // Clean and recreate output directory for fresh build
+  await Deno.remove(outDir, { recursive: true }).catch(() => {});
   await ensureDir(outDir);
 
   // Build asset map for cache-busting (always use / for static builds)
