@@ -1,14 +1,15 @@
 import type { LayoutProps } from "../../../types.ts";
 
 export default function DefaultLayout(props: LayoutProps) {
-  return (
-    <html>
-      <head>
-        <title>{props.title}</title>
-      </head>
-      <body>
-        <div dangerouslySetInnerHTML={{ __html: props.html }} />
-      </body>
-    </html>
-  );
+  const fullHtml = `<!DOCTYPE html>
+<html>
+<head>
+  <title>${props.title}</title>
+</head>
+<body>
+  <div>${props.html}</div>
+</body>
+</html>`;
+
+  return <div dangerouslySetInnerHTML={{ __html: fullHtml }} />;
 }

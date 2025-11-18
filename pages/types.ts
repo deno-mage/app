@@ -40,17 +40,15 @@ export interface LayoutProps {
 export type LayoutComponent = (props: LayoutProps) => ComponentChildren;
 
 /**
- * Site-wide metadata configuration.
+ * Site-wide metadata for sitemap and robots.txt generation.
  */
 export interface SiteMetadata {
-  /** Site title */
-  title: string;
-  /** Site description */
-  description: string;
   /** Base URL for the site (e.g., "https://example.com") */
-  baseUrl?: string;
-  /** Additional custom metadata */
-  [key: string]: unknown;
+  baseUrl: string;
+  /** Site title for meta tags */
+  title?: string;
+  /** Site description for meta tags */
+  description?: string;
 }
 
 /**
