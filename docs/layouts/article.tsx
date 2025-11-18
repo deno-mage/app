@@ -1,24 +1,14 @@
-export default function DefaultLayout({
-  html,
-  title,
-  description,
-}: {
-  html: string;
-  title: string;
-  description?: string;
-}) {
+import type { LayoutProps } from "../../pages/mod.ts";
+import { Head } from "../components/head.tsx";
+import { ColorMode } from "../components/color-mode.tsx";
+
+export default function DefaultLayout(props: LayoutProps) {
   return (
     <html lang="en">
-      <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>{title}</title>
-        {description && <meta name="description" content={description} />}
-        <link rel="stylesheet" href="/public/styles.css" />
-      </head>
+      <Head title={props.title} description={props.description} />
       <body>
         <header>
-          <div class="container">
+          <div>
             <nav>
               <a href="/">Home</a>
               {" | "}
@@ -26,14 +16,12 @@ export default function DefaultLayout({
               {" | "}
               <a href="/getting-started">Getting Started</a>
             </nav>
+            <ColorMode />
           </div>
         </header>
-        <main
-          className="container"
-          dangerouslySetInnerHTML={{ __html: html }}
-        />
+        <main dangerouslySetInnerHTML={{ __html: props.html }} />
         <footer>
-          <div class="container">
+          <div>
             <p>Mage - Simple, Fast Web Framework for Deno</p>
           </div>
         </footer>

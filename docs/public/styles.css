@@ -1,5 +1,82 @@
 @layer reset, base, components, utilities;
 
+:root {
+  /* Font families */
+  --font-heading: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, Helvetica, Arial, sans-serif;
+  --font-body: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, Helvetica, Arial, sans-serif;
+
+  /* Text sizing (rem) */
+  --text-0: 0;
+  --text-1: 0.875rem;
+  --text-2: 1rem;
+  --text-4: 1.25rem;
+  --text-8: 1.5rem;
+
+  /* Colors - Surfaces */
+  --surface-0: #ffffff;
+  --surface-0-hover: #f5f5f5;
+  --surface-1: #f9f9f9;
+  --surface-1-hover: #f0f0f0;
+  --surface-2: #e5e5e5;
+  --surface-2-hover: #d9d9d9;
+
+  /* Colors - Text */
+  --text: #333333;
+  --heading: #1a1a1a;
+  --link: #0066cc;
+  --link-hover: #0052a3;
+
+  /* Spacing */
+  --spacing-0: 0;
+  --spacing-1: 1px;
+  --spacing-2: 2px;
+  --spacing-4: 1rem;
+  --spacing-8: 2rem;
+
+  /* Sizing */
+  --size-0: 0;
+  --size-1: 1px;
+  --size-2: 2px;
+  --size-4: 1rem;
+  --size-8: 2rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    /* Colors - Surfaces */
+    --surface-0: #1a1a1a;
+    --surface-0-hover: #242424;
+    --surface-1: #0f0f0f;
+    --surface-1-hover: #1a1a1a;
+    --surface-2: #262626;
+    --surface-2-hover: #303030;
+
+    /* Colors - Text */
+    --text: #e5e5e5;
+    --heading: #f5f5f5;
+    --link: #4d9fff;
+    --link-hover: #7db8ff;
+  }
+}
+
+:root[data-theme="dark"] {
+  /* Colors - Surfaces */
+  --surface-0: #1a1a1a;
+  --surface-0-hover: #242424;
+  --surface-1: #0f0f0f;
+  --surface-1-hover: #1a1a1a;
+  --surface-2: #262626;
+  --surface-2-hover: #303030;
+
+  /* Colors - Text */
+  --text: #e5e5e5;
+  --heading: #f5f5f5;
+  --link: #4d9fff;
+  --link-hover: #7db8ff;
+}
+
 @layer reset {
   /* Box sizing */
   *,
@@ -108,45 +185,62 @@
 
 @layer base {
   body {
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-      Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji",
-      "Segoe UI Emoji";
-    background-color: #f9f9f9;
-    color: #333;
-    padding: 1rem;
+    font-family: var(--font-body);
+    background-color: var(--surface-1);
+    color: var(--text);
+    padding: var(--spacing-4);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-heading);
+    color: var(--heading);
   }
 
   h1 {
     font-size: 2.5rem;
-    margin-bottom: 1rem;
+    margin-bottom: var(--spacing-4);
   }
 
   h2 {
     font-size: 2rem;
-    margin-bottom: 0.75rem;
+    margin-bottom: var(--spacing-4);
   }
 
   h3 {
     font-size: 1.75rem;
-    margin-bottom: 0.5rem;
+    margin-bottom: var(--spacing-2);
   }
 
   h4 {
     font-size: 1.5rem;
-    margin-bottom: 0.5rem;
+    margin-bottom: var(--spacing-2);
   }
 
   h5 {
     font-size: 1.25rem;
-    margin-bottom: 0.5rem;
+    margin-bottom: var(--spacing-2);
   }
 
   h6 {
-    font-size: 1rem;
-    margin-bottom: 0.5rem;
+    font-size: var(--text-2);
+    margin-bottom: var(--spacing-2);
   }
 
   p {
-    margin-bottom: 1rem;
+    margin-bottom: var(--spacing-4);
+  }
+
+  a {
+    color: var(--link);
+    transition: color 150ms ease;
+  }
+
+  a:hover {
+    color: var(--link-hover);
   }
 }
