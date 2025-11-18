@@ -58,7 +58,7 @@ export function registerDevServer(
   };
 
   // Build initial asset map
-  buildAssetMap(publicDir).then((map) => {
+  buildAssetMap(publicDir, baseRoute).then((map) => {
     state.assetMap = map;
   });
 
@@ -68,7 +68,7 @@ export function registerDevServer(
 
     // Rebuild asset map if public/ changed
     if (path.startsWith(publicDir)) {
-      state.assetMap = await buildAssetMap(publicDir);
+      state.assetMap = await buildAssetMap(publicDir, baseRoute);
     }
 
     // Trigger hot reload
@@ -126,7 +126,7 @@ export function registerDevServer(
   });
 
   // Register routes for assets
-  app.get("/__public/*", async (c) => {
+  app.get(`${baseRoute}__public/*`, async (c) => {
     const hashedUrl = c.req.url.pathname;
 
     // Resolve hashed URL to clean file path

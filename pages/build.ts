@@ -38,8 +38,8 @@ export async function build(
   // Ensure output directory exists
   await ensureDir(outDir);
 
-  // Build asset map for cache-busting
-  const assetMap = await buildAssetMap(publicDir);
+  // Build asset map for cache-busting (always use / for static builds)
+  const assetMap = await buildAssetMap(publicDir, "/");
 
   // Scan for all markdown pages
   const pages = await scanPages(pagesDir);

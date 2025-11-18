@@ -44,10 +44,11 @@ export function buildHashedFilename(filePath: string, hash: string): string {
  * Scans a directory and builds a map of clean URLs to hashed URLs.
  *
  * Computes hash of each file's contents and maps:
- * `/public/path/file.ext` → `/__public/path/file-[hash].ext`
+ * `/public/path/file.ext` → `{baseRoute}__public/path/file-[hash].ext`
  */
 export async function buildAssetMap(
   publicDir: string,
+  baseRoute = "/",
 ): Promise<Map<string, string>> {
   const assetMap = new Map<string, string>();
 
@@ -61,8 +62,8 @@ export async function buildAssetMap(
         // Clean URL: /public/path/file.ext
         const cleanUrl = `/public/${relativePath}`;
 
-        // Hashed URL: /__public/path/file-hash.ext
-        const hashedUrl = `/__public/${hashedFilename}`;
+        // Hashed URL: {baseRoute}__public/path/file-hash.ext
+        const hashedUrl = `${baseRoute}__public/${hashedFilename}`;
 
         assetMap.set(cleanUrl, hashedUrl);
       }
@@ -113,7 +114,7 @@ export function replaceAssetUrls(
 /**
  * Reverses a hashed URL back to its clean file path.
  *
- * Maps incoming requests `/__public/file-hash.ext` → `file.ext`
+ * Maps incoming requests `{baseRoute}__public/file-hash.ext` → `file.ext`
  * for serving original files in dev mode.
  *
  * @returns Clean file path relative to public/ dir, or null if not found
