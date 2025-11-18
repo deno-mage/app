@@ -34,6 +34,24 @@ describe("scanner - page discovery", () => {
     expect(introPage!.filePath).toContain("docs/intro.md");
   });
 
+  it("should convert nested index.md to parent directory path", async () => {
+    const tempDir = await Deno.makeTempDir();
+    const pagesDir = join(tempDir, "pages");
+    const docsDir = join(pagesDir, "docs");
+
+    await Deno.mkdir(docsDir, { recursive: true });
+    await Deno.writeTextFile(
+      join(docsDir, "index.md"),
+      "---\ntitle: Docs\n---\n\n# Docs",
+    );
+
+    const pages = await scanPages(pagesDir);
+
+    const docsPage = pages.find((p) => p.urlPath === "/docs");
+    expect(docsPage).toBeDefined();
+    expect(docsPage!.filePath).toContain("docs/index.md");
+  });
+
   it("should return empty array for non-existent directory", async () => {
     const pagesDir = join(FIXTURES_DIR, "nonexistent");
     const pages = await scanPages(pagesDir);

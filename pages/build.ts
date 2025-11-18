@@ -55,8 +55,9 @@ export async function build(
     // Determine output file path
     const outputPath = urlPathToFilePath(page.urlPath, outDir);
 
-    // Ensure directory exists
-    await ensureDir(join(outDir, ...outputPath.split("/").slice(0, -1)));
+    // Ensure parent directory exists
+    const parentDir = join(outputPath, "..");
+    await ensureDir(parentDir);
 
     // Write HTML file
     await Deno.writeTextFile(outputPath, rendered.html);

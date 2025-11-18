@@ -72,6 +72,113 @@ title: Complete Page
     expect(result.html).toContain("<head");
     expect(result.html).toContain("<body");
   });
+
+  it("should replace asset URLs with hashed versions", async () => {
+    const markdown = `---
+title: Asset Test
+---
+
+# Test`;
+
+    const assetMap = new Map([
+      ["/public/styles.css", "/__public/styles-abc123.css"],
+    ]);
+    const result = await renderPage(markdown, FIXTURES_DIR, assetMap);
+
+    // Should NOT contain clean URLs
+    expect(result.html).not.toContain("/public/styles.css");
+
+    // Should contain hashed URLs
+    expect(result.html).toContain("/__public/styles-abc123.css");
+  });
+
+  it("should include description meta tag when description is present", async () => {
+    const markdown = `---
+title: Test Page
+description: This is a test description
+---
+
+# Content`;
+
+    const assetMap = new Map();
+    const result = await renderPage(markdown, FIXTURES_DIR, assetMap);
+
+    expect(result.html).toContain('<meta name="description"');
+    expect(result.html).toContain("This is a test description");
+  });
+
+  it("should not include description meta tag when description is absent", async () => {
+    const markdown = `---
+title: Test Page
+---
+
+# Content`;
+
+    const assetMap = new Map();
+    const result = await renderPage(markdown, FIXTURES_DIR, assetMap);
+
+    expect(result.html).not.toContain('<meta name="description"');
+  });
+});
+
+describe("renderer - error handling", () => {
+  it("should throw error when layout file does not exist", async () => {
+    const markdown = `---
+title: Test
+layout: nonexistent
+---
+
+# Content`;
+
+    const assetMap = new Map();
+
+    try {
+      await renderPage(markdown, FIXTURES_DIR, assetMap);
+      expect(true).toBe(false); // Should not reach here
+    } catch (error) {
+      expect(error).toBeInstanceOf(Error);
+      expect((error as Error).message).toContain("Layout file not found");
+    }
+  });
+
+  it("should throw error when frontmatter is invalid", async () => {
+    const markdown = `---
+title: Test
+invalid: [unclosed
+---
+
+# Content`;
+
+    const assetMap = new Map();
+
+    try {
+      await renderPage(markdown, FIXTURES_DIR, assetMap);
+      expect(true).toBe(false); // Should not reach here
+    } catch (error) {
+      expect(error).toBeInstanceOf(Error);
+      expect((error as Error).message).toContain("Invalid frontmatter YAML");
+    }
+  });
+
+  it("should throw error when title is missing in frontmatter", async () => {
+    const markdown = `---
+description: No title
+---
+
+# Content`;
+
+    const assetMap = new Map();
+
+    try {
+      await renderPage(markdown, FIXTURES_DIR, assetMap);
+      expect(true).toBe(false); // Should not reach here
+    } catch (error) {
+      expect(error).toBeInstanceOf(Error);
+      expect((error as Error).message).toContain(
+        "Frontmatter must include a 'title' field",
+      );
+    }
+  });
 });
 
 describe("renderer - file rendering", () => {
