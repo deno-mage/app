@@ -178,9 +178,8 @@ function calculateRouteSpecificity(routename: string): number {
  * 3. Wildcard routes (*) - lowest priority
  *
  * Best for:
- * - Serverless functions with frequent cold starts
  * - Small to medium applications (< 100 routes)
- * - Scenarios where startup time is critical
+ * - Applications where simplicity matters
  */
 export class LinearRouter implements MageRouter {
   private _entries: RouterEntry[] = [];

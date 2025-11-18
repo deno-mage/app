@@ -30,8 +30,8 @@ export interface MatchResult {
  * Router interface that all router implementations must follow.
  *
  * Implementations:
- * - LinearRouter (default): O(n) linear search, best for serverless/small apps
- * - RadixRouter (future): O(log n) tree-based, best for long-running servers with many routes
+ * - LinearRouter (default): O(n) linear search, simple and predictable
+ * - RadixRouter (future): O(log n) tree-based, for apps with many routes
  */
 export interface MageRouter {
   /**

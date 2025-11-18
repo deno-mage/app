@@ -6,8 +6,7 @@ complexity).
 ## Overview
 
 The Linear Router is the **default router** for Mage applications. It uses a
-straightforward array-based linear search algorithm to match routes, making it
-ideal for most use cases, especially serverless and edge deployments.
+straightforward array-based linear search algorithm to match routes.
 
 Routes are automatically sorted by specificity when matching, so static routes
 always take precedence over parameterized routes, which take precedence over
@@ -17,11 +16,9 @@ wildcards - regardless of registration order.
 
 **✅ Best for:**
 
-- Serverless functions (AWS Lambda, Cloudflare Workers, Deno Deploy)
-- Edge computing with frequent cold starts
 - Small to medium applications (< 100 routes)
+- Applications where simplicity and predictability matter
 - Development and testing
-- Any scenario where cold start latency is critical
 
 **⚠️ Consider alternatives for:**
 
@@ -372,7 +369,7 @@ private _entries: RouterEntry[] = [];
 - Minimal memory overhead
 - Fast iteration for small/medium route counts
 - Easy to debug and understand
-- Perfect for serverless cold starts
+- Fast initialization
 
 ## Examples
 
@@ -554,15 +551,14 @@ All tests use unit testing (no server required) for fast, isolated verification.
 
 ## Comparison with Other Routers
 
-| Feature             | Linear Router  | Radix Router (future) |
-| ------------------- | -------------- | --------------------- |
-| Time Complexity     | O(n)           | O(log n)              |
-| Startup Time        | < 1ms          | 5-30ms                |
-| Memory Usage        | Low            | Medium                |
-| Route Limit         | ~100 routes    | 1000+ routes          |
-| Cold Start Friendly | ✅ Yes         | ❌ No                 |
-| Simplicity          | ✅ Very simple | ⚠️ Complex            |
-| Debugging           | ✅ Easy        | ⚠️ Harder             |
+| Feature         | Linear Router  | Radix Router (future) |
+| --------------- | -------------- | --------------------- |
+| Time Complexity | O(n)           | O(log n)              |
+| Startup Time    | < 1ms          | 5-30ms                |
+| Memory Usage    | Low            | Medium                |
+| Route Limit     | ~100 routes    | 1000+ routes          |
+| Simplicity      | ✅ Very simple | ⚠️ Complex            |
+| Debugging       | ✅ Easy        | ⚠️ Harder             |
 
 ## Implementation Details
 
