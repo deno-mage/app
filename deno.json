@@ -27,7 +27,7 @@
       "README.md",
       "LICENSE"
     ],
-    "exclude": ["**/tests/**", "**/*.test.ts", "**/README.md"]
+    "exclude": ["**/tests/**", "**/*.test.ts"]
   },
   "exports": {
     ".": "./app/mod.ts",
