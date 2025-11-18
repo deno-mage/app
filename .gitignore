@@ -12,5 +12,4 @@ node_modules
 example/public/main.css
 
 # Docs build
-*/_site
-*/dist
+**/dist
