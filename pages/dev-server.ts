@@ -32,7 +32,7 @@ interface DevServerState {
  * Registers development server routes with hot reload.
  *
  * Behavior:
- * - Watches pages/, layouts/, and public/ for changes
+ * - Watches entire rootDir for changes (pages/, layouts/, components/, public/, etc.)
  * - Rebuilds asset map when public/ changes
  * - Renders pages on-demand from disk
  * - Serves assets from public/ with hashed URLs
@@ -50,7 +50,6 @@ export async function registerDevServer(
   const baseRoute = options.route ?? "/";
 
   const pagesDir = join(rootDir, "pages");
-  const layoutsDir = join(rootDir, "layouts");
   const publicDir = join(rootDir, "public");
 
   // Initialize dev server state
@@ -62,7 +61,7 @@ export async function registerDevServer(
   // Build initial asset map
   state.assetMap = await buildAssetMap(publicDir, baseRoute);
 
-  // Watch directories for changes
+  // Watch entire rootDir for changes
   const watchCallback = async (path: string) => {
     // Rebuild asset map if public/ changed
     if (path.startsWith(publicDir)) {
@@ -74,7 +73,7 @@ export async function registerDevServer(
   };
 
   state.watchers = watchDirectories(
-    [pagesDir, layoutsDir, publicDir],
+    [rootDir],
     watchCallback,
   );
 
@@ -124,6 +123,8 @@ export async function registerDevServer(
         rootDir,
         state.assetMap,
       );
+
+      logger.info(`Rendered page: ${urlPath}`);
 
       // Inject hot reload script
       const reloadEndpoint = `${baseRoute}__reload`;

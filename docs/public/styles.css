@@ -2,10 +2,12 @@
 
 :root {
   /* Font families */
-  --font-heading: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    Roboto, Helvetica, Arial, sans-serif;
-  --font-body: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    Roboto, Helvetica, Arial, sans-serif;
+  --font-heading:
+    system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+  --font-body:
+    system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
 
   /* Text sizing (rem) */
   --text-0: 0;

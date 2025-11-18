@@ -19,13 +19,17 @@ export const Head = (props: HeadProps) => {
         <meta name="description" content={props.description} />
       )}
       <link rel="stylesheet" href="/public/styles.css" />
-      <script>
-        {`(function() {
-        const stored = localStorage.getItem('theme');
-        const system = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-        document.documentElement.setAttribute('data-theme', stored || system);
-      })();`}
-      </script>
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `
+            (function() {
+              const stored = localStorage.getItem('theme');
+              const system = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+              document.documentElement.setAttribute('data-theme', stored || system);
+            })();
+          `,
+        }}
+      />
     </head>
   );
 };
