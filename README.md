@@ -84,6 +84,17 @@ Built-in hot reload, asset cache-busting, and static builds. Requires Preact:
 deno add jsr:@mage/app npm:preact npm:preact-render-to-string
 ```
 
+Add to your `deno.json`:
+
+```json
+{
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact"
+  }
+}
+```
+
 ### Import Examples
 
 ```typescript
