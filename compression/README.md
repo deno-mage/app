@@ -80,7 +80,7 @@ app.use(
 
 **Use this middleware when:**
 
-- Deploying to Deno Deploy or serverless (no nginx/CDN)
+- You don't have compression at the CDN/proxy level
 - Serving dynamic, uncacheable API responses (user-specific data, real-time
   content)
 - Network bandwidth is more expensive than CPU (mobile networks, pay-per-GB

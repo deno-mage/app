@@ -1,6 +1,6 @@
 ---
 title: "AWS Lambda"
-description: "Deploy Mage apps as serverless functions"
+description: "Deploy Mage apps to AWS Lambda"
 layout: "article"
 ---
 
