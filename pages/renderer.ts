@@ -9,6 +9,8 @@ import type { VNode } from "preact";
 import { parseAndRender } from "./markdown.ts";
 import { buildLayoutProps, resolveLayout } from "./layout.ts";
 import { replaceAssetUrls } from "./assets.ts";
+import { extractHead } from "./head-extractor.ts";
+import { loadHtmlTemplate, renderWithTemplate } from "./html-template.ts";
 import type { Frontmatter } from "./types.ts";
 
 /**
@@ -25,7 +27,7 @@ export interface RenderedPage {
  * Renders a markdown file to a complete HTML page.
  *
  * Combines markdown parsing, layout resolution, Preact rendering,
- * and asset URL replacement into one operation.
+ * head extraction, HTML template rendering, and asset URL replacement.
  *
  * @param markdownContent Raw markdown content with frontmatter
  * @param rootDir Root directory containing layouts/
@@ -49,8 +51,21 @@ export async function renderPage(
   // Render the layout with Preact
   const layoutHtml = renderToString(Layout(layoutProps) as VNode);
 
+  // Extract head content from layout
+  const { headContent, bodyContent } = extractHead(layoutHtml);
+
+  // Load HTML template
+  const template = await loadHtmlTemplate(rootDir);
+
+  // Render with template
+  const documentHtml = renderWithTemplate(template, {
+    head: headContent,
+    body: bodyContent,
+    props: layoutProps,
+  });
+
   // Replace asset URLs with hashed versions
-  const finalHtml = replaceAssetUrls(layoutHtml, assetMap);
+  const finalHtml = replaceAssetUrls(documentHtml, assetMap);
 
   return {
     html: finalHtml,

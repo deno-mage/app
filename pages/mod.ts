@@ -7,6 +7,7 @@
  */
 
 export { pages } from "./api.ts";
+export { Head } from "./head.tsx";
 
 export type {
   BuildOptions,

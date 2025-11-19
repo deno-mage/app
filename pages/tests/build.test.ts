@@ -155,9 +155,21 @@ title: Test
 # Test`,
     );
 
-    await Deno.copyFile(
-      join(FIXTURES_DIR, "layouts", "default.tsx"),
+    // Create a simple standalone layout for this test
+    await Deno.writeTextFile(
       join(tempLayoutsDir, "default.tsx"),
+      `import { Head } from "@mage/app/pages";
+
+export default function DefaultLayout(props) {
+  return (
+    <>
+      <Head>
+        <title>{props.title}</title>
+      </Head>
+      <div dangerouslySetInnerHTML={{ __html: props.html }} />
+    </>
+  );
+}`,
     );
 
     await build(siteMetadata, {
