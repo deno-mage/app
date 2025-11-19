@@ -4,10 +4,11 @@ export interface HeadProps {
 }
 
 /**
- * Renders the HTML head element with meta tags, title, and theme initialization.
+ * Renders the HTML head element with meta tags, title, and scripts.
  *
- * Includes an inline script that sets the theme before first paint to prevent
- * flash of incorrect theme. Priority: localStorage → system preference → light.
+ * Includes inline scripts for:
+ * - Theme initialization before first paint (localStorage → system preference → light)
+ * - Scroll-to-heading based on URL hash with smooth scrolling
  */
 export const Head = (props: HeadProps) => {
   return (
@@ -19,6 +20,13 @@ export const Head = (props: HeadProps) => {
         <meta name="description" content={props.description} />
       )}
       <link rel="stylesheet" href="/public/styles.css" />
+      <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"
+      />
+      {
+        // Theme initialization script
+      }
       <script
         dangerouslySetInnerHTML={{
           __html: `
@@ -26,6 +34,41 @@ export const Head = (props: HeadProps) => {
               const stored = localStorage.getItem('theme');
               const system = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
               document.documentElement.setAttribute('data-theme', stored || system);
+            })();
+          `,
+        }}
+      />
+      {
+        // Scroll to heading script
+      }
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `
+            (function() {
+              if (window.location.hash) {
+                // Wait for DOM to be ready
+                if (document.readyState === 'loading') {
+                  document.addEventListener('DOMContentLoaded', scrollToHash);
+                } else {
+                  scrollToHash();
+                }
+              }
+
+              function scrollToHash() {
+                const hash = window.location.hash.slice(1);
+                if (!hash) return;
+
+                const element = document.getElementById(hash);
+                if (element) {
+                  // Small delay to ensure layout is complete
+                  setTimeout(() => {
+                    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }, 0);
+                }
+              }
+
+              // Handle hash changes (e.g., clicking anchor links)
+              window.addEventListener('hashchange', scrollToHash);
             })();
           `,
         }}

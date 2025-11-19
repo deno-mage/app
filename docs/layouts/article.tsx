@@ -12,21 +12,38 @@ export default function ArticleLayout(props: LayoutProps) {
       <Head title={props.title} description={props.description} />
       <body>
         <header>
-          <div>
+          <div className="container">
             <nav>
-              <a href="/">Home</a>
-              {" | "}
-              <a href="/installation">Installation</a>
-              {" | "}
-              <a href="/getting-started">Getting Started</a>
+              <ul>
+                <li>
+                  <a href="/" className="nav-hero">
+                    🧙‍♂️ Mage
+                  </a>
+                </li>
+              </ul>
+              <ul>
+                <li>
+                  <a href="/">Docs</a>
+                </li>
+                <li>
+                  <a href="https://github.com/deno-mage/app">GitHub</a>
+                </li>
+                <li>
+                  <a href="https://jsr.io/@mage/app">JSR</a>
+                </li>
+              </ul>
             </nav>
-            <ColorMode />
           </div>
         </header>
-        <main dangerouslySetInnerHTML={{ __html: props.html }} />
+        <main
+          className="container"
+          dangerouslySetInnerHTML={{ __html: props.html }}
+        />
+        <hr />
         <footer>
-          <div>
+          <div className="container flex justify-between align-top">
             <p>Mage - Simple, Fast Web Framework for Deno</p>
+            <ColorMode />
           </div>
         </footer>
       </body>
