@@ -60,7 +60,7 @@ export function generateEntryPoint(
   layoutPath: string,
   _pageId: string,
 ): string {
-  return `import { hydrate } from "preact";
+  return `import { hydrate, Fragment, h } from "preact";
 import { ErrorBoundary } from "${ERROR_BOUNDARY_PATH}";
 import Layout from "${layoutPath}";
 
@@ -78,11 +78,30 @@ if (!appRoot) {
   };
 
   try {
-    // Hydrate the layout with error boundary
+    // Render layout to extract body children
+    // The Layout component returns <><Head /><body>children</body></>
+    // We need to extract just the body's children for hydration into #app
+    const layoutVNode = h(Layout, props);
+
+    // The layout returns a Fragment with Head and body
+    // We need to find the body element and get its children
+    let bodyChildren = layoutVNode;
+
+    // If it's a Fragment, look for the body element
+    if (layoutVNode.type === Fragment) {
+      const children = Array.isArray(layoutVNode.props.children)
+        ? layoutVNode.props.children
+        : [layoutVNode.props.children];
+
+      const bodyVNode = children.find(child => child?.type === 'body');
+      if (bodyVNode) {
+        bodyChildren = bodyVNode.props.children;
+      }
+    }
+
+    // Hydrate just the body children with error boundary
     hydrate(
-      <ErrorBoundary>
-        <Layout {...props} />
-      </ErrorBoundary>,
+      h(ErrorBoundary, null, bodyChildren),
       appRoot
     );
   } catch (error) {
