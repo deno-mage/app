@@ -1,3 +1,4 @@
+import { Head as PagesHead } from "../../pages/mod.ts";
 export interface HeadProps {
   title: string;
   description?: string;
@@ -12,7 +13,7 @@ export interface HeadProps {
  */
 export const Head = (props: HeadProps) => {
   return (
-    <head>
+    <PagesHead>
       <meta charset="UTF-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <title>{props.title}</title>
@@ -73,6 +74,6 @@ export const Head = (props: HeadProps) => {
           `,
         }}
       />
-    </head>
+    </PagesHead>
   );
 };

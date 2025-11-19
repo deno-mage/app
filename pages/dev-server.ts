@@ -17,6 +17,8 @@ import {
 } from "./hot-reload.ts";
 import { logger } from "./logger.ts";
 import type { DevServerOptions } from "./types.ts";
+import { buildBundle, stopBundleBuilder } from "./bundle-builder.ts";
+import type { BundleResult } from "./bundle-builder.ts";
 
 /**
  * State for the dev server.
@@ -26,6 +28,8 @@ interface DevServerState {
   assetMap: Map<string, string>;
   /** Watcher abort controllers */
   watchers: AbortController[];
+  /** In-memory bundle cache (pageId -> bundle) */
+  bundleCache: Map<string, BundleResult>;
 }
 
 /**
@@ -56,6 +60,7 @@ export async function registerDevServer(
   const state: DevServerState = {
     assetMap: new Map(),
     watchers: [],
+    bundleCache: new Map(),
   };
 
   // Build initial asset map
@@ -67,6 +72,9 @@ export async function registerDevServer(
     if (path.startsWith(publicDir)) {
       state.assetMap = await buildAssetMap(publicDir, baseRoute);
     }
+
+    // Clear bundle cache on any file change (layouts, components, etc.)
+    state.bundleCache.clear();
 
     // Notify WebSocket clients to reload
     notifyClients();
@@ -118,10 +126,42 @@ export async function registerDevServer(
 
     // Render page on-demand
     try {
+      // Read frontmatter to determine layout
+      const content = await Deno.readTextFile(page.filePath);
+      const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
+      let layoutName = "default";
+      if (frontmatterMatch) {
+        const frontmatter = frontmatterMatch[1];
+        const layoutMatch = frontmatter.match(/layout:\s*["']?([^"'\n]+)["']?/);
+        if (layoutMatch) {
+          layoutName = layoutMatch[1];
+        }
+      }
+
+      // Build or retrieve cached bundle
+      const pageId = urlPath === "/"
+        ? "index"
+        : urlPath.slice(1).replace(/\//g, "-");
+      let bundle = state.bundleCache.get(pageId);
+
+      if (!bundle) {
+        const layoutPath = join(rootDir, "layouts", `${layoutName}.tsx`);
+        bundle = await buildBundle({
+          layoutPath,
+          rootDir,
+          production: false, // Dev mode: no minification, with sourcemaps
+          pageId,
+        });
+        state.bundleCache.set(pageId, bundle);
+        logger.info(`Built dev bundle for: ${urlPath}`);
+      }
+
+      // Render page with bundle URL
+      const bundleUrl = `${baseRoute}__bundles/${pageId}.js`;
       const rendered = await renderPageFromFile(
         page.filePath,
         rootDir,
-        { assetMap: state.assetMap }, // No bundles in dev mode for MVP
+        { assetMap: state.assetMap, bundleUrl },
       );
 
       logger.info(`Rendered page: ${urlPath}`);
@@ -174,6 +214,21 @@ export async function registerDevServer(
     });
   });
 
+  // Register route for bundles
+  app.get(`${baseRoute}__bundles/:pageId.js`, (c) => {
+    const pageId = c.req.params.pageId;
+    const bundle = state.bundleCache.get(pageId);
+
+    if (!bundle) {
+      c.notFound();
+      return;
+    }
+
+    // Serve bundle with correct content type
+    c.header("Content-Type", "application/javascript");
+    c.text(bundle.code);
+  });
+
   // Register routes for assets
   app.get(`${baseRoute}__public/*`, async (c) => {
     const hashedUrl = c.req.url.pathname;
@@ -204,5 +259,6 @@ export async function registerDevServer(
     for (const watcher of state.watchers) {
       watcher.abort();
     }
+    stopBundleBuilder();
   };
 }

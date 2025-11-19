@@ -1,14 +1,10 @@
 import type { LayoutProps } from "../../pages/mod.ts";
-
-const cacheBuster = Date.now();
-
-const { Head, ColorMode } = (await import(
-  `../components/index.ts?t=${cacheBuster}`
-)) as typeof import("../components/index.ts");
+import { Head } from "../components/head.tsx";
+import { ColorMode } from "../components/color-mode.tsx";
 
 export default function ArticleLayout(props: LayoutProps) {
   return (
-    <html lang="en">
+    <>
       <Head title={props.title} description={props.description} />
       <body>
         <header>
@@ -37,6 +33,7 @@ export default function ArticleLayout(props: LayoutProps) {
         </header>
         <main
           className="container"
+          data-mage-layout="true"
           dangerouslySetInnerHTML={{ __html: props.html }}
         />
         <hr />
@@ -47,6 +44,6 @@ export default function ArticleLayout(props: LayoutProps) {
           </div>
         </footer>
       </body>
-    </html>
+    </>
   );
 }

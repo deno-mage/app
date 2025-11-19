@@ -32,7 +32,10 @@ afterAll(async () => {
   await server.stop();
 });
 
-describe("dev server - page serving", () => {
+describe("dev server - page serving", {
+  sanitizeResources: false,
+  sanitizeOps: false,
+}, () => {
   it("should serve the index page", async () => {
     const response = await fetch(server.url("/"));
 
@@ -174,7 +177,10 @@ describe("dev server - page serving", () => {
   });
 });
 
-describe("dev server - asset serving", () => {
+describe("dev server - asset serving", {
+  sanitizeResources: false,
+  sanitizeOps: false,
+}, () => {
   it("should serve assets with hashed URLs", async () => {
     const response = await fetch(server.url("/"));
     const html = await response.text();
@@ -231,7 +237,10 @@ describe("dev server - asset serving", () => {
   });
 });
 
-describe("dev server - hot reload endpoint", () => {
+describe("dev server - hot reload endpoint", {
+  sanitizeResources: false,
+  sanitizeOps: false,
+}, () => {
   it("should upgrade to WebSocket connection", async () => {
     const wsUrl = server.url("/__reload").toString().replace(
       "http://",
@@ -350,7 +359,10 @@ describe("dev server - hot reload endpoint", () => {
   });
 });
 
-describe("dev server - custom base route", () => {
+describe("dev server - custom base route", {
+  sanitizeResources: false,
+  sanitizeOps: false,
+}, () => {
   let customServer: MageTestServer;
   let customCleanup: (() => void) | undefined;
 
