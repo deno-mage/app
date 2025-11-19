@@ -326,29 +326,33 @@ export default function HtmlTemplate({
   bundleUrl,
   props,
 }: HtmlTemplateProps) {
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  ${head}
-</head>
-<body>
-  <div id="app">${body}</div>
-  ${
-    bundleUrl
-      ? `
-    <script>
-      window.__PAGE_PROPS__ = ${JSON.stringify(props)};
-    </script>
-    <script type="module" src="${bundleUrl}"></script>
-  `
-      : ""
-  }
-</body>
-</html>`;
+  return (
+    <html lang="en">
+      <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta dangerouslySetInnerHTML={{ __html: head }} />
+      </head>
+      <body>
+        <div id="app" dangerouslySetInnerHTML={{ __html: body }} />
+        {bundleUrl && (
+          <>
+            <script
+              dangerouslySetInnerHTML={{
+                __html: `window.__PAGE_PROPS__ = ${JSON.stringify(props)};`,
+              }}
+            />
+            <script type="module" src={bundleUrl} />
+          </>
+        )}
+      </body>
+    </html>
+  );
 }
 ```
+
+**Note:** The template is a Preact component that returns JSX. The DOCTYPE is
+added automatically during rendering.
 
 If `_html.tsx` is not provided, a sensible default is used.
 

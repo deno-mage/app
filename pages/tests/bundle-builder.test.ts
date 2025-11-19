@@ -12,15 +12,14 @@ const FIXTURES_DIR = join(
   "fixtures",
 );
 
-// Clean up esbuild after all tests
-afterAll(() => {
-  stopBundleBuilder();
-});
-
 describe("bundle-builder - entry point generation", {
   sanitizeResources: false,
   sanitizeOps: false,
 }, () => {
+  // Clean up esbuild after all tests
+  afterAll(() => {
+    stopBundleBuilder();
+  });
   it("should generate valid entry point code", () => {
     const layoutPath = "/path/to/layout.tsx";
     const pageId = "index";

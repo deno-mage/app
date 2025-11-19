@@ -10,7 +10,7 @@ import { parseAndRender } from "./markdown.ts";
 import { buildLayoutProps, resolveLayout } from "./layout.ts";
 import { replaceAssetUrls } from "./assets.ts";
 import { extractHead } from "./head-extractor.ts";
-import { loadHtmlTemplate, renderWithTemplate } from "./html-template.ts";
+import { loadHtmlTemplate, renderWithTemplate } from "./html-template.tsx";
 import type { Frontmatter } from "./types.ts";
 
 /**

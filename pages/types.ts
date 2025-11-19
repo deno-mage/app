@@ -4,7 +4,7 @@
  * @module
  */
 
-import type { ComponentChildren } from "preact";
+import type { ComponentChildren, JSX } from "preact";
 
 /**
  * Metadata that can be included in frontmatter.
@@ -122,6 +122,8 @@ export interface HtmlTemplateProps {
 }
 
 /**
- * _html.tsx template function signature.
+ * _html.tsx template component type.
+ *
+ * Should be a Preact component that returns JSX for the complete HTML document.
  */
-export type HtmlTemplate = (props: HtmlTemplateProps) => string;
+export type HtmlTemplate = (props: HtmlTemplateProps) => JSX.Element;

@@ -1,7 +1,7 @@
 import { describe, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
 import { join } from "@std/path";
-import { loadHtmlTemplate, renderWithTemplate } from "../html-template.ts";
+import { loadHtmlTemplate, renderWithTemplate } from "../html-template.tsx";
 import type { HtmlTemplateProps } from "../types.ts";
 
 const FIXTURES_DIR = join(

@@ -8,6 +8,8 @@
  */
 
 import { join } from "@std/path";
+import { render } from "preact-render-to-string";
+import type { JSX } from "preact";
 import type { HtmlTemplate, HtmlTemplateProps } from "./types.ts";
 
 /**
@@ -15,28 +17,36 @@ import type { HtmlTemplate, HtmlTemplateProps } from "./types.ts";
  *
  * Provides a sensible default document structure for backward compatibility.
  */
-function defaultHtmlTemplate(props: HtmlTemplateProps): string {
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  ${props.head}
-</head>
-<body>
-  <div id="app" data-layout="true">${props.body}</div>
-  ${
-    props.bundleUrl
-      ? `
-    <script>
-      window.__PAGE_PROPS__ = ${JSON.stringify(props.props)};
-    </script>
-    <script type="module" src="${props.bundleUrl}"></script>
-  `
-      : ""
-  }
-</body>
-</html>`;
+function defaultHtmlTemplate(props: HtmlTemplateProps): JSX.Element {
+  return (
+    <html lang="en">
+      <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta
+          dangerouslySetInnerHTML={{ __html: props.head }}
+        />
+      </head>
+      <body>
+        <div
+          id="app"
+          data-layout="true"
+          dangerouslySetInnerHTML={{ __html: props.body }}
+        />
+        {props.bundleUrl && (
+          <>
+            <script
+              dangerouslySetInnerHTML={{
+                __html:
+                  `window.__PAGE_PROPS__ = ${JSON.stringify(props.props)};`,
+              }}
+            />
+            <script type="module" src={props.bundleUrl} />
+          </>
+        )}
+      </body>
+    </html>
+  );
 }
 
 /**
@@ -82,15 +92,16 @@ export async function loadHtmlTemplate(
 }
 
 /**
- * Renders HTML using the template function.
+ * Renders HTML using the template component.
  *
- * @param template Template function to use
+ * @param template Template component to use
  * @param props Props to pass to template
- * @returns Complete HTML document string
+ * @returns Complete HTML document string with DOCTYPE
  */
 export function renderWithTemplate(
   template: HtmlTemplate,
   props: HtmlTemplateProps,
 ): string {
-  return template(props);
+  const jsx = template(props);
+  return `<!DOCTYPE html>\n${render(jsx)}`;
 }
