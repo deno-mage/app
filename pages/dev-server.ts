@@ -216,8 +216,14 @@ export async function registerDevServer(
   });
 
   // Register route for bundles
-  app.get(`${baseRoute}__bundles/:pageId.js`, (c) => {
-    const pageId = c.req.params.pageId;
+  app.get(`${baseRoute}__bundles/*`, (c) => {
+    // Extract pageId from path (remove /__bundles/ prefix and .js suffix)
+    const path = c.req.url.pathname;
+    const bundlesPrefix = `${baseRoute}__bundles/`;
+    const pageId = path
+      .slice(bundlesPrefix.length)
+      .replace(/\.js$/, "");
+
     const bundle = state.bundleCache.get(pageId);
 
     if (!bundle) {
