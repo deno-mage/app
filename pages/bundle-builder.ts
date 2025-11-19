@@ -64,17 +64,17 @@ export function generateEntryPoint(
 import { ErrorBoundary } from "${ERROR_BOUNDARY_PATH}";
 import Layout from "${layoutPath}";
 
-// Extract article HTML from DOM before hydration
+// Extract layout content HTML from DOM before hydration
 const appRoot = document.getElementById("app");
 if (!appRoot) {
   console.error("[Mage Pages] Failed to find #app element - hydration aborted");
   // Page still works with SSR'd content, just no interactivity
 } else {
-  const articleContainer = appRoot.querySelector('[data-article-html="true"]');
+  const layoutContainer = appRoot.querySelector('[data-mage-layout="true"]');
 
   const props = {
     ...window.__PAGE_PROPS__,
-    html: articleContainer ? articleContainer.innerHTML : "",
+    html: layoutContainer ? layoutContainer.innerHTML : "",
   };
 
   try {
