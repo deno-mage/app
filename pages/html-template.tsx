@@ -4,41 +4,31 @@
  * Loads _html.tsx from project root and uses it to wrap layout content
  * in a complete HTML document structure.
  *
+ * Head content, app wrapper, props script, and bundle script are injected
+ * automatically after template rendering.
+ *
  * @module
  */
 
 import { join } from "@std/path";
 import { render } from "preact-render-to-string";
 import type { JSX } from "preact";
-import type { HtmlTemplate, HtmlTemplateProps } from "./types.ts";
+import type { HtmlTemplate, HtmlTemplateProps, LayoutProps } from "./types.ts";
 
 /**
  * Default HTML template used when _html.tsx is not found.
  *
- * Provides a sensible default document structure for backward compatibility.
+ * Provides a minimal document structure. Head content, app wrapper,
+ * and scripts are injected automatically.
  */
-function defaultHtmlTemplate(props: HtmlTemplateProps): JSX.Element {
+function defaultHtmlTemplate(): JSX.Element {
   return (
     <html lang="en">
-      <head
-        dangerouslySetInnerHTML={{
-          __html:
-            `<meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />${props.head}`,
-        }}
-      />
-      <body>
-        <div
-          id="app"
-          data-mage-layout="true"
-          dangerouslySetInnerHTML={{ __html: props.body }}
-        />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `window.__PAGE_PROPS__ = ${JSON.stringify(props.props)};`,
-          }}
-        />
-        <script type="module" src={props.bundleUrl} />
-      </body>
+      <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      </head>
+      <body></body>
     </html>
   );
 }
@@ -53,9 +43,7 @@ function defaultHtmlTemplate(props: HtmlTemplateProps): JSX.Element {
  * @returns Template function
  * @throws Error if _html.tsx exists but doesn't export a default function
  */
-export async function loadHtmlTemplate(
-  rootDir: string,
-): Promise<HtmlTemplate> {
+export async function loadHtmlTemplate(rootDir: string): Promise<HtmlTemplate> {
   const templatePath = join(rootDir, "_html.tsx");
 
   try {
@@ -86,16 +74,78 @@ export async function loadHtmlTemplate(
 }
 
 /**
- * Renders HTML using the template component.
+ * Injects head content, app wrapper, and scripts into rendered HTML.
+ *
+ * Automatically injects:
+ * - Head content (from layouts) before `</head>`
+ * - App wrapper div before `</body>`
+ * - Props script before `</body>`
+ * - Bundle script before `</body>`
+ *
+ * @param html Rendered HTML from template
+ * @param headContent Extracted head content from layouts
+ * @param bodyContent Extracted body content from layouts
+ * @param bundleUrl URL to client bundle
+ * @param props Page props for serialization
+ * @returns HTML with injected content
+ */
+function injectContent(
+  html: string,
+  headContent: string,
+  bodyContent: string,
+  bundleUrl: string,
+  props: LayoutProps,
+): string {
+  // Inject head content before </head>
+  let result = html.replace("</head>", `${headContent}\n</head>`);
+
+  // Build injection content for body
+  const appHtml = `<div id="app" data-mage-layout="true">${bodyContent}</div>`;
+  const propsScript = `<script>window.__PAGE_PROPS__ = ${
+    JSON.stringify(
+      props,
+    )
+  };</script>`;
+  const bundleScript = `<script type="module" src="${bundleUrl}"></script>`;
+
+  // Inject app + scripts before </body>
+  result = result.replace(
+    "</body>",
+    `${appHtml}\n${propsScript}\n${bundleScript}\n</body>`,
+  );
+
+  return result;
+}
+
+/**
+ * Renders HTML using the template component and injects content.
  *
  * @param template Template component to use
- * @param props Props to pass to template
- * @returns Complete HTML document string with DOCTYPE
+ * @param templateProps Props to pass to template
+ * @param headContent Extracted head content from layouts
+ * @param bodyContent Extracted body content from layouts
+ * @param bundleUrl URL to client bundle
+ * @returns Complete HTML document string with DOCTYPE and injected content
  */
 export function renderWithTemplate(
   template: HtmlTemplate,
-  props: HtmlTemplateProps,
+  templateProps: HtmlTemplateProps,
+  headContent: string,
+  bodyContent: string,
+  bundleUrl: string,
 ): string {
-  const jsx = template(props);
-  return `<!DOCTYPE html>\n${render(jsx)}`;
+  // Render template
+  const jsx = template(templateProps);
+  const baseHtml = render(jsx);
+
+  // Inject head content, app, and scripts
+  const finalHtml = injectContent(
+    baseHtml,
+    headContent,
+    bodyContent,
+    bundleUrl,
+    templateProps.props,
+  );
+
+  return `<!DOCTYPE html>\n${finalHtml}`;
 }

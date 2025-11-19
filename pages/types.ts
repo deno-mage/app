@@ -111,15 +111,13 @@ export interface AssetMap {
 
 /**
  * Props passed to the _html.tsx document template.
+ *
+ * The template receives only the page props for conditional rendering.
+ * Head content, app wrapper, props script, and bundle script are injected
+ * automatically after template rendering.
  */
 export interface HtmlTemplateProps {
-  /** Extracted head content as HTML string */
-  head: string;
-  /** Rendered layout HTML as string */
-  body: string;
-  /** URL to client bundle for hydration */
-  bundleUrl: string;
-  /** Original page props (for conditional logic in template) */
+  /** Page props for conditional logic in template */
   props: LayoutProps;
 }
 

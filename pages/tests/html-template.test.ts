@@ -2,7 +2,6 @@ import { describe, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
 import { join } from "@std/path";
 import { loadHtmlTemplate, renderWithTemplate } from "../html-template.tsx";
-import type { HtmlTemplateProps } from "../types.ts";
 
 const FIXTURES_DIR = join(
   new URL(".", import.meta.url).pathname,
@@ -13,14 +12,13 @@ describe("html-template - loading", () => {
   it("should load custom _html.tsx template when it exists", async () => {
     const template = await loadHtmlTemplate(FIXTURES_DIR);
 
-    const props: HtmlTemplateProps = {
-      head: "<title>Test</title>",
-      body: "<div>Content</div>",
-      bundleUrl: "/__bundles/test.js",
-      props: { html: "", title: "Test" },
-    };
-
-    const html = renderWithTemplate(template, props);
+    const html = renderWithTemplate(
+      template,
+      { props: { html: "", title: "Test" } },
+      "<title>Test</title>",
+      "<div>Content</div>",
+      "/__bundles/test.js",
+    );
 
     expect(html).toContain("<!DOCTYPE html>");
     expect(html).toContain("<title>Test</title>");
@@ -30,14 +28,13 @@ describe("html-template - loading", () => {
   it("should use default template when _html.tsx does not exist", async () => {
     const template = await loadHtmlTemplate("/nonexistent");
 
-    const props: HtmlTemplateProps = {
-      head: "<title>Default</title>",
-      body: "<p>Body content</p>",
-      bundleUrl: "/__bundles/default.js",
-      props: { html: "", title: "Default" },
-    };
-
-    const html = renderWithTemplate(template, props);
+    const html = renderWithTemplate(
+      template,
+      { props: { html: "", title: "Default" } },
+      "<title>Default</title>",
+      "<p>Body content</p>",
+      "/__bundles/default.js",
+    );
 
     expect(html).toContain("<!DOCTYPE html>");
     expect(html).toContain("<title>Default</title>");
@@ -60,49 +57,48 @@ describe("html-template - loading", () => {
   });
 });
 
-describe("html-template - rendering", () => {
-  it("should render head content", async () => {
+describe("html-template - injection", () => {
+  it("should inject head content before </head>", async () => {
     const template = await loadHtmlTemplate("/nonexistent");
 
-    const props: HtmlTemplateProps = {
-      head: "<title>My Title</title>\n<meta name='description' content='Test'>",
-      body: "<div>Content</div>",
-      bundleUrl: "/__bundles/test.js",
-      props: { html: "", title: "My Title" },
-    };
-
-    const html = renderWithTemplate(template, props);
+    const html = renderWithTemplate(
+      template,
+      { props: { html: "", title: "My Title" } },
+      "<title>My Title</title>\n<meta name='description' content='Test'>",
+      "<div>Content</div>",
+      "/__bundles/test.js",
+    );
 
     expect(html).toContain("<title>My Title</title>");
     expect(html).toContain("<meta name='description' content='Test'>");
   });
 
-  it("should render body content", async () => {
+  it("should inject body content in app wrapper", async () => {
     const template = await loadHtmlTemplate("/nonexistent");
 
-    const props: HtmlTemplateProps = {
-      head: "",
-      body: "<main><h1>Hello</h1><p>World</p></main>",
-      bundleUrl: "/__bundles/test.js",
-      props: { html: "", title: "Test" },
-    };
+    const html = renderWithTemplate(
+      template,
+      { props: { html: "", title: "Test" } },
+      "",
+      "<main><h1>Hello</h1><p>World</p></main>",
+      "/__bundles/test.js",
+    );
 
-    const html = renderWithTemplate(template, props);
-
+    expect(html).toContain('<div id="app" data-mage-layout="true">');
     expect(html).toContain("<main><h1>Hello</h1><p>World</p></main>");
+    expect(html).toContain("</div>");
   });
 
-  it("should include bundle script when bundleUrl is provided", async () => {
+  it("should inject bundle script with correct URL", async () => {
     const template = await loadHtmlTemplate("/nonexistent");
 
-    const props: HtmlTemplateProps = {
-      head: "<title>Test</title>",
-      body: "<div>Content</div>",
-      bundleUrl: "/__bundles/test-abc123.js",
-      props: { html: "", title: "Test", description: "Test page" },
-    };
-
-    const html = renderWithTemplate(template, props);
+    const html = renderWithTemplate(
+      template,
+      { props: { html: "", title: "Test", description: "Test page" } },
+      "<title>Test</title>",
+      "<div>Content</div>",
+      "/__bundles/test-abc123.js",
+    );
 
     expect(html).toContain("window.__PAGE_PROPS__");
     expect(html).toContain('"title":"Test"');
@@ -112,40 +108,45 @@ describe("html-template - rendering", () => {
     );
   });
 
-  it("should always include bundle script since bundleUrl is required", async () => {
+  it("should inject props script before bundle script", async () => {
     const template = await loadHtmlTemplate("/nonexistent");
 
-    const props: HtmlTemplateProps = {
-      head: "<title>Test</title>",
-      body: "<div>Content</div>",
-      bundleUrl: "/__bundles/test.js",
-      props: { html: "", title: "Test" },
-    };
-
-    const html = renderWithTemplate(template, props);
+    const html = renderWithTemplate(
+      template,
+      { props: { html: "", title: "Test" } },
+      "<title>Test</title>",
+      "<div>Content</div>",
+      "/__bundles/test.js",
+    );
 
     expect(html).toContain("window.__PAGE_PROPS__");
     expect(html).toContain('<script type="module"');
+
+    // Props script should come before bundle script
+    const propsIndex = html.indexOf("window.__PAGE_PROPS__");
+    const bundleIndex = html.indexOf('<script type="module"');
+    expect(propsIndex).toBeLessThan(bundleIndex);
   });
 
-  it("should serialize props correctly", async () => {
+  it("should serialize props correctly including additionalFrontmatter", async () => {
     const template = await loadHtmlTemplate("/nonexistent");
 
-    const props: HtmlTemplateProps = {
-      head: "",
-      body: "<div>Content</div>",
-      bundleUrl: "/__bundles/test.js",
-      props: {
-        html: "<p>Should not be in serialized props</p>",
-        title: "Test Page",
-        description: "Test description",
-        additionalFrontmatter: {
-          customField: "custom value",
+    const html = renderWithTemplate(
+      template,
+      {
+        props: {
+          html: "<p>Layout content</p>",
+          title: "Test Page",
+          description: "Test description",
+          additionalFrontmatter: {
+            customField: "custom value",
+          },
         },
       },
-    };
-
-    const html = renderWithTemplate(template, props);
+      "",
+      "<div>Content</div>",
+      "/__bundles/test.js",
+    );
 
     // Props should be serialized
     expect(html).toContain('"title":"Test Page"');
@@ -153,26 +154,49 @@ describe("html-template - rendering", () => {
     expect(html).toContain('"customField":"custom value"');
 
     // html field should be included (extraction happens client-side)
-    expect(html).toContain('"html":"<p>Should not be in serialized props</p>"');
+    expect(html).toContain('"html":"<p>Layout content</p>"');
   });
 });
 
 describe("html-template - custom template", () => {
-  it("should use custom template structure when provided", async () => {
+  it("should use custom template structure and inject content", async () => {
     const template = await loadHtmlTemplate(FIXTURES_DIR);
 
-    const props: HtmlTemplateProps = {
-      head: "<title>Custom</title>",
-      body: "<div>Custom body</div>",
-      bundleUrl: "/__bundles/custom.js",
-      props: { html: "", title: "Custom" },
-    };
-
-    const html = renderWithTemplate(template, props);
+    const html = renderWithTemplate(
+      template,
+      { props: { html: "", title: "Custom" } },
+      "<title>Custom</title>",
+      "<div>Custom body</div>",
+      "/__bundles/custom.js",
+    );
 
     // Custom template should have its own structure
     expect(html).toContain("<!DOCTYPE html>");
     expect(html).toContain("<title>Custom</title>");
     expect(html).toContain("<div>Custom body</div>");
+    // Injected elements should still be present
+    expect(html).toContain('<div id="app" data-mage-layout="true">');
+    expect(html).toContain("window.__PAGE_PROPS__");
+  });
+
+  it("should allow conditional rendering based on props", async () => {
+    const template = await loadHtmlTemplate("/nonexistent");
+
+    const html = renderWithTemplate(
+      template,
+      {
+        props: {
+          html: "",
+          title: "Test",
+          additionalFrontmatter: { darkMode: true },
+        },
+      },
+      "",
+      "<div>Content</div>",
+      "/__bundles/test.js",
+    );
+
+    // Template receives props for conditional logic
+    expect(html).toContain("<!DOCTYPE html>");
   });
 });

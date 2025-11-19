@@ -69,13 +69,14 @@ export async function renderPage(
   // Load HTML template
   const template = await loadHtmlTemplate(rootDir);
 
-  // Render with template
-  const documentHtml = renderWithTemplate(template, {
-    head: headContent,
-    body: bodyContent,
+  // Render with template (injection happens automatically)
+  const documentHtml = renderWithTemplate(
+    template,
+    { props: layoutProps },
+    headContent,
+    bodyContent,
     bundleUrl,
-    props: layoutProps,
-  });
+  );
 
   // Replace asset URLs with hashed versions
   const finalHtml = replaceAssetUrls(documentHtml, assetMap);
