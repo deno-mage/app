@@ -1,4 +1,4 @@
-import { Head as PagesHead } from "../../pages/mod.ts";
+import { Head as PagesHead } from "../../pages/client.ts";
 export interface HeadProps {
   title: string;
   description?: string;

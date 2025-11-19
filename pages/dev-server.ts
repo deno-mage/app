@@ -4,7 +4,7 @@
  * @module
  */
 
-import { join } from "@std/path";
+import { join, resolve } from "@std/path";
 import type { MageApp } from "../app/mod.ts";
 import { scanPages } from "./scanner.ts";
 import { renderPageFromFile } from "./renderer.ts";
@@ -145,10 +145,11 @@ export async function registerDevServer(
       let bundle = state.bundleCache.get(pageId);
 
       if (!bundle) {
-        const layoutPath = join(rootDir, "layouts", `${layoutName}.tsx`);
+        // Resolve to absolute path for esbuild (handles both absolute and relative rootDir)
+        const layoutPath = resolve(rootDir, "layouts", `${layoutName}.tsx`);
         bundle = await buildBundle({
           layoutPath,
-          rootDir,
+          rootDir: Deno.cwd(), // Use project root where deno.json is for import resolution
           production: false, // Dev mode: no minification, with sourcemaps
           pageId,
         });
