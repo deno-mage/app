@@ -20,7 +20,7 @@ description: A test
 This is a test.`;
 
     const assetMap = new Map();
-    const result = await renderPage(markdown, FIXTURES_DIR, assetMap);
+    const result = await renderPage(markdown, FIXTURES_DIR, { assetMap });
 
     expect(result.html).toContain("<html");
     expect(result.html).toContain("<title>Test Page</title>");
@@ -37,7 +37,7 @@ layout: article
 # Article Content`;
 
     const assetMap = new Map();
-    const result = await renderPage(markdown, FIXTURES_DIR, assetMap);
+    const result = await renderPage(markdown, FIXTURES_DIR, { assetMap });
 
     expect(result.html).toContain("<article");
     expect(result.html).toContain("Article Page");
@@ -52,7 +52,7 @@ author: John Doe
 # Content`;
 
     const assetMap = new Map();
-    const result = await renderPage(markdown, FIXTURES_DIR, assetMap);
+    const result = await renderPage(markdown, FIXTURES_DIR, { assetMap });
 
     expect(result.frontmatter.author).toBe("John Doe");
   });
@@ -65,7 +65,7 @@ title: Complete Page
 # Test`;
 
     const assetMap = new Map();
-    const result = await renderPage(markdown, FIXTURES_DIR, assetMap);
+    const result = await renderPage(markdown, FIXTURES_DIR, { assetMap });
 
     expect(result.html).toContain("<!DOCTYPE html>");
     expect(result.html).toContain("<html");
@@ -83,7 +83,7 @@ title: Asset Test
     const assetMap = new Map([
       ["/public/styles.css", "/__public/styles-abc123.css"],
     ]);
-    const result = await renderPage(markdown, FIXTURES_DIR, assetMap);
+    const result = await renderPage(markdown, FIXTURES_DIR, { assetMap });
 
     // Should NOT contain clean URLs
     expect(result.html).not.toContain("/public/styles.css");
@@ -101,7 +101,7 @@ description: This is a test description
 # Content`;
 
     const assetMap = new Map();
-    const result = await renderPage(markdown, FIXTURES_DIR, assetMap);
+    const result = await renderPage(markdown, FIXTURES_DIR, { assetMap });
 
     expect(result.html).toContain('<meta name="description"');
     expect(result.html).toContain("This is a test description");
@@ -115,7 +115,7 @@ title: Test Page
 # Content`;
 
     const assetMap = new Map();
-    const result = await renderPage(markdown, FIXTURES_DIR, assetMap);
+    const result = await renderPage(markdown, FIXTURES_DIR, { assetMap });
 
     expect(result.html).not.toContain('<meta name="description"');
   });
@@ -133,7 +133,7 @@ layout: nonexistent
     const assetMap = new Map();
 
     try {
-      await renderPage(markdown, FIXTURES_DIR, assetMap);
+      await renderPage(markdown, FIXTURES_DIR, { assetMap });
       expect(true).toBe(false); // Should not reach here
     } catch (error) {
       expect(error).toBeInstanceOf(Error);
@@ -152,7 +152,7 @@ invalid: [unclosed
     const assetMap = new Map();
 
     try {
-      await renderPage(markdown, FIXTURES_DIR, assetMap);
+      await renderPage(markdown, FIXTURES_DIR, { assetMap });
       expect(true).toBe(false); // Should not reach here
     } catch (error) {
       expect(error).toBeInstanceOf(Error);
@@ -170,7 +170,7 @@ description: No title
     const assetMap = new Map();
 
     try {
-      await renderPage(markdown, FIXTURES_DIR, assetMap);
+      await renderPage(markdown, FIXTURES_DIR, { assetMap });
       expect(true).toBe(false); // Should not reach here
     } catch (error) {
       expect(error).toBeInstanceOf(Error);
@@ -186,7 +186,9 @@ describe("renderer - file rendering", () => {
     const filePath = join(FIXTURES_DIR, "pages", "index.md");
     const assetMap = new Map();
 
-    const result = await renderPageFromFile(filePath, FIXTURES_DIR, assetMap);
+    const result = await renderPageFromFile(filePath, FIXTURES_DIR, {
+      assetMap,
+    });
 
     expect(result.frontmatter.title).toBe("Home");
     expect(result.frontmatter.description).toBe("Welcome to the site");
@@ -197,7 +199,9 @@ describe("renderer - file rendering", () => {
     const filePath = join(FIXTURES_DIR, "pages", "docs", "intro.md");
     const assetMap = new Map();
 
-    const result = await renderPageFromFile(filePath, FIXTURES_DIR, assetMap);
+    const result = await renderPageFromFile(filePath, FIXTURES_DIR, {
+      assetMap,
+    });
 
     expect(result.frontmatter.title).toBe("Introduction");
     expect(result.html).toContain("Getting started");

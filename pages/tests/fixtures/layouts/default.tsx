@@ -12,7 +12,10 @@ export default function DefaultLayout(props: LayoutProps) {
         <link rel="stylesheet" href="/public/styles.css" />
       </Head>
 
-      <div dangerouslySetInnerHTML={{ __html: props.html }} />
+      <article
+        data-article-html="true"
+        dangerouslySetInnerHTML={{ __html: props.html }}
+      />
     </>
   );
 }

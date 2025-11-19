@@ -13,7 +13,10 @@ export default function ArticleLayout(props: LayoutProps) {
 
       <article>
         <h1>{props.title}</h1>
-        <div dangerouslySetInnerHTML={{ __html: props.html }} />
+        <div
+          data-article-html="true"
+          dangerouslySetInnerHTML={{ __html: props.html }}
+        />
       </article>
     </>
   );

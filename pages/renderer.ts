@@ -24,6 +24,16 @@ export interface RenderedPage {
 }
 
 /**
+ * Options for rendering a page.
+ */
+export interface RenderPageOptions {
+  /** Map of clean URLs to hashed URLs for asset replacement */
+  assetMap: Map<string, string>;
+  /** Optional URL to client bundle for hydration */
+  bundleUrl?: string;
+}
+
+/**
  * Renders a markdown file to a complete HTML page.
  *
  * Combines markdown parsing, layout resolution, Preact rendering,
@@ -31,14 +41,16 @@ export interface RenderedPage {
  *
  * @param markdownContent Raw markdown content with frontmatter
  * @param rootDir Root directory containing layouts/
- * @param assetMap Map of clean URLs to hashed URLs for asset replacement
+ * @param options Rendering options
  * @returns Complete rendered HTML page
  */
 export async function renderPage(
   markdownContent: string,
   rootDir: string,
-  assetMap: Map<string, string>,
+  options: RenderPageOptions,
 ): Promise<RenderedPage> {
+  const { assetMap, bundleUrl } = options;
+
   // Parse markdown and render to HTML
   const { frontmatter, html: contentHtml } = parseAndRender(markdownContent);
 
@@ -61,6 +73,7 @@ export async function renderPage(
   const documentHtml = renderWithTemplate(template, {
     head: headContent,
     body: bodyContent,
+    bundleUrl,
     props: layoutProps,
   });
 
@@ -80,14 +93,14 @@ export async function renderPage(
  *
  * @param filePath Path to the markdown file
  * @param rootDir Root directory containing layouts/
- * @param assetMap Map of clean URLs to hashed URLs
+ * @param options Rendering options
  * @returns Complete rendered HTML page
  */
 export async function renderPageFromFile(
   filePath: string,
   rootDir: string,
-  assetMap: Map<string, string>,
+  options: RenderPageOptions,
 ): Promise<RenderedPage> {
   const content = await Deno.readTextFile(filePath);
-  return await renderPage(content, rootDir, assetMap);
+  return await renderPage(content, rootDir, options);
 }

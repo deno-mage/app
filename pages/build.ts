@@ -10,6 +10,7 @@ import { scanPages } from "./scanner.ts";
 import type { PageInfo } from "./scanner.ts";
 import { renderPageFromFile } from "./renderer.ts";
 import { buildAssetMap } from "./assets.ts";
+import { buildBundle, stopBundleBuilder } from "./bundle-builder.ts";
 import { logger } from "./logger.ts";
 import type { BuildOptions, SiteMetadata } from "./types.ts";
 
@@ -53,16 +54,51 @@ export async function build(
   const pages = await scanPages(pagesDir);
   logger.info(`Found ${pages.length} pages to build`);
 
+  // Create bundles directory
+  const bundlesDir = join(outDir, "__bundles");
+  await ensureDir(bundlesDir);
+
   // Render and write each page
   let successCount = 0;
   let errorCount = 0;
 
   for (const page of pages) {
     try {
+      // Read frontmatter to determine layout
+      const content = await Deno.readTextFile(page.filePath);
+      const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
+      let layoutName = "default";
+      if (frontmatterMatch) {
+        const frontmatter = frontmatterMatch[1];
+        const layoutMatch = frontmatter.match(/layout:\s*["']?([^"'\n]+)["']?/);
+        if (layoutMatch) {
+          layoutName = layoutMatch[1];
+        }
+      }
+
+      // Build client bundle for this page
+      const layoutPath = join(rootDir, "layouts", `${layoutName}.tsx`);
+      const pageId = page.urlPath === "/"
+        ? "index"
+        : page.urlPath.slice(1).replace(/\//g, "-");
+
+      const bundle = await buildBundle({
+        layoutPath,
+        rootDir,
+        production: true,
+        pageId,
+      });
+
+      // Write bundle to disk
+      const bundlePath = join(bundlesDir, bundle.filename!);
+      await Deno.writeTextFile(bundlePath, bundle.code);
+
+      // Render page with bundle URL
+      const bundleUrl = `/__bundles/${bundle.filename}`;
       const rendered = await renderPageFromFile(
         page.filePath,
         rootDir,
-        assetMap,
+        { assetMap, bundleUrl },
       );
 
       // Determine output file path
@@ -93,7 +129,7 @@ export async function build(
     const rendered = await renderPageFromFile(
       notFoundPath,
       rootDir,
-      assetMap,
+      { assetMap }, // No bundle for error pages
     );
     await Deno.writeTextFile(join(outDir, "404.html"), rendered.html);
   } catch {
@@ -106,7 +142,7 @@ export async function build(
     const rendered = await renderPageFromFile(
       errorPath,
       rootDir,
-      assetMap,
+      { assetMap }, // No bundle for error pages
     );
     await Deno.writeTextFile(join(outDir, "500.html"), rendered.html);
   } catch {
@@ -121,6 +157,9 @@ export async function build(
 
   // Generate robots.txt
   await generateRobotsTxt(siteMetadata, outDir);
+
+  // Clean up esbuild
+  stopBundleBuilder();
 
   // Log summary
   if (errorCount > 0) {

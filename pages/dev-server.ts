@@ -96,7 +96,7 @@ export async function registerDevServer(
         const rendered = await renderPageFromFile(
           notFoundPath,
           rootDir,
-          state.assetMap,
+          { assetMap: state.assetMap },
         );
 
         // Inject hot reload script
@@ -121,7 +121,7 @@ export async function registerDevServer(
       const rendered = await renderPageFromFile(
         page.filePath,
         rootDir,
-        state.assetMap,
+        { assetMap: state.assetMap }, // No bundles in dev mode for MVP
       );
 
       logger.info(`Rendered page: ${urlPath}`);
@@ -143,7 +143,7 @@ export async function registerDevServer(
         const rendered = await renderPageFromFile(
           errorPath,
           rootDir,
-          state.assetMap,
+          { assetMap: state.assetMap },
         );
 
         // Inject hot reload script
