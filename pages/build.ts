@@ -16,6 +16,23 @@ import type { BuildOptions, SiteMetadata } from "./types.ts";
 import { extractLayoutName } from "./frontmatter-parser.ts";
 
 /**
+ * Normalizes a base path to ensure it has a trailing slash.
+ *
+ * - "/" → "/"
+ * - "/docs" → "/docs/"
+ * - "/docs/" → "/docs/"
+ *
+ * @param basePath Base path to normalize
+ * @returns Normalized base path with trailing slash
+ */
+function normalizeBasePath(basePath: string): string {
+  if (basePath === "/") {
+    return "/";
+  }
+  return basePath.endsWith("/") ? basePath : `${basePath}/`;
+}
+
+/**
  * Builds a static site from markdown files.
  *
  * Process:
@@ -38,7 +55,7 @@ export async function build(
 ): Promise<void> {
   const rootDir = options.rootDir ?? "./";
   const outDir = options.outDir ?? join(rootDir, "dist");
-  const baseUrl = options.baseUrl ?? "/";
+  const basePath = normalizeBasePath(options.basePath ?? "/");
 
   const pagesDir = join(rootDir, "pages");
   const publicDir = join(rootDir, "public");
@@ -49,8 +66,8 @@ export async function build(
   await Deno.remove(outDir, { recursive: true }).catch(() => {});
   await ensureDir(outDir);
 
-  // Build asset map for cache-busting with configured base URL
-  const assetMap = await buildAssetMap(publicDir, baseUrl);
+  // Build asset map for cache-busting with configured base path
+  const assetMap = await buildAssetMap(publicDir, basePath);
 
   // Scan for all markdown pages
   const pages = await scanPages(pagesDir);
@@ -88,8 +105,8 @@ export async function build(
       const bundlePath = join(bundlesDir, bundle.filename!);
       await Deno.writeTextFile(bundlePath, bundle.code);
 
-      // Render page with bundle URL (respecting base URL)
-      const bundleUrl = `${baseUrl}__bundles/${bundle.filename}`;
+      // Render page with bundle URL (respecting base path)
+      const bundleUrl = `${basePath}__bundles/${bundle.filename}`;
       const rendered = await renderPageFromFile(
         page.filePath,
         rootDir,
@@ -138,7 +155,10 @@ export async function build(
     const rendered = await renderPageFromFile(
       notFoundPath,
       rootDir,
-      { assetMap, bundleUrl: `${baseUrl}__bundles/${notFoundBundle.filename}` },
+      {
+        assetMap,
+        bundleUrl: `${basePath}__bundles/${notFoundBundle.filename}`,
+      },
     );
     await Deno.writeTextFile(join(outDir, "404.html"), rendered.html);
   } catch {
@@ -165,7 +185,7 @@ export async function build(
     const rendered = await renderPageFromFile(
       errorPath,
       rootDir,
-      { assetMap, bundleUrl: `${baseUrl}__bundles/${errorBundle.filename}` },
+      { assetMap, bundleUrl: `${basePath}__bundles/${errorBundle.filename}` },
     );
     await Deno.writeTextFile(join(outDir, "500.html"), rendered.html);
   } catch {
@@ -173,7 +193,7 @@ export async function build(
   }
 
   // Copy assets to dist/__public/ with hashed filenames
-  await copyHashedAssets(publicDir, outDir, assetMap);
+  await copyHashedAssets(publicDir, outDir, assetMap, basePath);
 
   // Generate sitemap.xml
   await generateSitemap(pages, siteMetadata, outDir);
@@ -216,15 +236,17 @@ async function copyHashedAssets(
   publicDir: string,
   outDir: string,
   assetMap: Map<string, string>,
+  basePath: string,
 ): Promise<void> {
   for (const [cleanUrl, hashedUrl] of assetMap) {
     // Extract relative path from clean URL
     // "/public/styles.css" → "styles.css"
     const relativePath = cleanUrl.replace(/^\/public\//, "");
 
-    // Extract hashed path from hashed URL
-    // "/__public/styles-abc123.css" → "styles-abc123.css"
-    const hashedPath = hashedUrl.replace(/^\/__public\//, "");
+    // Extract hashed path from hashed URL by stripping basePath prefix
+    // With basePath="/docs/": "/docs/__public/styles-abc123.css" → "styles-abc123.css"
+    // With basePath="/": "/__public/styles-abc123.css" → "styles-abc123.css"
+    const hashedPath = hashedUrl.replace(`${basePath}__public/`, "");
 
     const sourcePath = join(publicDir, relativePath);
     const destPath = join(outDir, "__public", hashedPath);

@@ -103,9 +103,12 @@ function injectContent(
 
   // Build injection content for body
   const appHtml = `<div id="app" data-mage-layout="true">${bodyContent}</div>`;
+
+  // Remove html field from props (it's extracted from DOM on client)
+  const { html: _html, ...propsWithoutHtml } = props;
   const propsScript = `<script>window.__PAGE_PROPS__ = ${
     JSON.stringify(
-      props,
+      propsWithoutHtml,
     )
   };</script>`;
   const bundleScript = `<script type="module" src="${bundleUrl}"></script>`;

@@ -12,6 +12,23 @@ import { serveFiles } from "../serve-files/mod.ts";
 import type { StaticServerOptions } from "./types.ts";
 
 /**
+ * Normalizes a base path to ensure it has a trailing slash.
+ *
+ * - "/" → "/"
+ * - "/docs" → "/docs/"
+ * - "/docs/" → "/docs/"
+ *
+ * @param basePath Base path to normalize
+ * @returns Normalized base path with trailing slash
+ */
+function normalizeBasePath(basePath: string): string {
+  if (basePath === "/") {
+    return "/";
+  }
+  return basePath.endsWith("/") ? basePath : `${basePath}/`;
+}
+
+/**
  * Registers static server routes for pre-built files.
  *
  * Behavior:
@@ -31,7 +48,7 @@ export function registerStaticServer(
   options: StaticServerOptions = {},
 ): void {
   const rootDir = options.rootDir ?? "./";
-  const baseRoute = options.route ?? "/";
+  const basePath = normalizeBasePath(options.basePath ?? "/");
 
   // Pre-load 404.html at startup to avoid blocking on 404 errors
   const notFoundPath = join(rootDir, "404.html");
@@ -43,7 +60,7 @@ export function registerStaticServer(
   }
 
   // Wrap serveFiles to handle custom 404 page
-  app.get(`${baseRoute}*`, async (c, next) => {
+  app.get(`${basePath}*`, async (c, next) => {
     // Store the original notFound function
     const originalNotFound = c.notFound.bind(c);
 

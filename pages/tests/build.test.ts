@@ -507,3 +507,152 @@ describe(
     });
   },
 );
+
+describe(
+  "build - basePath normalization",
+  {
+    sanitizeResources: false,
+    sanitizeOps: false,
+  },
+  () => {
+    it("should normalize basePath without trailing slash", async () => {
+      const testOutputDir = await Deno.makeTempDir();
+
+      try {
+        await build(
+          { baseUrl: "https://example.com" },
+          {
+            rootDir: FIXTURES_DIR,
+            outDir: testOutputDir,
+            basePath: "/docs", // No trailing slash
+          },
+        );
+
+        // Check that bundle URLs include the normalized basePath
+        const indexHtml = await Deno.readTextFile(
+          join(testOutputDir, "index.html"),
+        );
+        expect(indexHtml).toContain("/docs/__bundles/");
+      } finally {
+        await Deno.remove(testOutputDir, { recursive: true });
+      }
+    });
+
+    it("should normalize basePath with trailing slash", async () => {
+      const testOutputDir = await Deno.makeTempDir();
+
+      try {
+        await build(
+          { baseUrl: "https://example.com" },
+          {
+            rootDir: FIXTURES_DIR,
+            outDir: testOutputDir,
+            basePath: "/docs/", // With trailing slash
+          },
+        );
+
+        // Check that bundle URLs include the normalized basePath
+        const indexHtml = await Deno.readTextFile(
+          join(testOutputDir, "index.html"),
+        );
+        expect(indexHtml).toContain("/docs/__bundles/");
+      } finally {
+        await Deno.remove(testOutputDir, { recursive: true });
+      }
+    });
+
+    it("should handle root basePath", async () => {
+      const testOutputDir = await Deno.makeTempDir();
+
+      try {
+        await build(
+          { baseUrl: "https://example.com" },
+          {
+            rootDir: FIXTURES_DIR,
+            outDir: testOutputDir,
+            basePath: "/",
+          },
+        );
+
+        // Check that bundle URLs use root path
+        const indexHtml = await Deno.readTextFile(
+          join(testOutputDir, "index.html"),
+        );
+        expect(indexHtml).toContain("/__bundles/");
+        expect(indexHtml).not.toContain("//__bundles/");
+      } finally {
+        await Deno.remove(testOutputDir, { recursive: true });
+      }
+    });
+
+    it("should default to root basePath when not specified", async () => {
+      const testOutputDir = await Deno.makeTempDir();
+
+      try {
+        await build(
+          { baseUrl: "https://example.com" },
+          {
+            rootDir: FIXTURES_DIR,
+            outDir: testOutputDir,
+            // basePath not specified
+          },
+        );
+
+        // Check that bundle URLs use root path
+        const indexHtml = await Deno.readTextFile(
+          join(testOutputDir, "index.html"),
+        );
+        expect(indexHtml).toContain("/__bundles/");
+        expect(indexHtml).not.toContain("//__bundles/");
+      } finally {
+        await Deno.remove(testOutputDir, { recursive: true });
+      }
+    });
+
+    it("should copy assets to __public without basePath in directory structure", async () => {
+      const testOutputDir = await Deno.makeTempDir();
+
+      try {
+        await build(
+          { baseUrl: "https://example.com" },
+          {
+            rootDir: FIXTURES_DIR,
+            outDir: testOutputDir,
+            basePath: "/docs/",
+          },
+        );
+
+        // Assets should be in dist/__public/, NOT dist/__public/docs/__public/
+        const publicDir = join(testOutputDir, "__public");
+        const publicExists = await exists(publicDir);
+        expect(publicExists).toBe(true);
+
+        // Check that styles.css was copied with hash
+        const files = [];
+        for await (const entry of Deno.readDir(publicDir)) {
+          files.push(entry.name);
+        }
+
+        // Should have styles-[hash].css
+        const stylesFile = files.find((f) =>
+          f.startsWith("styles-") && f.endsWith(".css")
+        );
+        expect(stylesFile).toBeTruthy();
+
+        // Should NOT have nested docs/__public/ directory
+        const wrongDir = join(testOutputDir, "__public", "docs");
+        const wrongDirExists = await exists(wrongDir);
+        expect(wrongDirExists).toBe(false);
+
+        // HTML should reference /docs/__public/styles-[hash].css
+        const indexHtml = await Deno.readTextFile(
+          join(testOutputDir, "index.html"),
+        );
+        expect(indexHtml).toContain("/docs/__public/styles-");
+        expect(indexHtml).not.toContain("/__public/__public/");
+      } finally {
+        await Deno.remove(testOutputDir, { recursive: true });
+      }
+    });
+  },
+);

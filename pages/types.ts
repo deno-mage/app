@@ -78,7 +78,7 @@ export interface BuildOptions {
   /** Output directory for built files */
   outDir?: string;
   /** Base path for deployment (e.g., "/docs/" for https://example.com/docs/) */
-  baseUrl?: string;
+  basePath?: string;
 }
 
 /**
@@ -87,8 +87,8 @@ export interface BuildOptions {
 export interface StaticServerOptions {
   /** Root directory containing built files (dist/) */
   rootDir?: string;
-  /** Route to mount the static server on */
-  route?: string;
+  /** Base path for deployment (e.g., "/docs/" for https://example.com/docs/) */
+  basePath?: string;
 }
 
 /**

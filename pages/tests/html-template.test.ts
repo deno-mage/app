@@ -153,8 +153,8 @@ describe("html-template - injection", () => {
     expect(html).toContain('"description":"Test description"');
     expect(html).toContain('"customField":"custom value"');
 
-    // html field should be included (extraction happens client-side)
-    expect(html).toContain('"html":"<p>Layout content</p>"');
+    // html field should NOT be included (extracted from DOM on client)
+    expect(html).not.toContain('"html":"<p>Layout content</p>"');
   });
 });
 

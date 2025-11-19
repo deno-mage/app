@@ -37,7 +37,7 @@ beforeAll(async () => {
 
   registerStaticServer(server.app, {
     rootDir: distDir,
-    route: "/",
+    basePath: "/",
   });
 
   server.start();
@@ -222,7 +222,7 @@ describe("static server - custom base route", () => {
 
     registerStaticServer(customServer.app, {
       rootDir: customDistDir,
-      route: "/docs/",
+      basePath: "/docs/",
     });
 
     customServer.start();
@@ -265,6 +265,55 @@ describe("static server - custom base route", () => {
       expect(assetResponse.status).toBe(200);
       await assetResponse.body?.cancel();
     }
+  });
+});
+
+describe("static server - basePath normalization", () => {
+  let normalizeServer: MageTestServer;
+  let normalizeDistDir: string;
+
+  beforeAll(async () => {
+    const siteMetadata = { baseUrl: "https://example.com" };
+    normalizeDistDir = await Deno.makeTempDir();
+
+    // Build static site
+    await build(siteMetadata, {
+      rootDir: FIXTURES_DIR,
+      outDir: normalizeDistDir,
+    });
+
+    // Setup static server with basePath without trailing slash
+    normalizeServer = new MageTestServer();
+
+    const { registerStaticServer } = pages();
+
+    registerStaticServer(normalizeServer.app, {
+      rootDir: normalizeDistDir,
+      basePath: "/api", // No trailing slash - should be normalized
+    });
+
+    normalizeServer.start();
+  });
+
+  afterAll(async () => {
+    await normalizeServer.stop();
+    await Deno.remove(normalizeDistDir, { recursive: true });
+  });
+
+  it("should normalize basePath without trailing slash", async () => {
+    const response = await fetch(normalizeServer.url("/api/"));
+
+    expect(response.status).toBe(200);
+    const html = await response.text();
+    expect(html).toContain("<title>Home</title>");
+  });
+
+  it("should serve nested pages with normalized basePath", async () => {
+    const response = await fetch(normalizeServer.url("/api/docs/intro"));
+
+    expect(response.status).toBe(200);
+    const html = await response.text();
+    expect(html).toContain("<title>Introduction</title>");
   });
 });
 
@@ -337,7 +386,7 @@ describe("static server - fallback 404 when no custom 404.html", () => {
 
     registerStaticServer(fallbackServer.app, {
       rootDir: fallbackDistDir,
-      route: "/",
+      basePath: "/",
     });
 
     fallbackServer.start();
