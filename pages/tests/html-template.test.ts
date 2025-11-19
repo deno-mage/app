@@ -16,6 +16,7 @@ describe("html-template - loading", () => {
     const props: HtmlTemplateProps = {
       head: "<title>Test</title>",
       body: "<div>Content</div>",
+      bundleUrl: "/__bundles/test.js",
       props: { html: "", title: "Test" },
     };
 
@@ -32,6 +33,7 @@ describe("html-template - loading", () => {
     const props: HtmlTemplateProps = {
       head: "<title>Default</title>",
       body: "<p>Body content</p>",
+      bundleUrl: "/__bundles/default.js",
       props: { html: "", title: "Default" },
     };
 
@@ -40,7 +42,7 @@ describe("html-template - loading", () => {
     expect(html).toContain("<!DOCTYPE html>");
     expect(html).toContain("<title>Default</title>");
     expect(html).toContain("<p>Body content</p>");
-    expect(html).toContain('<div id="app" data-layout="true">');
+    expect(html).toContain('<div id="app" data-mage-layout="true">');
   });
 
   it("should throw error when _html.tsx exists but has no default export", async () => {
@@ -65,6 +67,7 @@ describe("html-template - rendering", () => {
     const props: HtmlTemplateProps = {
       head: "<title>My Title</title>\n<meta name='description' content='Test'>",
       body: "<div>Content</div>",
+      bundleUrl: "/__bundles/test.js",
       props: { html: "", title: "My Title" },
     };
 
@@ -80,6 +83,7 @@ describe("html-template - rendering", () => {
     const props: HtmlTemplateProps = {
       head: "",
       body: "<main><h1>Hello</h1><p>World</p></main>",
+      bundleUrl: "/__bundles/test.js",
       props: { html: "", title: "Test" },
     };
 
@@ -108,19 +112,20 @@ describe("html-template - rendering", () => {
     );
   });
 
-  it("should not include bundle script when bundleUrl is not provided", async () => {
+  it("should always include bundle script since bundleUrl is required", async () => {
     const template = await loadHtmlTemplate("/nonexistent");
 
     const props: HtmlTemplateProps = {
       head: "<title>Test</title>",
       body: "<div>Content</div>",
+      bundleUrl: "/__bundles/test.js",
       props: { html: "", title: "Test" },
     };
 
     const html = renderWithTemplate(template, props);
 
-    expect(html).not.toContain("window.__PAGE_PROPS__");
-    expect(html).not.toContain('<script type="module"');
+    expect(html).toContain("window.__PAGE_PROPS__");
+    expect(html).toContain('<script type="module"');
   });
 
   it("should serialize props correctly", async () => {
@@ -134,7 +139,9 @@ describe("html-template - rendering", () => {
         html: "<p>Should not be in serialized props</p>",
         title: "Test Page",
         description: "Test description",
-        customField: "custom value",
+        additionalFrontmatter: {
+          customField: "custom value",
+        },
       },
     };
 
@@ -157,6 +164,7 @@ describe("html-template - custom template", () => {
     const props: HtmlTemplateProps = {
       head: "<title>Custom</title>",
       body: "<div>Custom body</div>",
+      bundleUrl: "/__bundles/custom.js",
       props: { html: "", title: "Custom" },
     };
 

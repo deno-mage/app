@@ -19,6 +19,7 @@ import { logger } from "./logger.ts";
 import type { DevServerOptions } from "./types.ts";
 import { buildBundle, stopBundleBuilder } from "./bundle-builder.ts";
 import type { BundleResult } from "./bundle-builder.ts";
+import { extractLayoutName } from "./frontmatter-parser.ts";
 
 /**
  * State for the dev server.
@@ -101,10 +102,30 @@ export async function registerDevServer(
       // Try to render _not-found.md
       const notFoundPath = join(pagesDir, "_not-found.md");
       try {
+        const content = await Deno.readTextFile(notFoundPath);
+        const layoutName = extractLayoutName(content);
+
+        // Build or retrieve cached bundle for 404 page
+        const pageId = "404";
+        let bundle = state.bundleCache.get(pageId);
+
+        if (!bundle) {
+          const layoutPath = resolve(rootDir, "layouts", `${layoutName}.tsx`);
+          bundle = await buildBundle({
+            layoutPath,
+            rootDir: Deno.cwd(),
+            production: false,
+            pageId,
+          });
+          state.bundleCache.set(pageId, bundle);
+          logger.info("Built dev bundle for: 404");
+        }
+
+        const bundleUrl = `${baseRoute}__bundles/${pageId}.js`;
         const rendered = await renderPageFromFile(
           notFoundPath,
           rootDir,
-          { assetMap: state.assetMap },
+          { assetMap: state.assetMap, bundleUrl },
         );
 
         // Inject hot reload script
@@ -128,15 +149,7 @@ export async function registerDevServer(
     try {
       // Read frontmatter to determine layout
       const content = await Deno.readTextFile(page.filePath);
-      const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
-      let layoutName = "default";
-      if (frontmatterMatch) {
-        const frontmatter = frontmatterMatch[1];
-        const layoutMatch = frontmatter.match(/layout:\s*["']?([^"'\n]+)["']?/);
-        if (layoutMatch) {
-          layoutName = layoutMatch[1];
-        }
-      }
+      const layoutName = extractLayoutName(content);
 
       // Build or retrieve cached bundle
       const pageId = urlPath === "/"
@@ -181,10 +194,30 @@ export async function registerDevServer(
       // Try to render _error.md
       const errorPath = join(pagesDir, "_error.md");
       try {
+        const content = await Deno.readTextFile(errorPath);
+        const layoutName = extractLayoutName(content);
+
+        // Build or retrieve cached bundle for 500 page
+        const pageId = "500";
+        let bundle = state.bundleCache.get(pageId);
+
+        if (!bundle) {
+          const layoutPath = resolve(rootDir, "layouts", `${layoutName}.tsx`);
+          bundle = await buildBundle({
+            layoutPath,
+            rootDir: Deno.cwd(),
+            production: false,
+            pageId,
+          });
+          state.bundleCache.set(pageId, bundle);
+          logger.info("Built dev bundle for: 500");
+        }
+
+        const bundleUrl = `${baseRoute}__bundles/${pageId}.js`;
         const rendered = await renderPageFromFile(
           errorPath,
           rootDir,
-          { assetMap: state.assetMap },
+          { assetMap: state.assetMap, bundleUrl },
         );
 
         // Inject hot reload script

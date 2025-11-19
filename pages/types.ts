@@ -30,8 +30,8 @@ export interface LayoutProps {
   title: string;
   /** Page description for meta tags */
   description?: string;
-  /** Custom metadata fields from frontmatter */
-  [key: string]: unknown;
+  /** Additional custom fields from frontmatter */
+  additionalFrontmatter?: Record<string, unknown>;
 }
 
 /**
@@ -77,6 +77,8 @@ export interface BuildOptions {
   rootDir?: string;
   /** Output directory for built files */
   outDir?: string;
+  /** Base path for deployment (e.g., "/docs/" for https://example.com/docs/) */
+  baseUrl?: string;
 }
 
 /**
@@ -115,8 +117,8 @@ export interface HtmlTemplateProps {
   head: string;
   /** Rendered layout HTML as string */
   body: string;
-  /** URL to client bundle (if hydration enabled) */
-  bundleUrl?: string;
+  /** URL to client bundle for hydration */
+  bundleUrl: string;
   /** Original page props (for conditional logic in template) */
   props: LayoutProps;
 }

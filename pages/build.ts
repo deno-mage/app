@@ -13,6 +13,7 @@ import { buildAssetMap } from "./assets.ts";
 import { buildBundle, stopBundleBuilder } from "./bundle-builder.ts";
 import { logger } from "./logger.ts";
 import type { BuildOptions, SiteMetadata } from "./types.ts";
+import { extractLayoutName } from "./frontmatter-parser.ts";
 
 /**
  * Builds a static site from markdown files.
@@ -37,6 +38,7 @@ export async function build(
 ): Promise<void> {
   const rootDir = options.rootDir ?? "./";
   const outDir = options.outDir ?? join(rootDir, "dist");
+  const baseUrl = options.baseUrl ?? "/";
 
   const pagesDir = join(rootDir, "pages");
   const publicDir = join(rootDir, "public");
@@ -47,8 +49,8 @@ export async function build(
   await Deno.remove(outDir, { recursive: true }).catch(() => {});
   await ensureDir(outDir);
 
-  // Build asset map for cache-busting (always use / for static builds)
-  const assetMap = await buildAssetMap(publicDir, "/");
+  // Build asset map for cache-busting with configured base URL
+  const assetMap = await buildAssetMap(publicDir, baseUrl);
 
   // Scan for all markdown pages
   const pages = await scanPages(pagesDir);
@@ -66,15 +68,7 @@ export async function build(
     try {
       // Read frontmatter to determine layout
       const content = await Deno.readTextFile(page.filePath);
-      const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
-      let layoutName = "default";
-      if (frontmatterMatch) {
-        const frontmatter = frontmatterMatch[1];
-        const layoutMatch = frontmatter.match(/layout:\s*["']?([^"'\n]+)["']?/);
-        if (layoutMatch) {
-          layoutName = layoutMatch[1];
-        }
-      }
+      const layoutName = extractLayoutName(content);
 
       // Build client bundle for this page
       // Use resolve() to ensure absolute path for esbuild
@@ -94,8 +88,8 @@ export async function build(
       const bundlePath = join(bundlesDir, bundle.filename!);
       await Deno.writeTextFile(bundlePath, bundle.code);
 
-      // Render page with bundle URL
-      const bundleUrl = `/__bundles/${bundle.filename}`;
+      // Render page with bundle URL (respecting base URL)
+      const bundleUrl = `${baseUrl}__bundles/${bundle.filename}`;
       const rendered = await renderPageFromFile(
         page.filePath,
         rootDir,
@@ -127,10 +121,24 @@ export async function build(
   // Render _not-found.md to 404.html (if it exists)
   const notFoundPath = join(pagesDir, "_not-found.md");
   try {
+    const content = await Deno.readTextFile(notFoundPath);
+    const layoutName = extractLayoutName(content);
+    const layoutPath = resolve(rootDir, "layouts", `${layoutName}.tsx`);
+
+    const notFoundBundle = await buildBundle({
+      layoutPath,
+      rootDir: Deno.cwd(),
+      production: true,
+      pageId: "404",
+    });
+
+    const notFoundBundlePath = join(bundlesDir, notFoundBundle.filename!);
+    await Deno.writeTextFile(notFoundBundlePath, notFoundBundle.code);
+
     const rendered = await renderPageFromFile(
       notFoundPath,
       rootDir,
-      { assetMap }, // No bundle for error pages
+      { assetMap, bundleUrl: `${baseUrl}__bundles/${notFoundBundle.filename}` },
     );
     await Deno.writeTextFile(join(outDir, "404.html"), rendered.html);
   } catch {
@@ -140,10 +148,24 @@ export async function build(
   // Render _error.md to 500.html (if it exists)
   const errorPath = join(pagesDir, "_error.md");
   try {
+    const content = await Deno.readTextFile(errorPath);
+    const layoutName = extractLayoutName(content);
+    const layoutPath = resolve(rootDir, "layouts", `${layoutName}.tsx`);
+
+    const errorBundle = await buildBundle({
+      layoutPath,
+      rootDir: Deno.cwd(),
+      production: true,
+      pageId: "500",
+    });
+
+    const errorBundlePath = join(bundlesDir, errorBundle.filename!);
+    await Deno.writeTextFile(errorBundlePath, errorBundle.code);
+
     const rendered = await renderPageFromFile(
       errorPath,
       rootDir,
-      { assetMap }, // No bundle for error pages
+      { assetMap, bundleUrl: `${baseUrl}__bundles/${errorBundle.filename}` },
     );
     await Deno.writeTextFile(join(outDir, "500.html"), rendered.html);
   } catch {

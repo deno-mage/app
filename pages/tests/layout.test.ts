@@ -162,10 +162,10 @@ describe("layout - build props", () => {
 
     const props = buildLayoutProps(html, frontmatter);
 
-    expect(props.layout).toBeUndefined();
+    expect(props.additionalFrontmatter?.layout).toBeUndefined();
   });
 
-  it("should spread custom frontmatter fields", () => {
+  it("should nest custom frontmatter fields in additionalFrontmatter", () => {
     const html = "<p>Content</p>";
     const frontmatter: Frontmatter = {
       title: "Test",
@@ -176,9 +176,12 @@ describe("layout - build props", () => {
 
     const props = buildLayoutProps(html, frontmatter);
 
-    expect(props.author).toBe("John Doe");
-    expect(props.tags).toEqual(["javascript", "testing"]);
-    expect(props.draft).toBe(true);
+    expect(props.additionalFrontmatter?.author).toBe("John Doe");
+    expect(props.additionalFrontmatter?.tags).toEqual([
+      "javascript",
+      "testing",
+    ]);
+    expect(props.additionalFrontmatter?.draft).toBe(true);
   });
 
   it("should handle frontmatter with only required fields", () => {

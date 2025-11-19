@@ -28,12 +28,15 @@ describe("bundle-builder - entry point generation", {
 
     expect(entry).toContain('import { hydrate } from "preact"');
     expect(entry).toContain("import { ErrorBoundary } from");
-    expect(entry).toContain('import Layout from "/path/to/layout.tsx"');
+    expect(entry).toContain(
+      'import LayoutComponent from "/path/to/layout.tsx"',
+    );
     expect(entry).toContain('document.getElementById("app")');
     expect(entry).toContain("window.__PAGE_PROPS__");
     expect(entry).toContain("querySelector('[data-mage-layout=\"true\"]')");
     expect(entry).toContain("<ErrorBoundary>");
-    expect(entry).toContain("<Layout {...props} />");
+    expect(entry).toContain("function BodyContent(props)");
+    expect(entry).toContain("<BodyContent {...props} />");
     expect(entry).toContain("</ErrorBoundary>");
   });
 

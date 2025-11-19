@@ -20,30 +20,24 @@ import type { HtmlTemplate, HtmlTemplateProps } from "./types.ts";
 function defaultHtmlTemplate(props: HtmlTemplateProps): JSX.Element {
   return (
     <html lang="en">
-      <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <meta
-          dangerouslySetInnerHTML={{ __html: props.head }}
-        />
-      </head>
+      <head
+        dangerouslySetInnerHTML={{
+          __html:
+            `<meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />${props.head}`,
+        }}
+      />
       <body>
         <div
           id="app"
-          data-layout="true"
+          data-mage-layout="true"
           dangerouslySetInnerHTML={{ __html: props.body }}
         />
-        {props.bundleUrl && (
-          <>
-            <script
-              dangerouslySetInnerHTML={{
-                __html:
-                  `window.__PAGE_PROPS__ = ${JSON.stringify(props.props)};`,
-              }}
-            />
-            <script type="module" src={props.bundleUrl} />
-          </>
-        )}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `window.__PAGE_PROPS__ = ${JSON.stringify(props.props)};`,
+          }}
+        />
+        <script type="module" src={props.bundleUrl} />
       </body>
     </html>
   );

@@ -7,13 +7,6 @@
 import { Component, type ComponentChildren } from "preact";
 
 /**
- * Window interface extended with Mage error handler.
- */
-interface MageWindow extends Window {
-  __MAGE_ERROR_HANDLER__?: (error: Error, errorInfo: unknown) => void;
-}
-
-/**
  * Props for the ErrorBoundary component.
  */
 export interface ErrorBoundaryProps {
@@ -62,8 +55,7 @@ export class ErrorBoundary
   /**
    * Called when an error is caught during rendering.
    *
-   * Logs the error to console and optionally sends to error tracking service
-   * if __MAGE_ERROR_HANDLER__ is configured.
+   * Logs the error to console for debugging.
    *
    * @param error The error that was thrown
    * @param errorInfo Additional error information from Preact
@@ -71,14 +63,6 @@ export class ErrorBoundary
   override componentDidCatch(error: Error, errorInfo: unknown): void {
     // Log to console for debugging
     console.error("[Mage Pages] Hydration error:", error, errorInfo);
-
-    // In production, could send to error tracking service
-    if (
-      typeof window !== "undefined" &&
-      (window as MageWindow).__MAGE_ERROR_HANDLER__
-    ) {
-      (window as MageWindow).__MAGE_ERROR_HANDLER__!(error, errorInfo);
-    }
   }
 
   /**

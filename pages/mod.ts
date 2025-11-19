@@ -8,7 +8,6 @@
 
 export { pages } from "./api.ts";
 export { Head } from "./head.tsx";
-export { ErrorBoundary } from "./error-boundary.tsx";
 
 export type {
   BuildOptions,
@@ -22,7 +21,3 @@ export type {
   SiteMetadata,
   StaticServerOptions,
 } from "./types.ts";
-export type {
-  ErrorBoundaryProps,
-  ErrorBoundaryState,
-} from "./error-boundary.tsx";

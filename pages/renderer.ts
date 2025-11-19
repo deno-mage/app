@@ -29,8 +29,8 @@ export interface RenderedPage {
 export interface RenderPageOptions {
   /** Map of clean URLs to hashed URLs for asset replacement */
   assetMap: Map<string, string>;
-  /** Optional URL to client bundle for hydration */
-  bundleUrl?: string;
+  /** URL to client bundle for hydration */
+  bundleUrl: string;
 }
 
 /**

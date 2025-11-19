@@ -33,19 +33,25 @@ export function registerStaticServer(
   const rootDir = options.rootDir ?? "./";
   const baseRoute = options.route ?? "/";
 
+  // Pre-load 404.html at startup to avoid blocking on 404 errors
+  const notFoundPath = join(rootDir, "404.html");
+  let notFoundHtml: string | null = null;
+  try {
+    notFoundHtml = Deno.readTextFileSync(notFoundPath);
+  } catch {
+    // 404.html doesn't exist, will use default notFound
+  }
+
   // Wrap serveFiles to handle custom 404 page
   app.get(`${baseRoute}*`, async (c, next) => {
     // Store the original notFound function
     const originalNotFound = c.notFound.bind(c);
 
-    // Override notFound to serve custom 404.html (synchronously)
+    // Override notFound to serve custom 404.html
     c.notFound = (text?: string) => {
-      const notFoundPath = join(rootDir, "404.html");
-      try {
-        // Read file synchronously to maintain sync interface
-        const html = Deno.readTextFileSync(notFoundPath);
-        c.html(html, 404);
-      } catch {
+      if (notFoundHtml) {
+        c.html(notFoundHtml, 404);
+      } else {
         // Fall back to original notFound if 404.html doesn't exist
         originalNotFound(text);
       }
