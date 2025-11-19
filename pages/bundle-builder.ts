@@ -60,9 +60,26 @@ export function generateEntryPoint(
   layoutPath: string,
   _pageId: string,
 ): string {
-  return `import { hydrate, Fragment, h } from "preact";
+  return `import { hydrate } from "preact";
 import { ErrorBoundary } from "${ERROR_BOUNDARY_PATH}";
-import Layout from "${layoutPath}";
+import LayoutComponent from "${layoutPath}";
+
+// Wrapper that extracts only the body children from the Layout
+// The Layout renders <><Head/><body>children</body></>, but we only want the body children
+function BodyContent(props) {
+  const layoutOutput = LayoutComponent(props);
+
+  // Layout returns a Fragment with [Head, body]
+  // Extract the body element
+  const children = Array.isArray(layoutOutput.props?.children)
+    ? layoutOutput.props.children
+    : [layoutOutput.props?.children];
+
+  const bodyElement = children.find(child => child?.type === 'body');
+
+  // Return just the body's children (without the body wrapper)
+  return bodyElement ? bodyElement.props.children : null;
+}
 
 // Extract layout content HTML from DOM before hydration
 const appRoot = document.getElementById("app");
@@ -78,30 +95,11 @@ if (!appRoot) {
   };
 
   try {
-    // Render layout to extract body children
-    // The Layout component returns <><Head /><body>children</body></>
-    // We need to extract just the body's children for hydration into #app
-    const layoutVNode = h(Layout, props);
-
-    // The layout returns a Fragment with Head and body
-    // We need to find the body element and get its children
-    let bodyChildren = layoutVNode;
-
-    // If it's a Fragment, look for the body element
-    if (layoutVNode.type === Fragment) {
-      const children = Array.isArray(layoutVNode.props.children)
-        ? layoutVNode.props.children
-        : [layoutVNode.props.children];
-
-      const bodyVNode = children.find(child => child?.type === 'body');
-      if (bodyVNode) {
-        bodyChildren = bodyVNode.props.children;
-      }
-    }
-
-    // Hydrate just the body children with error boundary
+    // Hydrate only the body content (not the full Layout with <body> tag)
     hydrate(
-      h(ErrorBoundary, null, bodyChildren),
+      <ErrorBoundary>
+        <BodyContent {...props} />
+      </ErrorBoundary>,
       appRoot
     );
   } catch (error) {
