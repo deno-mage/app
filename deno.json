@@ -56,7 +56,7 @@
     "format": "deno fmt",
     "check": "deno check .",
     "docs:dev": "deno run --allow-all docs/dev.ts",
-    "docs:build": "deno run --allow-read --allow-write --allow-env docs/build.ts",
+    "docs:build": "deno run --allow-read --allow-write --allow-run --allow-env docs/build.ts",
     "docs:serve": "deno run --allow-read --allow-net --allow-env docs/serve.ts"
   },
   "imports": {
