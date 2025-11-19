@@ -5,7 +5,7 @@
  */
 
 import { ensureDir } from "@std/fs";
-import { join } from "@std/path";
+import { join, resolve } from "@std/path";
 import { scanPages } from "./scanner.ts";
 import type { PageInfo } from "./scanner.ts";
 import { renderPageFromFile } from "./renderer.ts";
@@ -77,14 +77,15 @@ export async function build(
       }
 
       // Build client bundle for this page
-      const layoutPath = join(rootDir, "layouts", `${layoutName}.tsx`);
+      // Use resolve() to ensure absolute path for esbuild
+      const layoutPath = resolve(rootDir, "layouts", `${layoutName}.tsx`);
       const pageId = page.urlPath === "/"
         ? "index"
         : page.urlPath.slice(1).replace(/\//g, "-");
 
       const bundle = await buildBundle({
         layoutPath,
-        rootDir,
+        rootDir: Deno.cwd(), // Use project root where deno.json is for import resolution
         production: true,
         pageId,
       });

@@ -151,12 +151,6 @@ export async function buildBundle(
     jsxImportSource: "preact",
     jsx: "automatic",
     write: false,
-    // Mark server-side packages as external (don't bundle them)
-    external: [
-      "@std/*",
-      "@mage/app/*",
-      "node:*",
-    ],
     define: {
       "process.env.NODE_ENV": JSON.stringify(
         production ? "production" : "development",
