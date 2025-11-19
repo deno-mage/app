@@ -19,7 +19,7 @@ beforeAll(async () => {
 
   cleanup = await registerDevServer(server.app, {
     rootDir: FIXTURES_DIR,
-    route: "/",
+    basePath: "/",
   });
 
   server.start();
@@ -373,7 +373,7 @@ describe("dev server - custom base route", {
 
     customCleanup = await registerDevServer(customServer.app, {
       rootDir: FIXTURES_DIR,
-      route: "/docs/",
+      basePath: "/docs/",
     });
 
     customServer.start();
@@ -420,5 +420,46 @@ describe("dev server - custom base route", {
     expect(ws.readyState).toBe(WebSocket.OPEN);
 
     ws.close();
+  });
+});
+
+describe("dev server - basePath normalization", () => {
+  let normalizeServer: MageTestServer;
+  let normalizeCleanup: (() => void) | undefined;
+
+  beforeAll(async () => {
+    normalizeServer = new MageTestServer();
+
+    const { registerDevServer } = pages();
+
+    normalizeCleanup = await registerDevServer(normalizeServer.app, {
+      rootDir: FIXTURES_DIR,
+      basePath: "/api", // No trailing slash - should be normalized
+    });
+
+    normalizeServer.start();
+  });
+
+  afterAll(async () => {
+    if (normalizeCleanup) {
+      normalizeCleanup();
+    }
+    await normalizeServer.stop();
+  });
+
+  it("should normalize basePath without trailing slash", async () => {
+    const response = await fetch(normalizeServer.url("/api/"));
+
+    expect(response.status).toBe(200);
+    const html = await response.text();
+    expect(html).toContain("<title>Home</title>");
+  });
+
+  it("should serve nested pages with normalized basePath", async () => {
+    const response = await fetch(normalizeServer.url("/api/docs/intro"));
+
+    expect(response.status).toBe(200);
+    const html = await response.text();
+    expect(html).toContain("<title>Introduction</title>");
   });
 });

@@ -65,8 +65,8 @@ export interface PagesOptions {
 export interface DevServerOptions {
   /** Root directory containing pages/, layouts/, public/ */
   rootDir?: string;
-  /** Route to mount the dev server on */
-  route?: string;
+  /** Base path for development (e.g., "/docs/" for http://localhost:8000/docs/) */
+  basePath?: string;
 }
 
 /**

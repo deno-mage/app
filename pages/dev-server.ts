@@ -22,6 +22,23 @@ import type { BundleResult } from "./bundle-builder.ts";
 import { extractLayoutName } from "./frontmatter-parser.ts";
 
 /**
+ * Normalizes a base path to ensure it has a trailing slash.
+ *
+ * - "/" → "/"
+ * - "/docs" → "/docs/"
+ * - "/docs/" → "/docs/"
+ *
+ * @param basePath Base path to normalize
+ * @returns Normalized base path with trailing slash
+ */
+function normalizeBasePath(basePath: string): string {
+  if (basePath === "/") {
+    return "/";
+  }
+  return basePath.endsWith("/") ? basePath : `${basePath}/`;
+}
+
+/**
  * State for the dev server.
  */
 interface DevServerState {
@@ -52,7 +69,7 @@ export async function registerDevServer(
   options: DevServerOptions = {},
 ): Promise<() => void> {
   const rootDir = options.rootDir ?? "./";
-  const baseRoute = options.route ?? "/";
+  const basePath = normalizeBasePath(options.basePath ?? "/");
 
   const pagesDir = join(rootDir, "pages");
   const publicDir = join(rootDir, "public");
@@ -65,13 +82,13 @@ export async function registerDevServer(
   };
 
   // Build initial asset map
-  state.assetMap = await buildAssetMap(publicDir, baseRoute);
+  state.assetMap = await buildAssetMap(publicDir, basePath);
 
   // Watch entire rootDir for changes
   const watchCallback = async (path: string) => {
     // Rebuild asset map if public/ changed
     if (path.startsWith(publicDir)) {
-      state.assetMap = await buildAssetMap(publicDir, baseRoute);
+      state.assetMap = await buildAssetMap(publicDir, basePath);
     }
 
     // Clear bundle cache on any file change (layouts, components, etc.)
@@ -87,8 +104,16 @@ export async function registerDevServer(
   );
 
   // Register routes for pages
-  app.get(`${baseRoute}*`, async (c) => {
-    let urlPath = c.req.url.pathname.replace(baseRoute, "");
+  app.get(`${basePath}*`, async (c) => {
+    let pathname = c.req.url.pathname;
+
+    // Normalize pathname: if it matches basePath without trailing slash, add it
+    // This ensures both /docs and /docs/ work when basePath is /docs/
+    if (basePath !== "/" && pathname === basePath.slice(0, -1)) {
+      pathname = basePath;
+    }
+
+    let urlPath = pathname.replace(basePath, "");
     // Ensure urlPath starts with /
     if (!urlPath.startsWith("/")) {
       urlPath = "/" + urlPath;
@@ -121,7 +146,7 @@ export async function registerDevServer(
           logger.info("Built dev bundle for: 404");
         }
 
-        const bundleUrl = `${baseRoute}__bundles/${pageId}.js`;
+        const bundleUrl = `${basePath}__bundles/${pageId}.js`;
         const rendered = await renderPageFromFile(
           notFoundPath,
           rootDir,
@@ -129,14 +154,14 @@ export async function registerDevServer(
         );
 
         // Inject hot reload script
-        const reloadEndpoint = `${baseRoute}__reload`;
+        const reloadEndpoint = `${basePath}__reload`;
         const htmlWithReload = injectHotReload(rendered.html, reloadEndpoint);
 
         c.html(htmlWithReload, 404);
         return;
       } catch {
         // Fall back to simple 404 if _not-found.md doesn't exist or fails to render
-        const reloadEndpoint = `${baseRoute}__reload`;
+        const reloadEndpoint = `${basePath}__reload`;
         const fallbackHtml =
           `<html><body><h1>404 Not Found</h1><p>Page not found: ${urlPath}</p></body></html>`;
         const htmlWithReload = injectHotReload(fallbackHtml, reloadEndpoint);
@@ -171,7 +196,7 @@ export async function registerDevServer(
       }
 
       // Render page with bundle URL
-      const bundleUrl = `${baseRoute}__bundles/${pageId}.js`;
+      const bundleUrl = `${basePath}__bundles/${pageId}.js`;
       const rendered = await renderPageFromFile(
         page.filePath,
         rootDir,
@@ -181,7 +206,7 @@ export async function registerDevServer(
       logger.info(`Rendered page: ${urlPath}`);
 
       // Inject hot reload script
-      const reloadEndpoint = `${baseRoute}__reload`;
+      const reloadEndpoint = `${basePath}__reload`;
       const htmlWithReload = injectHotReload(rendered.html, reloadEndpoint);
 
       c.html(htmlWithReload);
@@ -213,7 +238,7 @@ export async function registerDevServer(
           logger.info("Built dev bundle for: 500");
         }
 
-        const bundleUrl = `${baseRoute}__bundles/${pageId}.js`;
+        const bundleUrl = `${basePath}__bundles/${pageId}.js`;
         const rendered = await renderPageFromFile(
           errorPath,
           rootDir,
@@ -221,7 +246,7 @@ export async function registerDevServer(
         );
 
         // Inject hot reload script
-        const reloadEndpoint = `${baseRoute}__reload`;
+        const reloadEndpoint = `${basePath}__reload`;
         const htmlWithReload = injectHotReload(rendered.html, reloadEndpoint);
 
         c.html(htmlWithReload, 500);
@@ -231,7 +256,7 @@ export async function registerDevServer(
         const message = error instanceof Error
           ? error.message
           : "Unknown error";
-        const reloadEndpoint = `${baseRoute}__reload`;
+        const reloadEndpoint = `${basePath}__reload`;
         const fallbackHtml =
           `<html><body><h1>Error rendering page</h1><pre>${message}</pre></body></html>`;
         const htmlWithReload = injectHotReload(fallbackHtml, reloadEndpoint);
@@ -242,17 +267,17 @@ export async function registerDevServer(
   });
 
   // Register hot reload WebSocket endpoint
-  app.get(`${baseRoute}__reload`, (c) => {
+  app.get(`${basePath}__reload`, (c) => {
     c.webSocket((socket) => {
       registerHotReloadClient(socket);
     });
   });
 
   // Register route for bundles
-  app.get(`${baseRoute}__bundles/*`, (c) => {
+  app.get(`${basePath}__bundles/*`, (c) => {
     // Extract pageId from path (remove /__bundles/ prefix and .js suffix)
     const path = c.req.url.pathname;
-    const bundlesPrefix = `${baseRoute}__bundles/`;
+    const bundlesPrefix = `${basePath}__bundles/`;
     const pageId = path
       .slice(bundlesPrefix.length)
       .replace(/\.js$/, "");
@@ -270,7 +295,7 @@ export async function registerDevServer(
   });
 
   // Register routes for assets
-  app.get(`${baseRoute}__public/*`, async (c) => {
+  app.get(`${basePath}__public/*`, async (c) => {
     const hashedUrl = c.req.url.pathname;
 
     // Resolve hashed URL to clean file path
