@@ -11,6 +11,13 @@
 import * as esbuild from "esbuild";
 import { crypto } from "@std/crypto/crypto";
 import { encodeHex } from "@std/encoding/hex";
+import { join } from "@std/path";
+
+// Path to error-boundary.tsx in the pages module
+const ERROR_BOUNDARY_PATH = join(
+  new URL(".", import.meta.url).pathname,
+  "error-boundary.tsx",
+);
 
 /**
  * Options for building a client bundle.
@@ -42,7 +49,8 @@ export interface BundleResult {
  * Generates a hydration entry point for a page.
  *
  * The entry point imports the layout, extracts article HTML from the DOM,
- * merges with window.__PAGE_PROPS__, and hydrates the layout.
+ * merges with window.__PAGE_PROPS__, and hydrates the layout wrapped in
+ * an error boundary for graceful degradation.
  *
  * @param layoutPath Absolute path to the layout file
  * @param _pageId Unique identifier for the page (currently unused)
@@ -53,12 +61,14 @@ export function generateEntryPoint(
   _pageId: string,
 ): string {
   return `import { hydrate } from "preact";
+import { ErrorBoundary } from "${ERROR_BOUNDARY_PATH}";
 import Layout from "${layoutPath}";
 
 // Extract article HTML from DOM before hydration
 const appRoot = document.getElementById("app");
 if (!appRoot) {
   console.error("[Mage Pages] Failed to find #app element - hydration aborted");
+  // Page still works with SSR'd content, just no interactivity
 } else {
   const articleContainer = appRoot.querySelector('[data-article-html="true"]');
 
@@ -68,10 +78,16 @@ if (!appRoot) {
   };
 
   try {
-    // Hydrate the layout
-    hydrate(<Layout {...props} />, appRoot);
+    // Hydrate the layout with error boundary
+    hydrate(
+      <ErrorBoundary>
+        <Layout {...props} />
+      </ErrorBoundary>,
+      appRoot
+    );
   } catch (error) {
     console.error("[Mage Pages] Hydration failed:", error);
+    // Page remains functional with SSR'd HTML
   }
 }
 `;

@@ -28,11 +28,14 @@ describe("bundle-builder - entry point generation", {
     const entry = generateEntryPoint(layoutPath, pageId);
 
     expect(entry).toContain('import { hydrate } from "preact"');
+    expect(entry).toContain("import { ErrorBoundary } from");
     expect(entry).toContain('import Layout from "/path/to/layout.tsx"');
     expect(entry).toContain('document.getElementById("app")');
     expect(entry).toContain("window.__PAGE_PROPS__");
     expect(entry).toContain("querySelector('[data-article-html=\"true\"]')");
-    expect(entry).toContain("hydrate(<Layout {...props} />, appRoot)");
+    expect(entry).toContain("<ErrorBoundary>");
+    expect(entry).toContain("<Layout {...props} />");
+    expect(entry).toContain("</ErrorBoundary>");
   });
 
   it("should include error handling in entry point", () => {
