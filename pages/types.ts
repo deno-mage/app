@@ -106,3 +106,22 @@ export interface AssetMap {
   /** Map from clean URL to hashed URL */
   map: Map<string, string>;
 }
+
+/**
+ * Props passed to the _html.tsx document template.
+ */
+export interface HtmlTemplateProps {
+  /** Extracted head content as HTML string */
+  head: string;
+  /** Rendered layout HTML as string */
+  body: string;
+  /** URL to client bundle (if hydration enabled) */
+  bundleUrl?: string;
+  /** Original page props (for conditional logic in template) */
+  props: LayoutProps;
+}
+
+/**
+ * _html.tsx template function signature.
+ */
+export type HtmlTemplate = (props: HtmlTemplateProps) => string;

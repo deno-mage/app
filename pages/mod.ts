@@ -12,6 +12,8 @@ export type {
   BuildOptions,
   DevServerOptions,
   Frontmatter,
+  HtmlTemplate,
+  HtmlTemplateProps,
   LayoutComponent,
   LayoutProps,
   PagesOptions,
