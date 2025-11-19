@@ -232,8 +232,8 @@ export async function registerDevServer(
     }
 
     // Serve bundle with correct content type
-    c.header("Content-Type", "application/javascript");
     c.text(bundle.code);
+    c.header("Content-Type", "application/javascript");
   });
 
   // Register routes for assets
