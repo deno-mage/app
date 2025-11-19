@@ -10,7 +10,7 @@
  * @module
  */
 
-import { join } from "@std/path";
+import { join, toFileUrl } from "@std/path";
 import { render } from "preact-render-to-string";
 import type { JSX } from "preact";
 import type { HtmlTemplate, HtmlTemplateProps, LayoutProps } from "./types.ts";
@@ -47,11 +47,13 @@ export async function loadHtmlTemplate(rootDir: string): Promise<HtmlTemplate> {
   const templatePath = join(rootDir, "_html.tsx");
 
   try {
-    // Check if file exists
-    await Deno.stat(templatePath);
+    // Convert to absolute file URL for dynamic import
+    const absolutePath = toFileUrl(Deno.realPathSync(templatePath)).href;
+    // Add cache-busting query parameter to force reload on every import
+    const cacheBustedUrl = `${absolutePath}?t=${Date.now()}`;
 
     // Load the template module
-    const templateModule = await import(`file://${templatePath}`);
+    const templateModule = await import(cacheBustedUrl);
 
     // Validate default export exists and is a function
     if (typeof templateModule.default !== "function") {
@@ -144,7 +146,7 @@ export function renderWithTemplate(
     headContent,
     bodyContent,
     bundleUrl,
-    templateProps.props,
+    templateProps.layoutProps,
   );
 
   return `<!DOCTYPE html>\n${finalHtml}`;

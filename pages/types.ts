@@ -117,8 +117,8 @@ export interface AssetMap {
  * automatically after template rendering.
  */
 export interface HtmlTemplateProps {
-  /** Page props for conditional logic in template */
-  props: LayoutProps;
+  /** Layout props for conditional logic in template */
+  layoutProps: LayoutProps;
 }
 
 /**

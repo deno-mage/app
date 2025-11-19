@@ -72,7 +72,7 @@ export async function renderPage(
   // Render with template (injection happens automatically)
   const documentHtml = renderWithTemplate(
     template,
-    { props: layoutProps },
+    { layoutProps },
     headContent,
     bodyContent,
     bundleUrl,

@@ -14,7 +14,7 @@ describe("html-template - loading", () => {
 
     const html = renderWithTemplate(
       template,
-      { props: { html: "", title: "Test" } },
+      { layoutProps: { html: "", title: "Test" } },
       "<title>Test</title>",
       "<div>Content</div>",
       "/__bundles/test.js",
@@ -30,7 +30,7 @@ describe("html-template - loading", () => {
 
     const html = renderWithTemplate(
       template,
-      { props: { html: "", title: "Default" } },
+      { layoutProps: { html: "", title: "Default" } },
       "<title>Default</title>",
       "<p>Body content</p>",
       "/__bundles/default.js",
@@ -63,7 +63,7 @@ describe("html-template - injection", () => {
 
     const html = renderWithTemplate(
       template,
-      { props: { html: "", title: "My Title" } },
+      { layoutProps: { html: "", title: "My Title" } },
       "<title>My Title</title>\n<meta name='description' content='Test'>",
       "<div>Content</div>",
       "/__bundles/test.js",
@@ -78,7 +78,7 @@ describe("html-template - injection", () => {
 
     const html = renderWithTemplate(
       template,
-      { props: { html: "", title: "Test" } },
+      { layoutProps: { html: "", title: "Test" } },
       "",
       "<main><h1>Hello</h1><p>World</p></main>",
       "/__bundles/test.js",
@@ -94,7 +94,7 @@ describe("html-template - injection", () => {
 
     const html = renderWithTemplate(
       template,
-      { props: { html: "", title: "Test", description: "Test page" } },
+      { layoutProps: { html: "", title: "Test", description: "Test page" } },
       "<title>Test</title>",
       "<div>Content</div>",
       "/__bundles/test-abc123.js",
@@ -113,7 +113,7 @@ describe("html-template - injection", () => {
 
     const html = renderWithTemplate(
       template,
-      { props: { html: "", title: "Test" } },
+      { layoutProps: { html: "", title: "Test" } },
       "<title>Test</title>",
       "<div>Content</div>",
       "/__bundles/test.js",
@@ -134,7 +134,7 @@ describe("html-template - injection", () => {
     const html = renderWithTemplate(
       template,
       {
-        props: {
+        layoutProps: {
           html: "<p>Layout content</p>",
           title: "Test Page",
           description: "Test description",
@@ -164,7 +164,7 @@ describe("html-template - custom template", () => {
 
     const html = renderWithTemplate(
       template,
-      { props: { html: "", title: "Custom" } },
+      { layoutProps: { html: "", title: "Custom" } },
       "<title>Custom</title>",
       "<div>Custom body</div>",
       "/__bundles/custom.js",
@@ -185,7 +185,7 @@ describe("html-template - custom template", () => {
     const html = renderWithTemplate(
       template,
       {
-        props: {
+        layoutProps: {
           html: "",
           title: "Test",
           additionalFrontmatter: { darkMode: true },
