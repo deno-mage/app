@@ -135,8 +135,8 @@ export async function scanSourceFiles(
 /**
  * Generates CSS from source content using UnoCSS.
  *
- * Creates a UnoCSS generator with the user's config (if provided) merged
- * with presetWind4 as a default, then generates CSS from the provided content.
+ * Creates a UnoCSS generator with the user's config. No default presets
+ * are provided - users must configure their own presets in uno.config.ts.
  *
  * @param content Source content to scan for utility classes
  * @param userConfig Optional user configuration from uno.config.ts

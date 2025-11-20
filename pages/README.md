@@ -390,13 +390,13 @@ files and generates optimized CSS automatically.
 Install UnoCSS dependencies:
 
 ```bash
-deno add npm:@unocss/core npm:@@unocss/preset-wind4
+deno add npm:@unocss/core npm:@unocss/preset-wind4
 ```
 
 Create `uno.config.ts` in your project root:
 
 ```typescript
-import presetWind4 from "@@unocss/preset-wind4";
+import presetWind4 from "@unocss/preset-wind4";
 
 export default {
   presets: [presetWind4()],
@@ -475,7 +475,7 @@ export default function Layout({ html, title }: LayoutProps) {
 UnoCSS uses your `uno.config.ts` for customization:
 
 ```typescript
-import presetWind4 from "@@unocss/preset-wind4";
+import presetWind4 from "@unocss/preset-wind4";
 
 export default {
   presets: [presetWind4()],
@@ -505,7 +505,7 @@ See [UnoCSS documentation](https://unocss.dev) for full configuration options.
 - CSS generation happens once per build (not per page)
 - If config loading fails, build continues without UnoCSS (logs error)
 - Supports all UnoCSS presets and transformers
-- Compatible with Tailwind CSS syntax via `@@unocss/preset-wind4`
+- Compatible with Tailwind CSS syntax via `@unocss/preset-wind4`
 
 ## API Reference
 

@@ -14,7 +14,7 @@ describe("unocss - config detection", () => {
     const tempDir = await Deno.makeTempDir();
     await Deno.writeTextFile(
       join(tempDir, "uno.config.ts"),
-      'import presetWind4 from "@@unocss/preset-wind4"; export default { presets: [presetWind4()] };',
+      'import presetWind4 from "@unocss/preset-wind4"; export default { presets: [presetWind4()] };',
     );
 
     const exists = await checkUnoConfigExists(tempDir);
@@ -34,7 +34,7 @@ describe("unocss - config loading", () => {
     const tempDir = await Deno.makeTempDir();
     await Deno.writeTextFile(
       join(tempDir, "uno.config.ts"),
-      'import presetWind4 from "@@unocss/preset-wind4"; export default { presets: [presetWind4()] };',
+      'import presetWind4 from "@unocss/preset-wind4"; export default { presets: [presetWind4()] };',
     );
 
     const config = await loadUnoConfig(tempDir);
@@ -192,8 +192,10 @@ describe("unocss - source file scanning", () => {
 
 describe("unocss - CSS generation", () => {
   it("should generate CSS from content with Tailwind classes", async () => {
+    const presetWind4 = (await import("@unocss/preset-wind4")).default;
+    const config = { presets: [presetWind4()] };
     const content = '<div class="text-red-500 bg-blue-100 p-4">Test</div>';
-    const result = await generateCSS(content, undefined, "/");
+    const result = await generateCSS(content, config, "/");
 
     expect(result.css).toContain("text-red-500");
     expect(result.css).toContain("bg-blue-100");
@@ -203,41 +205,51 @@ describe("unocss - CSS generation", () => {
   });
 
   it("should generate hashed filename based on CSS content", async () => {
+    const presetWind4 = (await import("@unocss/preset-wind4")).default;
+    const config = { presets: [presetWind4()] };
     const content = '<div class="text-red-500">Test</div>';
-    const result1 = await generateCSS(content, undefined, "/");
-    const result2 = await generateCSS(content, undefined, "/");
+    const result1 = await generateCSS(content, config, "/");
+    const result2 = await generateCSS(content, config, "/");
 
     // Same content should produce same hash
     expect(result1.filename).toBe(result2.filename);
   });
 
   it("should generate different hashes for different content", async () => {
+    const presetWind4 = (await import("@unocss/preset-wind4")).default;
+    const config = { presets: [presetWind4()] };
     const content1 = '<div class="text-red-500">Test</div>';
     const content2 = '<div class="text-blue-500">Test</div>';
 
-    const result1 = await generateCSS(content1, undefined, "/");
-    const result2 = await generateCSS(content2, undefined, "/");
+    const result1 = await generateCSS(content1, config, "/");
+    const result2 = await generateCSS(content2, config, "/");
 
     expect(result1.filename).not.toBe(result2.filename);
   });
 
   it("should respect basePath in URL", async () => {
+    const presetWind4 = (await import("@unocss/preset-wind4")).default;
+    const config = { presets: [presetWind4()] };
     const content = '<div class="text-red-500">Test</div>';
-    const result = await generateCSS(content, undefined, "/docs/");
+    const result = await generateCSS(content, config, "/docs/");
 
     expect(result.url).toBe(`/docs/__styles/${result.filename}`);
   });
 
-  it("should include CSS preflights layer", async () => {
+  it("should include CSS base layer", async () => {
+    const presetWind4 = (await import("@unocss/preset-wind4")).default;
+    const config = { presets: [presetWind4()] };
     const content = '<div class="text-red-500">Test</div>';
-    const result = await generateCSS(content, undefined, "/");
+    const result = await generateCSS(content, config, "/");
 
-    expect(result.css).toContain("/* layer: preflights */");
+    expect(result.css).toContain("/* layer: base */");
   });
 
   it("should generate responsive container classes", async () => {
+    const presetWind4 = (await import("@unocss/preset-wind4")).default;
+    const config = { presets: [presetWind4()] };
     const content = '<div class="container">Test</div>';
-    const result = await generateCSS(content, undefined, "/");
+    const result = await generateCSS(content, config, "/");
 
     expect(result.css).toContain("container");
     expect(result.css).toContain("max-width");
@@ -274,7 +286,7 @@ describe("unocss - end-to-end integration", () => {
     // Create config
     await Deno.writeTextFile(
       join(tempDir, "uno.config.ts"),
-      'import presetWind4 from "@@unocss/preset-wind4"; export default { presets: [presetWind4()] };',
+      'import presetWind4 from "@unocss/preset-wind4"; export default { presets: [presetWind4()] };',
     );
 
     // Create source files
@@ -323,7 +335,7 @@ describe("unocss - end-to-end integration", () => {
     // Create config
     await Deno.writeTextFile(
       join(tempDir, "uno.config.ts"),
-      'import presetWind4 from "@@unocss/preset-wind4"; export default { presets: [presetWind4()] };',
+      'import presetWind4 from "@unocss/preset-wind4"; export default { presets: [presetWind4()] };',
     );
 
     // Create source files
@@ -347,7 +359,7 @@ describe("unocss - end-to-end integration", () => {
     // Create config
     await Deno.writeTextFile(
       join(tempDir, "uno.config.ts"),
-      'import presetWind4 from "@@unocss/preset-wind4"; export default { presets: [presetWind4()] };',
+      'import presetWind4 from "@unocss/preset-wind4"; export default { presets: [presetWind4()] };',
     );
 
     // Create source files
