@@ -404,10 +404,10 @@ Register development server with hot reload.
 
 **Options:**
 
-| Option    | Type     | Default | Description                        |
-| --------- | -------- | ------- | ---------------------------------- |
-| `rootDir` | `string` | `"./"`  | Directory containing pages/layouts |
-| `route`   | `string` | `"/"`   | Base route to mount at             |
+| Option     | Type     | Default | Description                        |
+| ---------- | -------- | ------- | ---------------------------------- |
+| `rootDir`  | `string` | `"./"`  | Directory containing pages/layouts |
+| `basePath` | `string` | `"/"`   | Base path to mount at              |
 
 **Behavior:**
 
@@ -422,10 +422,11 @@ Generate static site files.
 
 **Options:**
 
-| Option    | Type     | Default           | Description                        |
-| --------- | -------- | ----------------- | ---------------------------------- |
-| `rootDir` | `string` | `"./"`            | Directory containing pages/layouts |
-| `outDir`  | `string` | `${rootDir}/dist` | Output directory for static files  |
+| Option     | Type     | Default           | Description                        |
+| ---------- | -------- | ----------------- | ---------------------------------- |
+| `rootDir`  | `string` | `"./"`            | Directory containing pages/layouts |
+| `outDir`   | `string` | `${rootDir}/dist` | Output directory for static files  |
+| `basePath` | `string` | `"/"`             | Base path for URLs in built site   |
 
 **Behavior:**
 
@@ -439,10 +440,10 @@ Serve pre-built static files.
 
 **Options:**
 
-| Option    | Type     | Default | Description                |
-| --------- | -------- | ------- | -------------------------- |
-| `rootDir` | `string` | `"./"`  | Directory containing dist/ |
-| `route`   | `string` | `"/"`   | Base route to mount at     |
+| Option     | Type     | Default | Description                |
+| ---------- | -------- | ------- | -------------------------- |
+| `rootDir`  | `string` | `"./"`  | Directory containing dist/ |
+| `basePath` | `string` | `"/"`   | Base path to mount at      |
 
 **Behavior:**
 
