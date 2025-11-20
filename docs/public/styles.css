@@ -11,7 +11,8 @@ h3 > a.anchor,
 h4 > a.anchor,
 h5 > a.anchor,
 h6 > a.anchor {
-  opacity: 0;
+  display: inline-block;
+  opacity: 0.8;
   transition: opacity 0.2s ease-in-out;
   padding-right: 8px;
 }
@@ -29,26 +30,6 @@ h6:hover > a.anchor {
 }
 
 /**
- * Style for anchor links in headings
+ * Note: Utility classes like .flex, .justify-between, .container, etc.
+ * are now provided by UnoCSS (see uno.config.ts in project root)
  */
-.nav-hero {
-  font-size: 2em;
-  font-weight: bold;
-  text-decoration: none;
-  color: inherit;
-}
-
-/**
- * Flex utils
- */
-.flex {
-  display: flex;
-}
-
-.justify-between {
-  justify-content: space-between;
-}
-
-.align-top {
-  align-items: top;
-}

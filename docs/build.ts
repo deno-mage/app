@@ -8,4 +8,4 @@ const { build } = pages({
   },
 });
 
-await build({ rootDir: "./docs", basePath: "/docs" });
+await build({ rootDir: "./docs" });

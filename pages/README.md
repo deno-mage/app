@@ -247,11 +247,7 @@ import { useState } from "preact/hooks";
 function Counter() {
   const [count, setCount] = useState(0);
 
-  return (
-    <button onClick={() => setCount(count + 1)}>
-      Clicks: {count}
-    </button>
-  );
+  return <button onClick={() => setCount(count + 1)}>Clicks: {count}</button>;
 }
 
 export default function InteractiveLayout(props: LayoutProps) {
@@ -394,16 +390,16 @@ files and generates optimized CSS automatically.
 Install UnoCSS dependencies:
 
 ```bash
-deno add npm:@unocss/core npm:@unocss/preset-uno
+deno add npm:@unocss/core npm:@@unocss/preset-wind4
 ```
 
 Create `uno.config.ts` in your project root:
 
 ```typescript
-import presetUno from "@unocss/preset-uno";
+import presetWind4 from "@@unocss/preset-wind4";
 
 export default {
-  presets: [presetUno()],
+  presets: [presetWind4()],
 };
 ```
 
@@ -433,7 +429,9 @@ export default function Layout({ html, title }: LayoutProps) {
       </Head>
 
       <nav class="bg-gray-800 text-white p-4">
-        <a href="/" class="hover:text-blue-400">Home</a>
+        <a href="/" class="hover:text-blue-400">
+          Home
+        </a>
       </nav>
 
       <main class="container mx-auto">
@@ -477,10 +475,10 @@ export default function Layout({ html, title }: LayoutProps) {
 UnoCSS uses your `uno.config.ts` for customization:
 
 ```typescript
-import presetUno from "@unocss/preset-uno";
+import presetWind4 from "@@unocss/preset-wind4";
 
 export default {
-  presets: [presetUno()],
+  presets: [presetWind4()],
 
   // Custom theme
   theme: {
@@ -495,9 +493,7 @@ export default {
   },
 
   // Custom rules
-  rules: [
-    ["custom-rule", { color: "red" }],
-  ],
+  rules: [["custom-rule", { color: "red" }]],
 };
 ```
 
@@ -509,7 +505,7 @@ See [UnoCSS documentation](https://unocss.dev) for full configuration options.
 - CSS generation happens once per build (not per page)
 - If config loading fails, build continues without UnoCSS (logs error)
 - Supports all UnoCSS presets and transformers
-- Compatible with Tailwind CSS syntax via `@unocss/preset-uno`
+- Compatible with Tailwind CSS syntax via `@@unocss/preset-wind4`
 
 ## API Reference
 

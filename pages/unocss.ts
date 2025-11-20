@@ -9,7 +9,6 @@
 
 import { createGenerator } from "@unocss/core";
 import type { UnoGenerator, UserConfig } from "@unocss/core";
-import presetUno from "@unocss/preset-uno";
 import { expandGlob } from "@std/fs";
 import { join, toFileUrl } from "@std/path";
 import { crypto } from "@std/crypto/crypto";
@@ -137,7 +136,7 @@ export async function scanSourceFiles(
  * Generates CSS from source content using UnoCSS.
  *
  * Creates a UnoCSS generator with the user's config (if provided) merged
- * with presetUno as a default, then generates CSS from the provided content.
+ * with presetWind4 as a default, then generates CSS from the provided content.
  *
  * @param content Source content to scan for utility classes
  * @param userConfig Optional user configuration from uno.config.ts
@@ -150,8 +149,7 @@ export async function generateCSS(
   basePath: string,
 ): Promise<UnoResult> {
   // Create generator with user config merged with defaults
-  const generator: UnoGenerator = await createGenerator({
-    presets: [presetUno()],
+  const generator: UnoGenerator = createGenerator({
     ...userConfig,
   });
 

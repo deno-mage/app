@@ -9,7 +9,7 @@ export default function Html(props: HtmlTemplateProps): JSX.Element {
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Mage Docs | {props.layoutProps.title}</title>
       </head>
-      <body>Hello world!</body>
+      <body className="bg-green-900"></body>
     </html>
   );
 }

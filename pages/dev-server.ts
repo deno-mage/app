@@ -100,16 +100,13 @@ export async function registerDevServer(
   // Initialize UnoCSS if enabled
   const unoEnabled = await checkUnoConfigExists(rootDir);
   if (unoEnabled) {
-    logger.info("UnoCSS enabled - generating styles...");
+    logger.info("UnoCSS enabled");
     try {
       state.unoConfig = await loadUnoConfig(rootDir);
       const content = await scanSourceFiles(rootDir, "dist");
       const result = await generateCSS(content, state.unoConfig, basePath);
       state.stylesheetUrl = result.url;
       state.stylesheetContent = result.css;
-      logger.info(
-        `✓ Generated ${result.filename} (${result.css.length} bytes)`,
-      );
     } catch (error) {
       logger.error(error instanceof Error ? error : new Error(String(error)));
     }
@@ -188,7 +185,6 @@ export async function registerDevServer(
             pageId,
           });
           state.bundleCache.set(pageId, bundle);
-          logger.info("Built dev bundle for: 404");
         }
 
         const bundleUrl = `${basePath}__bundles/${pageId}.js`;
@@ -241,7 +237,6 @@ export async function registerDevServer(
           pageId,
         });
         state.bundleCache.set(pageId, bundle);
-        logger.info(`Built dev bundle for: ${urlPath}`);
       }
 
       // Render page with bundle URL
@@ -288,7 +283,6 @@ export async function registerDevServer(
             pageId,
           });
           state.bundleCache.set(pageId, bundle);
-          logger.info("Built dev bundle for: 500");
         }
 
         const bundleUrl = `${basePath}__bundles/${pageId}.js`;

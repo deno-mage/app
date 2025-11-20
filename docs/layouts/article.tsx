@@ -8,7 +8,7 @@ export default function ArticleLayout(props: LayoutProps) {
       <Head title={props.title} description={props.description} />
       <body>
         <header>
-          <div className="container">
+          <div>
             <nav>
               <ul>
                 <li>
@@ -32,9 +32,9 @@ export default function ArticleLayout(props: LayoutProps) {
           </div>
         </header>
         <main
-          className="container"
-          data-mage-layout="true"
+          data-mage-layout
           dangerouslySetInnerHTML={{ __html: props.html }}
+          className="prose"
         />
         <hr />
         <footer>

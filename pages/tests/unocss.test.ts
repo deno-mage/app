@@ -14,7 +14,7 @@ describe("unocss - config detection", () => {
     const tempDir = await Deno.makeTempDir();
     await Deno.writeTextFile(
       join(tempDir, "uno.config.ts"),
-      'import presetUno from "@unocss/preset-uno"; export default { presets: [presetUno()] };',
+      'import presetWind4 from "@@unocss/preset-wind4"; export default { presets: [presetWind4()] };',
     );
 
     const exists = await checkUnoConfigExists(tempDir);
@@ -34,7 +34,7 @@ describe("unocss - config loading", () => {
     const tempDir = await Deno.makeTempDir();
     await Deno.writeTextFile(
       join(tempDir, "uno.config.ts"),
-      'import presetUno from "@unocss/preset-uno"; export default { presets: [presetUno()] };',
+      'import presetWind4 from "@@unocss/preset-wind4"; export default { presets: [presetWind4()] };',
     );
 
     const config = await loadUnoConfig(tempDir);
@@ -274,7 +274,7 @@ describe("unocss - end-to-end integration", () => {
     // Create config
     await Deno.writeTextFile(
       join(tempDir, "uno.config.ts"),
-      'import presetUno from "@unocss/preset-uno"; export default { presets: [presetUno()] };',
+      'import presetWind4 from "@@unocss/preset-wind4"; export default { presets: [presetWind4()] };',
     );
 
     // Create source files
@@ -323,7 +323,7 @@ describe("unocss - end-to-end integration", () => {
     // Create config
     await Deno.writeTextFile(
       join(tempDir, "uno.config.ts"),
-      'import presetUno from "@unocss/preset-uno"; export default { presets: [presetUno()] };',
+      'import presetWind4 from "@@unocss/preset-wind4"; export default { presets: [presetWind4()] };',
     );
 
     // Create source files
@@ -347,7 +347,7 @@ describe("unocss - end-to-end integration", () => {
     // Create config
     await Deno.writeTextFile(
       join(tempDir, "uno.config.ts"),
-      'import presetUno from "@unocss/preset-uno"; export default { presets: [presetUno()] };',
+      'import presetWind4 from "@@unocss/preset-wind4"; export default { presets: [presetWind4()] };',
     );
 
     // Create source files
