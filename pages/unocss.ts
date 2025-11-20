@@ -149,7 +149,7 @@ export async function generateCSS(
   basePath: string,
 ): Promise<UnoResult> {
   // Create generator with user config merged with defaults
-  const generator: UnoGenerator = createGenerator({
+  const generator: UnoGenerator = await createGenerator({
     ...userConfig,
   });
 
