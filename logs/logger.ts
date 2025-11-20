@@ -38,6 +38,16 @@ export class MageLogger {
     console.error(this.format("error", message.toString()));
   }
 
+  /**
+   * Log ephemeral message that overwrites the previous line.
+   * Useful for status updates that change frequently (e.g., render notifications).
+   */
+  public ephemeral(message: string) {
+    // \r returns to start of line, \x1b[K clears from cursor to end of line
+    const output = "\r\x1b[K" + this.format("info", message);
+    Deno.stdout.writeSync(new TextEncoder().encode(output));
+  }
+
   private format(logLevel: keyof typeof COLORS, message: string) {
     const level = `${COLORS[logLevel]}[${
       logLevel.charAt(0).toUpperCase() + logLevel.slice(1)

@@ -251,7 +251,7 @@ export async function registerDevServer(
         },
       );
 
-      logger.info(`Rendered page: ${urlPath}`);
+      logger.ephemeral(`Rendered page: ${urlPath}`);
 
       // Inject hot reload script
       const reloadEndpoint = `${basePath}__reload`;
