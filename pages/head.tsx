@@ -16,13 +16,8 @@ export interface HeadProps {
  * During SSR: Renders to a marker for extraction.
  * On client: Returns null (head already exists).
  *
- * @example
- * ```tsx
- * <Head>
- *   <title>My Page</title>
- *   <meta name="description" content="..." />
- * </Head>
- * ```
+ * @param props Component props
+ * @returns Head marker during SSR, null on client
  */
 export function Head({ children }: HeadProps): VNode | null {
   // SSR: render to marker for extraction

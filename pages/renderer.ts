@@ -41,8 +41,9 @@ export interface RenderPageOptions {
  *
  * @param markdownContent Raw markdown content with frontmatter
  * @param rootDir Root directory containing layouts/
- * @param options Rendering options
- * @returns Complete rendered HTML page
+ * @param options Rendering options including asset map and bundle URL
+ * @returns Complete rendered HTML page with frontmatter
+ * @throws Error if markdown is invalid, layout not found, or rendering fails
  */
 export async function renderPage(
   markdownContent: string,
@@ -94,8 +95,9 @@ export async function renderPage(
  *
  * @param filePath Path to the markdown file
  * @param rootDir Root directory containing layouts/
- * @param options Rendering options
- * @returns Complete rendered HTML page
+ * @param options Rendering options including asset map and bundle URL
+ * @returns Complete rendered HTML page with frontmatter
+ * @throws Error if file not found, markdown invalid, or rendering fails
  */
 export async function renderPageFromFile(
   filePath: string,

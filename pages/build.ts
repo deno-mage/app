@@ -18,9 +18,8 @@ import { extractLayoutName } from "./frontmatter-parser.ts";
 /**
  * Normalizes a base path to ensure it has a trailing slash.
  *
- * - "/" → "/"
- * - "/docs" → "/docs/"
- * - "/docs/" → "/docs/"
+ * This ensures consistent URL building across the application.
+ * Root path "/" is a special case that remains unchanged.
  *
  * @param basePath Base path to normalize
  * @returns Normalized base path with trailing slash
@@ -46,8 +45,9 @@ function normalizeBasePath(basePath: string): string {
  * Note: The output directory is completely cleaned before each build
  * to ensure no stale files remain from previous builds.
  *
- * @param siteMetadata Site-wide metadata
+ * @param siteMetadata Site-wide metadata for sitemap and robots.txt
  * @param options Build configuration
+ * @throws Error if file operations fail or rendering fails
  */
 export async function build(
   siteMetadata: SiteMetadata,
@@ -214,9 +214,11 @@ export async function build(
 /**
  * Converts a URL path to an output file path.
  *
- * - `/` → `dist/index.html`
- * - `/docs/api` → `dist/docs/api/index.html`
- * - `/guide/intro` → `dist/guide/intro/index.html`
+ * Uses directory-based URLs with index.html for clean URL structure.
+ *
+ * @param urlPath URL path to convert
+ * @param outDir Output directory base path
+ * @returns File path for HTML output
  */
 function urlPathToFilePath(urlPath: string, outDir: string): string {
   if (urlPath === "/") {
@@ -231,6 +233,12 @@ function urlPathToFilePath(urlPath: string, outDir: string): string {
  *
  * Uses the asset map to determine hashed filenames and copies each file
  * to the correct location in the output directory.
+ *
+ * @param publicDir Source directory for assets
+ * @param outDir Destination directory for build output
+ * @param assetMap Map of clean URLs to hashed URLs
+ * @param basePath Base path for URL construction (used to strip prefix)
+ * @throws Error if file copy operations fail
  */
 async function copyHashedAssets(
   publicDir: string,
@@ -260,9 +268,14 @@ async function copyHashedAssets(
 }
 
 /**
- * Generates a sitemap.xml file.
+ * Generates a sitemap.xml file for search engine indexing.
  *
- * Creates XML sitemap with all page URLs for search engine indexing.
+ * Creates XML sitemap with all page URLs and weekly change frequency.
+ *
+ * @param pages Array of page information
+ * @param siteMetadata Site metadata including baseUrl
+ * @param outDir Output directory for sitemap.xml
+ * @throws Error if file write fails
  */
 async function generateSitemap(
   pages: PageInfo[],
@@ -286,9 +299,13 @@ ${urls}
 }
 
 /**
- * Generates a robots.txt file.
+ * Generates a robots.txt file allowing all crawlers.
  *
- * Allows all crawlers and points to the sitemap.
+ * Points to the sitemap for improved search engine discovery.
+ *
+ * @param siteMetadata Site metadata including baseUrl
+ * @param outDir Output directory for robots.txt
+ * @throws Error if file write fails
  */
 async function generateRobotsTxt(
   siteMetadata: SiteMetadata,

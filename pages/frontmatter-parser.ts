@@ -12,17 +12,6 @@
  *
  * @param content Markdown content with frontmatter
  * @returns Layout name or "default"
- *
- * @example
- * ```ts
- * const content = `---
- * title: My Page
- * layout: article
- * ---
- * # Content`;
- *
- * const layout = extractLayoutName(content); // "article"
- * ```
  */
 export function extractLayoutName(content: string): string {
   const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);

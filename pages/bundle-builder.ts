@@ -27,7 +27,10 @@ export interface BundleBuildOptions {
   layoutPath: string;
   /** Root directory of the project */
   rootDir: string;
-  /** Whether this is a production build */
+  /**
+   * Whether this is a production build
+   * @default false
+   */
   production?: boolean;
   /** Page-specific identifier for the bundle */
   pageId: string;
@@ -127,6 +130,7 @@ if (!appRoot) {
  *
  * @param options Bundle build options
  * @returns Bundle result with code and optional metadata
+ * @throws Error if esbuild fails or bundle cannot be generated
  */
 export async function buildBundle(
   options: BundleBuildOptions,
@@ -176,9 +180,10 @@ export async function buildBundle(
 }
 
 /**
- * Stops the esbuild service.
+ * Stops the esbuild service and releases resources.
  *
- * Should be called when done building bundles to release resources.
+ * Call this after all bundles are built (e.g., at end of static build or
+ * when shutting down dev server) to prevent resource leaks.
  */
 export function stopBundleBuilder(): void {
   esbuild.stop();

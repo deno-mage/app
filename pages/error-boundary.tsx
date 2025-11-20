@@ -32,6 +32,10 @@ export interface ErrorBoundaryState {
  * Catches errors during hydration and displays fallback UI instead of
  * breaking the entire page. The SSR'd content remains visible.
  *
+ * Accepts children to wrap and an optional fallback UI to display when
+ * errors occur. If no fallback is provided, returns null (SSR'd content
+ * remains visible).
+ *
  * Note: In production, error boundaries ensure graceful degradation.
  * If hydration fails, the SSR'd HTML remains functional and visible.
  */

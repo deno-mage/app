@@ -16,10 +16,13 @@ import type { JSX } from "preact";
 import type { HtmlTemplate, HtmlTemplateProps, LayoutProps } from "./types.ts";
 
 /**
- * Default HTML template used when _html.tsx is not found.
+ * Default fallback HTML template when _html.tsx is not found.
  *
- * Provides a minimal document structure. Head content, app wrapper,
- * and scripts are injected automatically.
+ * Provides a minimal document structure with basic meta tags.
+ * Head content, app wrapper, and scripts are injected automatically
+ * by `injectContent()`.
+ *
+ * @returns Minimal HTML document structure
  */
 function defaultHtmlTemplate(): JSX.Element {
   return (
@@ -84,11 +87,14 @@ export async function loadHtmlTemplate(rootDir: string): Promise<HtmlTemplate> {
  * - Props script before `</body>`
  * - Bundle script before `</body>`
  *
+ * Note: The html field is removed from props before serialization since
+ * it's extracted from the DOM on the client side during hydration.
+ *
  * @param html Rendered HTML from template
  * @param headContent Extracted head content from layouts
  * @param bodyContent Extracted body content from layouts
  * @param bundleUrl URL to client bundle
- * @param props Page props for serialization
+ * @param props Page props for serialization (html field removed before injection)
  * @returns HTML with injected content
  */
 function injectContent(

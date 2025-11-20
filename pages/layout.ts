@@ -13,6 +13,10 @@ import type { Frontmatter, LayoutComponent, LayoutProps } from "./types.ts";
  *
  * Maps layout name to `layouts/{name}.tsx` relative to rootDir.
  * Defaults to "default" if no layout specified.
+ *
+ * @param layoutName Layout name from frontmatter, or undefined for default
+ * @param rootDir Root directory containing layouts/ folder
+ * @returns Absolute path to layout file
  */
 export function resolveLayoutPath(
   layoutName: string | undefined,

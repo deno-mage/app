@@ -8,6 +8,12 @@
 
 export { pages } from "./api.ts";
 export { Head } from "./head.tsx";
+export { ErrorBoundary } from "./error-boundary.tsx";
+
+export type {
+  ErrorBoundaryProps,
+  ErrorBoundaryState,
+} from "./error-boundary.tsx";
 
 export type {
   BuildOptions,

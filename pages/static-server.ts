@@ -14,9 +14,8 @@ import type { StaticServerOptions } from "./types.ts";
 /**
  * Normalizes a base path to ensure it has a trailing slash.
  *
- * - "/" → "/"
- * - "/docs" → "/docs/"
- * - "/docs/" → "/docs/"
+ * This ensures consistent URL building across the application.
+ * Root path "/" is a special case that remains unchanged.
  *
  * @param basePath Base path to normalize
  * @returns Normalized base path with trailing slash

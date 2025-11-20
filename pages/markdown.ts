@@ -14,6 +14,7 @@ import type { Frontmatter, ParsedMarkdown } from "./types.ts";
  * Frontmatter must be at the start of the file, enclosed in `---` delimiters.
  * If no frontmatter is found, returns empty frontmatter object.
  *
+ * @param markdown Raw markdown content with optional frontmatter
  * @throws Error if frontmatter YAML is invalid
  */
 export function parseFrontmatter(markdown: string): ParsedMarkdown {
@@ -62,6 +63,7 @@ export function renderToHtml(markdown: string): string {
  *
  * Combines frontmatter extraction and markdown rendering into a single operation.
  *
+ * @param markdown Raw markdown content with optional frontmatter
  * @throws Error if frontmatter is invalid or markdown cannot be rendered
  */
 export function parseAndRender(markdown: string): {

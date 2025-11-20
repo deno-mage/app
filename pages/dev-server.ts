@@ -24,9 +24,8 @@ import { extractLayoutName } from "./frontmatter-parser.ts";
 /**
  * Normalizes a base path to ensure it has a trailing slash.
  *
- * - "/" → "/"
- * - "/docs" → "/docs/"
- * - "/docs/" → "/docs/"
+ * This ensures consistent URL building across the application.
+ * Root path "/" is a special case that remains unchanged.
  *
  * @param basePath Base path to normalize
  * @returns Normalized base path with trailing slash
@@ -42,11 +41,11 @@ function normalizeBasePath(basePath: string): string {
  * State for the dev server.
  */
 interface DevServerState {
-  /** Asset map rebuilt on asset changes */
+  /** Asset map rebuilt on asset changes for cache-busting */
   assetMap: Map<string, string>;
-  /** Watcher abort controllers */
+  /** Watcher abort controllers for cleanup */
   watchers: AbortController[];
-  /** In-memory bundle cache (pageId -> bundle) */
+  /** In-memory bundle cache to avoid rebuilding (pageId -> bundle) */
   bundleCache: Map<string, BundleResult>;
 }
 
@@ -63,6 +62,7 @@ interface DevServerState {
  * @param app Mage application instance
  * @param options Dev server configuration
  * @returns Cleanup function to stop watchers
+ * @throws Error if file operations fail or rendering fails
  */
 export async function registerDevServer(
   app: MageApp,
