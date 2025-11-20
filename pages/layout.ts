@@ -13,6 +13,10 @@ import type { Frontmatter, LayoutComponent, LayoutProps } from "./types.ts";
  *
  * Maps layout name to `layouts/{name}.tsx` relative to rootDir.
  * Defaults to "default" if no layout specified.
+ *
+ * @param layoutName Layout name from frontmatter, or undefined for default
+ * @param rootDir Root directory containing layouts/ folder
+ * @returns Absolute path to layout file
  */
 export function resolveLayoutPath(
   layoutName: string | undefined,
@@ -78,7 +82,8 @@ export async function resolveLayout(
 /**
  * Builds props object for layout component from frontmatter and HTML.
  *
- * Merges HTML content with frontmatter metadata, spreading custom fields.
+ * Merges HTML content with frontmatter metadata, nesting custom fields
+ * in additionalFrontmatter to avoid prop conflicts.
  */
 export function buildLayoutProps(
   html: string,
@@ -86,10 +91,16 @@ export function buildLayoutProps(
 ): LayoutProps {
   const { title, description, layout: _layout, ...customFields } = frontmatter;
 
-  return {
+  const props: LayoutProps = {
     html,
     title,
     description,
-    ...customFields,
   };
+
+  // Only add additionalFrontmatter if there are custom fields
+  if (Object.keys(customFields).length > 0) {
+    props.additionalFrontmatter = customFields;
+  }
+
+  return props;
 }

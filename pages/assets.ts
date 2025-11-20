@@ -13,6 +13,9 @@ import { walk } from "@std/fs";
  * Computes a hash of file contents for cache-busting.
  *
  * Uses SHA-256 and returns first 8 characters of hex digest.
+ *
+ * @param filePath Path to file to hash
+ * @returns First 8 characters of SHA-256 hash in hex format
  */
 async function hashFile(filePath: string): Promise<string> {
   const content = await Deno.readFile(filePath);
@@ -29,6 +32,10 @@ async function hashFile(filePath: string): Promise<string> {
  *
  * "styles.css" + "abc123" → "styles-abc123.css"
  * "images/logo.png" + "def456" → "images/logo-def456.png"
+ *
+ * @param filePath Original file path (relative)
+ * @param hash Hash string to insert
+ * @returns Filename with hash inserted before extension
  */
 export function buildHashedFilename(filePath: string, hash: string): string {
   const lastDotIndex = filePath.lastIndexOf(".");
@@ -45,6 +52,10 @@ export function buildHashedFilename(filePath: string, hash: string): string {
  *
  * Computes hash of each file's contents and maps:
  * `/public/path/file.ext` → `{baseRoute}__public/path/file-[hash].ext`
+ *
+ * @param publicDir Directory containing static assets
+ * @param baseRoute Base path for URLs (e.g., "/", "/docs/")
+ * @returns Map of clean URLs to hashed URLs for cache-busting
  */
 export async function buildAssetMap(
   publicDir: string,
@@ -91,6 +102,10 @@ function escapeRegex(str: string): string {
  *
  * Finds `/public/*` URLs in quotes, parentheses, and equals signs,
  * replacing with `/__public/*-[hash].*` from the asset map.
+ *
+ * @param html Rendered HTML content
+ * @param assetMap Map of clean URLs to hashed URLs
+ * @returns HTML with all asset URLs replaced with hashed versions
  */
 export function replaceAssetUrls(
   html: string,
@@ -117,6 +132,8 @@ export function replaceAssetUrls(
  * Maps incoming requests `{baseRoute}__public/file-hash.ext` → `file.ext`
  * for serving original files in dev mode.
  *
+ * @param hashedUrl Incoming request URL with hash
+ * @param assetMap Map of clean URLs to hashed URLs
  * @returns Clean file path relative to public/ dir, or null if not found
  */
 export function resolveAssetPath(

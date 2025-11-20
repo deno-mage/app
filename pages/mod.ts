@@ -7,11 +7,20 @@
  */
 
 export { pages } from "./api.ts";
+export { Head } from "./head.tsx";
+export { ErrorBoundary } from "./error-boundary.tsx";
+
+export type {
+  ErrorBoundaryProps,
+  ErrorBoundaryState,
+} from "./error-boundary.tsx";
 
 export type {
   BuildOptions,
   DevServerOptions,
   Frontmatter,
+  HtmlTemplate,
+  HtmlTemplateProps,
   LayoutComponent,
   LayoutProps,
   PagesOptions,

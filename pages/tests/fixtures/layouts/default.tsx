@@ -1,21 +1,21 @@
 import type { LayoutProps } from "../../../types.ts";
+import { Head } from "../../../head.tsx";
 
 export default function DefaultLayout(props: LayoutProps) {
-  const metaTag = props.description
-    ? `<meta name="description" content="${props.description}" />`
-    : "";
+  return (
+    <>
+      <Head>
+        <title>{props.title}</title>
+        {props.description && (
+          <meta name="description" content={props.description} />
+        )}
+        <link rel="stylesheet" href="/public/styles.css" />
+      </Head>
 
-  const fullHtml = `<!DOCTYPE html>
-<html>
-<head>
-  <title>${props.title}</title>
-  ${metaTag}
-  <link rel="stylesheet" href="/public/styles.css">
-</head>
-<body>
-  <div>${props.html}</div>
-</body>
-</html>`;
-
-  return <div dangerouslySetInnerHTML={{ __html: fullHtml }} />;
+      <article
+        data-mage-layout="true"
+        dangerouslySetInnerHTML={{ __html: props.html }}
+      />
+    </>
+  );
 }

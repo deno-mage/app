@@ -1,34 +1,76 @@
+import { useEffect, useState } from "preact/hooks";
+
+type Theme = "system" | "light" | "dark";
+
+const themeOrder: Theme[] = ["system", "light", "dark"];
+const themeIcons: Record<Theme, string> = {
+  system: "💻",
+  light: "☀️",
+  dark: "🌙",
+};
+const themeLabels: Record<Theme, string> = {
+  system: "Using system theme (click to use light mode)",
+  light: "Using light theme (click to use dark mode)",
+  dark: "Using dark theme (click to use system mode)",
+};
+
+function getSystemTheme(): "light" | "dark" {
+  return globalThis.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
+}
+
+function applyTheme(theme: Theme) {
+  const actualTheme = theme === "system" ? getSystemTheme() : theme;
+  document.documentElement.setAttribute("data-theme", actualTheme);
+}
+
 /**
- * Theme toggle button for switching between light and dark modes.
+ * Theme cycling button that toggles between system, light, and dark modes.
  *
- * Uses an inline script to handle clicks since this is a static site.
  * Updates both the DOM attribute and localStorage for persistence.
+ * Cycles through modes: system → light → dark → system.
  */
 export const ColorMode = () => {
-  const toggleColorMode = () => {};
+  const [theme, setTheme] = useState<Theme>(() => {
+    if (typeof globalThis.localStorage === "undefined") return "system";
+    return (globalThis.localStorage.getItem("theme") as Theme) || "system";
+  });
+
+  useEffect(() => {
+    // Apply theme on mount and when it changes
+    applyTheme(theme);
+    globalThis.localStorage.setItem("theme", theme);
+  }, [theme]);
+
+  useEffect(() => {
+    // Listen for system theme changes when in system mode
+    const mediaQuery = globalThis.matchMedia("(prefers-color-scheme: dark)");
+    const handleChange = () => {
+      if (theme === "system") {
+        applyTheme("system");
+      }
+    };
+
+    mediaQuery.addEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
+  }, [theme]);
+
+  const handleThemeChange = () => {
+    const currentIndex = themeOrder.indexOf(theme);
+    const nextIndex = (currentIndex + 1) % themeOrder.length;
+    const nextTheme = themeOrder[nextIndex];
+    setTheme(nextTheme);
+  };
 
   return (
-    <>
-      <button
-        id="theme-toggle"
-        type="button"
-        onClick={toggleColorMode}
-        aria-label="Toggle Color Mode"
-      >
-        Toggle Color Mode
-      </button>
-      <script
-        dangerouslySetInnerHTML={{
-          __html: `
-            document.getElementById('theme-toggle').addEventListener('click', () => {
-              const currentMode = document.documentElement.getAttribute("data-theme");
-              const newMode = currentMode === "dark" ? "light" : "dark";
-              document.documentElement.setAttribute("data-theme", newMode);
-              localStorage.setItem("theme", newMode);
-            });
-          `,
-        }}
-      />
-    </>
+    <button
+      className="contrast"
+      type="button"
+      onClick={handleThemeChange}
+      aria-label={themeLabels[theme]}
+    >
+      <span aria-hidden="true">{themeIcons[theme]}</span>
+    </button>
   );
 };

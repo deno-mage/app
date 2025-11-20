@@ -159,7 +159,9 @@ Your markdown content here.
 
 ## Layouts
 
-Layouts are Preact components that wrap your markdown content.
+Layouts are Preact components that wrap your markdown content. They support
+server-side rendering for fast initial loads and client-side hydration for
+interactivity.
 
 **Type signature:**
 
@@ -175,7 +177,7 @@ interface LayoutProps {
 **Example layout** (`layouts/default.tsx`):
 
 ```tsx
-import type { LayoutProps } from "@mage/app/pages";
+import { Head, type LayoutProps } from "@mage/app/pages";
 
 export default function DefaultLayout({
   html,
@@ -183,31 +185,176 @@ export default function DefaultLayout({
   description,
 }: LayoutProps) {
   return (
-    <html lang="en">
-      <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <>
+      <Head>
         <title>{title}</title>
         {description && <meta name="description" content={description} />}
         <link rel="stylesheet" href="/public/styles.css" />
-      </head>
-      <body>
-        <nav>
-          <a href="/">Home</a>
-          <a href="/guide">Guide</a>
-        </nav>
-        <main dangerouslySetInnerHTML={{ __html: html }} />
-      </body>
-    </html>
+      </Head>
+
+      <nav>
+        <a href="/">Home</a>
+        <a href="/guide">Guide</a>
+      </nav>
+
+      <main>
+        <article
+          data-mage-layout="true"
+          dangerouslySetInnerHTML={{ __html: html }}
+        />
+      </main>
+    </>
   );
 }
 ```
+
+**Key features:**
+
+- Use the `<Head>` component for declarative head management
+- Mark content containers with `data-mage-layout="true"` for hydration
+- Return body content only (wrapped in document by `_html.tsx`)
+- Supports interactive Preact components and hooks
 
 **Layout resolution:**
 
 1. Check frontmatter for `layout: "article"`
 2. Resolve to `layouts/article.tsx`
 3. If not specified, use `layouts/default.tsx`
+
+## Client-Side Hydration
+
+Production builds include client-side hydration for interactive components.
+
+**How it works:**
+
+1. Server renders static HTML (fast initial load)
+2. Client JavaScript hydrates interactive components
+3. Preact takes over for interactivity (state, events, etc.)
+
+**Automatic behavior:**
+
+- Development mode: No client bundles (just hot reload)
+- Production build: Generates one bundle per page with cache-busting
+- Content marked with `data-mage-layout="true"` is extracted for hydration
+- Error boundaries catch failures - SSR'd content always visible
+
+**Using interactive components:**
+
+```tsx
+import { Head, type LayoutProps } from "@mage/app/pages";
+import { useState } from "preact/hooks";
+
+function Counter() {
+  const [count, setCount] = useState(0);
+
+  return (
+    <button onClick={() => setCount(count + 1)}>
+      Clicks: {count}
+    </button>
+  );
+}
+
+export default function InteractiveLayout(props: LayoutProps) {
+  return (
+    <>
+      <Head>
+        <title>{props.title}</title>
+      </Head>
+
+      <Counter />
+
+      <article
+        data-mage-layout="true"
+        dangerouslySetInnerHTML={{ __html: props.html }}
+      />
+    </>
+  );
+}
+```
+
+### Error Handling
+
+Hydration errors are caught automatically by error boundaries. If hydration
+fails:
+
+- SSR'd content remains visible and functional
+- Interactive features won't work
+- Error is logged to console for debugging
+- No page crash or white screen
+
+**Custom error UI (optional):**
+
+```tsx
+import { ErrorBoundary, Head, type LayoutProps } from "@mage/app/pages";
+
+export default function DocsLayout(props: LayoutProps) {
+  return (
+    <>
+      <Head>
+        <title>{props.title}</title>
+      </Head>
+
+      <ErrorBoundary
+        fallback={
+          <div style="padding: 1rem; background: #fef2f2;">
+            Interactive features unavailable. Content is still readable.
+          </div>
+        }
+      >
+        <YourInteractiveComponent />
+      </ErrorBoundary>
+
+      <article
+        data-mage-layout="true"
+        dangerouslySetInnerHTML={{ __html: props.html }}
+      />
+    </>
+  );
+}
+```
+
+## HTML Templates
+
+Customize the document structure with `_html.tsx` in your project root:
+
+```tsx
+import type { HtmlTemplateProps } from "@mage/app/pages";
+
+export default function HtmlTemplate({
+  head,
+  body,
+  bundleUrl,
+  props,
+}: HtmlTemplateProps) {
+  return (
+    <html lang="en">
+      <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta dangerouslySetInnerHTML={{ __html: head }} />
+      </head>
+      <body>
+        <div id="app" dangerouslySetInnerHTML={{ __html: body }} />
+        {bundleUrl && (
+          <>
+            <script
+              dangerouslySetInnerHTML={{
+                __html: `window.__PAGE_PROPS__ = ${JSON.stringify(props)};`,
+              }}
+            />
+            <script type="module" src={bundleUrl} />
+          </>
+        )}
+      </body>
+    </html>
+  );
+}
+```
+
+**Note:** The template is a Preact component that returns JSX. The DOCTYPE is
+added automatically during rendering.
+
+If `_html.tsx` is not provided, a sensible default is used.
 
 ## Assets & Cache-Busting
 
@@ -257,10 +404,10 @@ Register development server with hot reload.
 
 **Options:**
 
-| Option    | Type     | Default | Description                        |
-| --------- | -------- | ------- | ---------------------------------- |
-| `rootDir` | `string` | `"./"`  | Directory containing pages/layouts |
-| `route`   | `string` | `"/"`   | Base route to mount at             |
+| Option     | Type     | Default | Description                        |
+| ---------- | -------- | ------- | ---------------------------------- |
+| `rootDir`  | `string` | `"./"`  | Directory containing pages/layouts |
+| `basePath` | `string` | `"/"`   | Base path to mount at              |
 
 **Behavior:**
 
@@ -275,10 +422,11 @@ Generate static site files.
 
 **Options:**
 
-| Option    | Type     | Default           | Description                        |
-| --------- | -------- | ----------------- | ---------------------------------- |
-| `rootDir` | `string` | `"./"`            | Directory containing pages/layouts |
-| `outDir`  | `string` | `${rootDir}/dist` | Output directory for static files  |
+| Option     | Type     | Default           | Description                        |
+| ---------- | -------- | ----------------- | ---------------------------------- |
+| `rootDir`  | `string` | `"./"`            | Directory containing pages/layouts |
+| `outDir`   | `string` | `${rootDir}/dist` | Output directory for static files  |
+| `basePath` | `string` | `"/"`             | Base path for URLs in built site   |
 
 **Behavior:**
 
@@ -292,10 +440,10 @@ Serve pre-built static files.
 
 **Options:**
 
-| Option    | Type     | Default | Description                |
-| --------- | -------- | ------- | -------------------------- |
-| `rootDir` | `string` | `"./"`  | Directory containing dist/ |
-| `route`   | `string` | `"/"`   | Base route to mount at     |
+| Option     | Type     | Default | Description                |
+| ---------- | -------- | ------- | -------------------------- |
+| `rootDir`  | `string` | `"./"`  | Directory containing dist/ |
+| `basePath` | `string` | `"/"`   | Base path to mount at      |
 
 **Behavior:**
 

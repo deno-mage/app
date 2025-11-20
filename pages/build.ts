@@ -5,13 +5,31 @@
  */
 
 import { ensureDir } from "@std/fs";
-import { join } from "@std/path";
+import { join, resolve } from "@std/path";
 import { scanPages } from "./scanner.ts";
 import type { PageInfo } from "./scanner.ts";
 import { renderPageFromFile } from "./renderer.ts";
 import { buildAssetMap } from "./assets.ts";
+import { buildBundle, stopBundleBuilder } from "./bundle-builder.ts";
 import { logger } from "./logger.ts";
 import type { BuildOptions, SiteMetadata } from "./types.ts";
+import { extractLayoutName } from "./frontmatter-parser.ts";
+
+/**
+ * Normalizes a base path to ensure it has a trailing slash.
+ *
+ * This ensures consistent URL building across the application.
+ * Root path "/" is a special case that remains unchanged.
+ *
+ * @param basePath Base path to normalize
+ * @returns Normalized base path with trailing slash
+ */
+function normalizeBasePath(basePath: string): string {
+  if (basePath === "/") {
+    return "/";
+  }
+  return basePath.endsWith("/") ? basePath : `${basePath}/`;
+}
 
 /**
  * Builds a static site from markdown files.
@@ -27,8 +45,9 @@ import type { BuildOptions, SiteMetadata } from "./types.ts";
  * Note: The output directory is completely cleaned before each build
  * to ensure no stale files remain from previous builds.
  *
- * @param siteMetadata Site-wide metadata
+ * @param siteMetadata Site-wide metadata for sitemap and robots.txt
  * @param options Build configuration
+ * @throws Error if file operations fail or rendering fails
  */
 export async function build(
   siteMetadata: SiteMetadata,
@@ -36,6 +55,7 @@ export async function build(
 ): Promise<void> {
   const rootDir = options.rootDir ?? "./";
   const outDir = options.outDir ?? join(rootDir, "dist");
+  const basePath = normalizeBasePath(options.basePath ?? "/");
 
   const pagesDir = join(rootDir, "pages");
   const publicDir = join(rootDir, "public");
@@ -46,12 +66,16 @@ export async function build(
   await Deno.remove(outDir, { recursive: true }).catch(() => {});
   await ensureDir(outDir);
 
-  // Build asset map for cache-busting (always use / for static builds)
-  const assetMap = await buildAssetMap(publicDir, "/");
+  // Build asset map for cache-busting with configured base path
+  const assetMap = await buildAssetMap(publicDir, basePath);
 
   // Scan for all markdown pages
   const pages = await scanPages(pagesDir);
   logger.info(`Found ${pages.length} pages to build`);
+
+  // Create bundles directory
+  const bundlesDir = join(outDir, "__bundles");
+  await ensureDir(bundlesDir);
 
   // Render and write each page
   let successCount = 0;
@@ -59,10 +83,34 @@ export async function build(
 
   for (const page of pages) {
     try {
+      // Read frontmatter to determine layout
+      const content = await Deno.readTextFile(page.filePath);
+      const layoutName = extractLayoutName(content);
+
+      // Build client bundle for this page
+      // Use resolve() to ensure absolute path for esbuild
+      const layoutPath = resolve(rootDir, "layouts", `${layoutName}.tsx`);
+      const pageId = page.urlPath === "/"
+        ? "index"
+        : page.urlPath.slice(1).replace(/\//g, "-");
+
+      const bundle = await buildBundle({
+        layoutPath,
+        rootDir: Deno.cwd(), // Use project root where deno.json is for import resolution
+        production: true,
+        pageId,
+      });
+
+      // Write bundle to disk
+      const bundlePath = join(bundlesDir, bundle.filename!);
+      await Deno.writeTextFile(bundlePath, bundle.code);
+
+      // Render page with bundle URL (respecting base path)
+      const bundleUrl = `${basePath}__bundles/${bundle.filename}`;
       const rendered = await renderPageFromFile(
         page.filePath,
         rootDir,
-        assetMap,
+        { assetMap, bundleUrl },
       );
 
       // Determine output file path
@@ -90,10 +138,27 @@ export async function build(
   // Render _not-found.md to 404.html (if it exists)
   const notFoundPath = join(pagesDir, "_not-found.md");
   try {
+    const content = await Deno.readTextFile(notFoundPath);
+    const layoutName = extractLayoutName(content);
+    const layoutPath = resolve(rootDir, "layouts", `${layoutName}.tsx`);
+
+    const notFoundBundle = await buildBundle({
+      layoutPath,
+      rootDir: Deno.cwd(),
+      production: true,
+      pageId: "404",
+    });
+
+    const notFoundBundlePath = join(bundlesDir, notFoundBundle.filename!);
+    await Deno.writeTextFile(notFoundBundlePath, notFoundBundle.code);
+
     const rendered = await renderPageFromFile(
       notFoundPath,
       rootDir,
-      assetMap,
+      {
+        assetMap,
+        bundleUrl: `${basePath}__bundles/${notFoundBundle.filename}`,
+      },
     );
     await Deno.writeTextFile(join(outDir, "404.html"), rendered.html);
   } catch {
@@ -103,10 +168,24 @@ export async function build(
   // Render _error.md to 500.html (if it exists)
   const errorPath = join(pagesDir, "_error.md");
   try {
+    const content = await Deno.readTextFile(errorPath);
+    const layoutName = extractLayoutName(content);
+    const layoutPath = resolve(rootDir, "layouts", `${layoutName}.tsx`);
+
+    const errorBundle = await buildBundle({
+      layoutPath,
+      rootDir: Deno.cwd(),
+      production: true,
+      pageId: "500",
+    });
+
+    const errorBundlePath = join(bundlesDir, errorBundle.filename!);
+    await Deno.writeTextFile(errorBundlePath, errorBundle.code);
+
     const rendered = await renderPageFromFile(
       errorPath,
       rootDir,
-      assetMap,
+      { assetMap, bundleUrl: `${basePath}__bundles/${errorBundle.filename}` },
     );
     await Deno.writeTextFile(join(outDir, "500.html"), rendered.html);
   } catch {
@@ -114,13 +193,16 @@ export async function build(
   }
 
   // Copy assets to dist/__public/ with hashed filenames
-  await copyHashedAssets(publicDir, outDir, assetMap);
+  await copyHashedAssets(publicDir, outDir, assetMap, basePath);
 
   // Generate sitemap.xml
   await generateSitemap(pages, siteMetadata, outDir);
 
   // Generate robots.txt
   await generateRobotsTxt(siteMetadata, outDir);
+
+  // Clean up esbuild
+  stopBundleBuilder();
 
   // Log summary
   if (errorCount > 0) {
@@ -132,9 +214,11 @@ export async function build(
 /**
  * Converts a URL path to an output file path.
  *
- * - `/` → `dist/index.html`
- * - `/docs/api` → `dist/docs/api/index.html`
- * - `/guide/intro` → `dist/guide/intro/index.html`
+ * Uses directory-based URLs with index.html for clean URL structure.
+ *
+ * @param urlPath URL path to convert
+ * @param outDir Output directory base path
+ * @returns File path for HTML output
  */
 function urlPathToFilePath(urlPath: string, outDir: string): string {
   if (urlPath === "/") {
@@ -149,20 +233,28 @@ function urlPathToFilePath(urlPath: string, outDir: string): string {
  *
  * Uses the asset map to determine hashed filenames and copies each file
  * to the correct location in the output directory.
+ *
+ * @param publicDir Source directory for assets
+ * @param outDir Destination directory for build output
+ * @param assetMap Map of clean URLs to hashed URLs
+ * @param basePath Base path for URL construction (used to strip prefix)
+ * @throws Error if file copy operations fail
  */
 async function copyHashedAssets(
   publicDir: string,
   outDir: string,
   assetMap: Map<string, string>,
+  basePath: string,
 ): Promise<void> {
   for (const [cleanUrl, hashedUrl] of assetMap) {
     // Extract relative path from clean URL
     // "/public/styles.css" → "styles.css"
     const relativePath = cleanUrl.replace(/^\/public\//, "");
 
-    // Extract hashed path from hashed URL
-    // "/__public/styles-abc123.css" → "styles-abc123.css"
-    const hashedPath = hashedUrl.replace(/^\/__public\//, "");
+    // Extract hashed path from hashed URL by stripping basePath prefix
+    // With basePath="/docs/": "/docs/__public/styles-abc123.css" → "styles-abc123.css"
+    // With basePath="/": "/__public/styles-abc123.css" → "styles-abc123.css"
+    const hashedPath = hashedUrl.replace(`${basePath}__public/`, "");
 
     const sourcePath = join(publicDir, relativePath);
     const destPath = join(outDir, "__public", hashedPath);
@@ -176,9 +268,14 @@ async function copyHashedAssets(
 }
 
 /**
- * Generates a sitemap.xml file.
+ * Generates a sitemap.xml file for search engine indexing.
  *
- * Creates XML sitemap with all page URLs for search engine indexing.
+ * Creates XML sitemap with all page URLs and weekly change frequency.
+ *
+ * @param pages Array of page information
+ * @param siteMetadata Site metadata including baseUrl
+ * @param outDir Output directory for sitemap.xml
+ * @throws Error if file write fails
  */
 async function generateSitemap(
   pages: PageInfo[],
@@ -202,9 +299,13 @@ ${urls}
 }
 
 /**
- * Generates a robots.txt file.
+ * Generates a robots.txt file allowing all crawlers.
  *
- * Allows all crawlers and points to the sitemap.
+ * Points to the sitemap for improved search engine discovery.
+ *
+ * @param siteMetadata Site metadata including baseUrl
+ * @param outDir Output directory for robots.txt
+ * @throws Error if file write fails
  */
 async function generateRobotsTxt(
   siteMetadata: SiteMetadata,

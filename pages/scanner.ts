@@ -75,6 +75,9 @@ export async function scanPages(pagesDir: string): Promise<PageInfo[]> {
  * - `index.md` → `/`
  * - `docs/api.md` → `/docs/api`
  * - `guide/intro.md` → `/guide/intro`
+ *
+ * @param filePath Relative file path from pages directory
+ * @returns URL path for the page
  */
 function filePathToUrlPath(filePath: string): string {
   // Remove .md extension

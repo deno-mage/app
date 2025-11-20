@@ -4,7 +4,7 @@
  * @module
  */
 
-import type { ComponentChildren } from "preact";
+import type { ComponentChildren, JSX } from "preact";
 
 /**
  * Metadata that can be included in frontmatter.
@@ -30,8 +30,8 @@ export interface LayoutProps {
   title: string;
   /** Page description for meta tags */
   description?: string;
-  /** Custom metadata fields from frontmatter */
-  [key: string]: unknown;
+  /** Additional custom fields from frontmatter */
+  additionalFrontmatter?: Record<string, unknown>;
 }
 
 /**
@@ -65,8 +65,8 @@ export interface PagesOptions {
 export interface DevServerOptions {
   /** Root directory containing pages/, layouts/, public/ */
   rootDir?: string;
-  /** Route to mount the dev server on */
-  route?: string;
+  /** Base path for development (e.g., "/docs/" for http://localhost:8000/docs/) */
+  basePath?: string;
 }
 
 /**
@@ -77,6 +77,8 @@ export interface BuildOptions {
   rootDir?: string;
   /** Output directory for built files */
   outDir?: string;
+  /** Base path for deployment (e.g., "/docs/" for https://example.com/docs/) */
+  basePath?: string;
 }
 
 /**
@@ -85,8 +87,8 @@ export interface BuildOptions {
 export interface StaticServerOptions {
   /** Root directory containing built files (dist/) */
   rootDir?: string;
-  /** Route to mount the static server on */
-  route?: string;
+  /** Base path for deployment (e.g., "/docs/" for https://example.com/docs/) */
+  basePath?: string;
 }
 
 /**
@@ -106,3 +108,22 @@ export interface AssetMap {
   /** Map from clean URL to hashed URL */
   map: Map<string, string>;
 }
+
+/**
+ * Props passed to the _html.tsx document template.
+ *
+ * The template receives only the page props for conditional rendering.
+ * Head content, app wrapper, props script, and bundle script are injected
+ * automatically after template rendering.
+ */
+export interface HtmlTemplateProps {
+  /** Layout props for conditional logic in template */
+  layoutProps: LayoutProps;
+}
+
+/**
+ * _html.tsx template component type.
+ *
+ * Should be a Preact component that returns JSX for the complete HTML document.
+ */
+export type HtmlTemplate = (props: HtmlTemplateProps) => JSX.Element;

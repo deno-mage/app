@@ -12,6 +12,22 @@ import { serveFiles } from "../serve-files/mod.ts";
 import type { StaticServerOptions } from "./types.ts";
 
 /**
+ * Normalizes a base path to ensure it has a trailing slash.
+ *
+ * This ensures consistent URL building across the application.
+ * Root path "/" is a special case that remains unchanged.
+ *
+ * @param basePath Base path to normalize
+ * @returns Normalized base path with trailing slash
+ */
+function normalizeBasePath(basePath: string): string {
+  if (basePath === "/") {
+    return "/";
+  }
+  return basePath.endsWith("/") ? basePath : `${basePath}/`;
+}
+
+/**
  * Registers static server routes for pre-built files.
  *
  * Behavior:
@@ -31,21 +47,27 @@ export function registerStaticServer(
   options: StaticServerOptions = {},
 ): void {
   const rootDir = options.rootDir ?? "./";
-  const baseRoute = options.route ?? "/";
+  const basePath = normalizeBasePath(options.basePath ?? "/");
+
+  // Pre-load 404.html at startup to avoid blocking on 404 errors
+  const notFoundPath = join(rootDir, "404.html");
+  let notFoundHtml: string | null = null;
+  try {
+    notFoundHtml = Deno.readTextFileSync(notFoundPath);
+  } catch {
+    // 404.html doesn't exist, will use default notFound
+  }
 
   // Wrap serveFiles to handle custom 404 page
-  app.get(`${baseRoute}*`, async (c, next) => {
+  app.get(`${basePath}*`, async (c, next) => {
     // Store the original notFound function
     const originalNotFound = c.notFound.bind(c);
 
-    // Override notFound to serve custom 404.html (synchronously)
+    // Override notFound to serve custom 404.html
     c.notFound = (text?: string) => {
-      const notFoundPath = join(rootDir, "404.html");
-      try {
-        // Read file synchronously to maintain sync interface
-        const html = Deno.readTextFileSync(notFoundPath);
-        c.html(html, 404);
-      } catch {
+      if (notFoundHtml) {
+        c.html(notFoundHtml, 404);
+      } else {
         // Fall back to original notFound if 404.html doesn't exist
         originalNotFound(text);
       }

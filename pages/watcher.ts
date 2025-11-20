@@ -18,6 +18,8 @@ export type WatchCallback = (
  * Invokes callback on create, modify, or remove events.
  * Silently ignores missing directories or permission errors.
  *
+ * @param dirPath Directory path to watch
+ * @param callback Function to invoke on file changes
  * @returns AbortController to stop watching
  */
 export function watchDirectory(
@@ -74,6 +76,8 @@ export function watchDirectory(
 /**
  * Watches multiple directories simultaneously.
  *
+ * @param dirPaths Array of directory paths to watch
+ * @param callback Function to invoke on file changes in any directory
  * @returns Array of AbortControllers (one per directory)
  */
 export function watchDirectories(
@@ -85,6 +89,8 @@ export function watchDirectories(
 
 /**
  * Stops all watchers.
+ *
+ * @param controllers Array of AbortControllers to abort
  */
 export function stopWatching(controllers: AbortController[]): void {
   for (const controller of controllers) {

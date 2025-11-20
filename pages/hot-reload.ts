@@ -15,6 +15,8 @@ const hotReloadClients = new Set<WebSocket>();
 
 /**
  * Register a WebSocket client for hot reload notifications.
+ *
+ * @param socket WebSocket connection to register
  */
 export function registerHotReloadClient(socket: WebSocket): void {
   hotReloadClients.add(socket);
@@ -53,6 +55,9 @@ export function notifyClients(): void {
  *
  * The script connects via WebSocket and reloads the page when the server
  * signals a change.
+ *
+ * @param reloadEndpoint WebSocket endpoint path for reload notifications
+ * @returns Script tag with hot reload client code
  */
 export function generateHotReloadScript(reloadEndpoint: string): string {
   return `
@@ -85,6 +90,10 @@ export function generateHotReloadScript(reloadEndpoint: string): string {
 
 /**
  * Injects hot reload script into HTML before closing body tag.
+ *
+ * @param html HTML content to inject script into
+ * @param reloadEndpoint WebSocket endpoint path for reload notifications
+ * @returns HTML with hot reload script injected
  */
 export function injectHotReload(html: string, reloadEndpoint: string): string {
   const script = generateHotReloadScript(reloadEndpoint);

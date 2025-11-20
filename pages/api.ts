@@ -20,32 +20,8 @@ import type {
  *
  * Returns functions for dev server, static build, and static serving.
  *
- * @example Development server (no siteMetadata needed)
- * ```ts
- * import { MageApp } from "@mage/app";
- * import { pages } from "@mage/app/pages";
- *
- * const { registerDevServer } = pages();
- *
- * const app = new MageApp();
- * await registerDevServer(app, { rootDir: "./docs" });
- *
- * Deno.serve({ port: 3000 }, app.handler);
- * ```
- *
- * @example Build (siteMetadata required for sitemap/robots.txt)
- * ```ts
- * import { pages } from "@mage/app/pages";
- *
- * const { build } = pages({
- *   siteMetadata: {
- *     baseUrl: "https://example.com",
- *     title: "My Site",
- *   },
- * });
- *
- * await build({ rootDir: "./docs" });
- * ```
+ * For development, no siteMetadata is required. For building, siteMetadata
+ * is required for sitemap and robots.txt generation.
  */
 export function pages(options: PagesOptions = {}): {
   registerDevServer: (
