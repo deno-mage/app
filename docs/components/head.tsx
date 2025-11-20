@@ -21,10 +21,6 @@ export const Head = (props: HeadProps) => {
         <meta name="description" content={props.description} />
       )}
       <link rel="stylesheet" href="/public/styles.css" />
-      <link
-        rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"
-      />
       {
         // Theme initialization script
       }

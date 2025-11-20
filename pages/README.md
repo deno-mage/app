@@ -247,11 +247,7 @@ import { useState } from "preact/hooks";
 function Counter() {
   const [count, setCount] = useState(0);
 
-  return (
-    <button onClick={() => setCount(count + 1)}>
-      Clicks: {count}
-    </button>
-  );
+  return <button onClick={() => setCount(count + 1)}>Clicks: {count}</button>;
 }
 
 export default function InteractiveLayout(props: LayoutProps) {
@@ -383,6 +379,133 @@ Reference assets with clean URLs - cache-busting is automatic.
 4. File location (build): `dist/__public/styles-abc123.css`
 
 All files in `public/` are automatically hashed and cache-busted.
+
+## UnoCSS Support
+
+Zero-config utility CSS generation with UnoCSS. When enabled, scans your source
+files and generates optimized CSS automatically.
+
+### Setup
+
+Install UnoCSS dependencies:
+
+```bash
+deno add npm:@unocss/core npm:@unocss/preset-wind4
+```
+
+Create `uno.config.ts` in your project root:
+
+```typescript
+import presetWind4 from "@unocss/preset-wind4";
+
+export default {
+  presets: [presetWind4()],
+};
+```
+
+That's it. UnoCSS is now enabled.
+
+### Usage
+
+Use Tailwind-compatible utility classes in your markdown and layouts:
+
+**In markdown:**
+
+```markdown
+<div class="container mx-auto px-4">
+  <h1 class="text-4xl font-bold text-blue-600">Welcome</h1>
+  <p class="text-lg text-gray-700">Your content here.</p>
+</div>
+```
+
+**In layouts:**
+
+```tsx
+export default function Layout({ html, title }: LayoutProps) {
+  return (
+    <>
+      <Head>
+        <title>{title}</title>
+      </Head>
+
+      <nav class="bg-gray-800 text-white p-4">
+        <a href="/" class="hover:text-blue-400">
+          Home
+        </a>
+      </nav>
+
+      <main class="container mx-auto">
+        <article
+          data-mage-layout="true"
+          dangerouslySetInnerHTML={{ __html: html }}
+        />
+      </main>
+    </>
+  );
+}
+```
+
+### How It Works
+
+**Development mode:**
+
+- Scans all source files (`.ts`, `.tsx`, `.md`, `.html`, etc.)
+- Generates CSS containing only the utilities you use
+- Serves from `/__styles/uno-{hash}.css`
+- Automatically injected into `<head>`
+- Regenerates on file changes
+
+**Production build:**
+
+- Single site-wide CSS bundle for all pages
+- Content-hashed filename for cache-busting
+- Typically 5-20KB for small-medium sites
+- Includes CSS reset (preflights) and utilities
+
+**What gets scanned:**
+
+- ✅ All `.ts`, `.tsx`, `.js`, `.jsx` files
+- ✅ All `.md`, `.mdx`, `.html` files
+- ✅ Root-level files like `_html.tsx`
+- ✅ Nested directories (`pages/`, `layouts/`, components, etc.)
+- ❌ `dist/` and `node_modules/` are excluded
+
+### Configuration
+
+UnoCSS uses your `uno.config.ts` for customization:
+
+```typescript
+import presetWind4 from "@unocss/preset-wind4";
+
+export default {
+  presets: [presetWind4()],
+
+  // Custom theme
+  theme: {
+    colors: {
+      brand: "#3b82f6",
+    },
+  },
+
+  // Custom shortcuts
+  shortcuts: {
+    btn: "px-4 py-2 rounded bg-brand text-white hover:bg-blue-600",
+  },
+
+  // Custom rules
+  rules: [["custom-rule", { color: "red" }]],
+};
+```
+
+See [UnoCSS documentation](https://unocss.dev) for full configuration options.
+
+### Notes
+
+- UnoCSS is **opt-in** - only enabled when `uno.config.ts` exists
+- CSS generation happens once per build (not per page)
+- If config loading fails, build continues without UnoCSS (logs error)
+- Supports all UnoCSS presets and transformers
+- Compatible with Tailwind CSS syntax via `@unocss/preset-wind4`
 
 ## API Reference
 
