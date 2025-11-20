@@ -71,7 +71,7 @@ Run it: `deno run --allow-all main.ts`
 ### Utilities
 
 - [**cookies**](./cookies) - Signed cookie utilities
-- [**logs**](./logs) - Structured JSON logging
+- [**logs**](./logs) - Console logger with colored output
 - [**status**](./status) - HTTP status code utilities
 
 ### Static Site Generator
