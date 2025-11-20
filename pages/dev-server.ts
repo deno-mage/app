@@ -20,6 +20,13 @@ import type { DevServerOptions } from "./types.ts";
 import { buildBundle, stopBundleBuilder } from "./bundle-builder.ts";
 import type { BundleResult } from "./bundle-builder.ts";
 import { extractLayoutName } from "./frontmatter-parser.ts";
+import {
+  checkUnoConfigExists,
+  generateCSS,
+  loadUnoConfig,
+  scanSourceFiles,
+} from "./unocss.ts";
+import type { UserConfig } from "@unocss/core";
 
 /**
  * Normalizes a base path to ensure it has a trailing slash.
@@ -47,6 +54,12 @@ interface DevServerState {
   watchers: AbortController[];
   /** In-memory bundle cache to avoid rebuilding (pageId -> bundle) */
   bundleCache: Map<string, BundleResult>;
+  /** UnoCSS stylesheet URL (undefined if disabled) */
+  stylesheetUrl?: string;
+  /** UnoCSS generated CSS content */
+  stylesheetContent?: string;
+  /** UnoCSS user config */
+  unoConfig?: UserConfig;
 }
 
 /**
@@ -84,11 +97,43 @@ export async function registerDevServer(
   // Build initial asset map
   state.assetMap = await buildAssetMap(publicDir, basePath);
 
+  // Initialize UnoCSS if enabled
+  const unoEnabled = await checkUnoConfigExists(rootDir);
+  if (unoEnabled) {
+    logger.info("UnoCSS enabled - generating styles...");
+    try {
+      state.unoConfig = await loadUnoConfig(rootDir);
+      const content = await scanSourceFiles(rootDir, "dist");
+      const result = await generateCSS(content, state.unoConfig, basePath);
+      state.stylesheetUrl = result.url;
+      state.stylesheetContent = result.css;
+      logger.info(
+        `✓ Generated ${result.filename} (${result.css.length} bytes)`,
+      );
+    } catch (error) {
+      logger.error(error instanceof Error ? error : new Error(String(error)));
+    }
+  }
+
   // Watch entire rootDir for changes
   const watchCallback = async (path: string) => {
     // Rebuild asset map if public/ changed
     if (path.startsWith(publicDir)) {
       state.assetMap = await buildAssetMap(publicDir, basePath);
+    }
+
+    // Regenerate UnoCSS if enabled and source files changed
+    if (
+      unoEnabled && !path.includes("/dist/") && !path.includes("/node_modules/")
+    ) {
+      try {
+        const content = await scanSourceFiles(rootDir, "dist");
+        const result = await generateCSS(content, state.unoConfig, basePath);
+        state.stylesheetUrl = result.url;
+        state.stylesheetContent = result.css;
+      } catch (error) {
+        logger.error(error instanceof Error ? error : new Error(String(error)));
+      }
     }
 
     // Clear bundle cache on any file change (layouts, components, etc.)
@@ -150,7 +195,11 @@ export async function registerDevServer(
         const rendered = await renderPageFromFile(
           notFoundPath,
           rootDir,
-          { assetMap: state.assetMap, bundleUrl },
+          {
+            assetMap: state.assetMap,
+            bundleUrl,
+            stylesheetUrl: state.stylesheetUrl,
+          },
         );
 
         // Inject hot reload script
@@ -200,7 +249,11 @@ export async function registerDevServer(
       const rendered = await renderPageFromFile(
         page.filePath,
         rootDir,
-        { assetMap: state.assetMap, bundleUrl },
+        {
+          assetMap: state.assetMap,
+          bundleUrl,
+          stylesheetUrl: state.stylesheetUrl,
+        },
       );
 
       logger.info(`Rendered page: ${urlPath}`);
@@ -242,7 +295,11 @@ export async function registerDevServer(
         const rendered = await renderPageFromFile(
           errorPath,
           rootDir,
-          { assetMap: state.assetMap, bundleUrl },
+          {
+            assetMap: state.assetMap,
+            bundleUrl,
+            stylesheetUrl: state.stylesheetUrl,
+          },
         );
 
         // Inject hot reload script
@@ -292,6 +349,18 @@ export async function registerDevServer(
     // Serve bundle with correct content type
     c.text(bundle.code);
     c.header("Content-Type", "application/javascript");
+  });
+
+  // Register route for UnoCSS stylesheet
+  app.get(`${basePath}__styles/*`, (c) => {
+    if (!state.stylesheetContent) {
+      c.notFound();
+      return;
+    }
+
+    // Serve CSS with correct content type
+    c.text(state.stylesheetContent);
+    c.header("Content-Type", "text/css");
   });
 
   // Register routes for assets

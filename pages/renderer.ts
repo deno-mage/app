@@ -31,6 +31,8 @@ export interface RenderPageOptions {
   assetMap: Map<string, string>;
   /** URL to client bundle for hydration */
   bundleUrl: string;
+  /** Optional URL to UnoCSS stylesheet */
+  stylesheetUrl?: string;
 }
 
 /**
@@ -50,7 +52,7 @@ export async function renderPage(
   rootDir: string,
   options: RenderPageOptions,
 ): Promise<RenderedPage> {
-  const { assetMap, bundleUrl } = options;
+  const { assetMap, bundleUrl, stylesheetUrl } = options;
 
   // Parse markdown and render to HTML
   const { frontmatter, html: contentHtml } = parseAndRender(markdownContent);
@@ -77,6 +79,7 @@ export async function renderPage(
     headContent,
     bodyContent,
     bundleUrl,
+    stylesheetUrl,
   );
 
   // Replace asset URLs with hashed versions

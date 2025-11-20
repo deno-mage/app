@@ -14,6 +14,7 @@ import { buildBundle, stopBundleBuilder } from "./bundle-builder.ts";
 import { logger } from "./logger.ts";
 import type { BuildOptions, SiteMetadata } from "./types.ts";
 import { extractLayoutName } from "./frontmatter-parser.ts";
+import { processUnoCSS } from "./unocss.ts";
 
 /**
  * Normalizes a base path to ensure it has a trailing slash.
@@ -77,6 +78,9 @@ export async function build(
   const bundlesDir = join(outDir, "__bundles");
   await ensureDir(bundlesDir);
 
+  // Generate UnoCSS styles if enabled
+  const stylesheetUrl = await processUnoCSS(rootDir, outDir, basePath);
+
   // Render and write each page
   let successCount = 0;
   let errorCount = 0;
@@ -110,7 +114,7 @@ export async function build(
       const rendered = await renderPageFromFile(
         page.filePath,
         rootDir,
-        { assetMap, bundleUrl },
+        { assetMap, bundleUrl, stylesheetUrl },
       );
 
       // Determine output file path
@@ -158,6 +162,7 @@ export async function build(
       {
         assetMap,
         bundleUrl: `${basePath}__bundles/${notFoundBundle.filename}`,
+        stylesheetUrl,
       },
     );
     await Deno.writeTextFile(join(outDir, "404.html"), rendered.html);
@@ -185,7 +190,11 @@ export async function build(
     const rendered = await renderPageFromFile(
       errorPath,
       rootDir,
-      { assetMap, bundleUrl: `${basePath}__bundles/${errorBundle.filename}` },
+      {
+        assetMap,
+        bundleUrl: `${basePath}__bundles/${errorBundle.filename}`,
+        stylesheetUrl,
+      },
     );
     await Deno.writeTextFile(join(outDir, "500.html"), rendered.html);
   } catch {

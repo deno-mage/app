@@ -384,6 +384,133 @@ Reference assets with clean URLs - cache-busting is automatic.
 
 All files in `public/` are automatically hashed and cache-busted.
 
+## UnoCSS Support
+
+Zero-config utility CSS generation with UnoCSS. When enabled, scans your source
+files and generates optimized CSS automatically.
+
+### Setup
+
+Install UnoCSS dependencies:
+
+```bash
+deno add npm:@unocss/core npm:@unocss/preset-uno
+```
+
+Create `uno.config.ts` in your project root:
+
+```typescript
+import presetUno from "@unocss/preset-uno";
+
+export default {
+  presets: [presetUno()],
+};
+```
+
+That's it. UnoCSS is now enabled.
+
+### Usage
+
+Use Tailwind-compatible utility classes in your markdown and layouts:
+
+**In markdown:**
+
+```markdown
+<div class="container mx-auto px-4">
+  <h1 class="text-4xl font-bold text-blue-600">Welcome</h1>
+  <p class="text-lg text-gray-700">Your content here.</p>
+</div>
+```
+
+**In layouts:**
+
+```tsx
+export default function Layout({ html, title }: LayoutProps) {
+  return (
+    <>
+      <Head>
+        <title>{title}</title>
+      </Head>
+
+      <nav class="bg-gray-800 text-white p-4">
+        <a href="/" class="hover:text-blue-400">Home</a>
+      </nav>
+
+      <main class="container mx-auto">
+        <article
+          data-mage-layout="true"
+          dangerouslySetInnerHTML={{ __html: html }}
+        />
+      </main>
+    </>
+  );
+}
+```
+
+### How It Works
+
+**Development mode:**
+
+- Scans all source files (`.ts`, `.tsx`, `.md`, `.html`, etc.)
+- Generates CSS containing only the utilities you use
+- Serves from `/__styles/uno-{hash}.css`
+- Automatically injected into `<head>`
+- Regenerates on file changes
+
+**Production build:**
+
+- Single site-wide CSS bundle for all pages
+- Content-hashed filename for cache-busting
+- Typically 5-20KB for small-medium sites
+- Includes CSS reset (preflights) and utilities
+
+**What gets scanned:**
+
+- ✅ All `.ts`, `.tsx`, `.js`, `.jsx` files
+- ✅ All `.md`, `.mdx`, `.html` files
+- ✅ Root-level files like `_html.tsx`
+- ✅ Nested directories (`pages/`, `layouts/`, components, etc.)
+- ❌ `dist/` and `node_modules/` are excluded
+
+### Configuration
+
+UnoCSS uses your `uno.config.ts` for customization:
+
+```typescript
+import presetUno from "@unocss/preset-uno";
+
+export default {
+  presets: [presetUno()],
+
+  // Custom theme
+  theme: {
+    colors: {
+      brand: "#3b82f6",
+    },
+  },
+
+  // Custom shortcuts
+  shortcuts: {
+    btn: "px-4 py-2 rounded bg-brand text-white hover:bg-blue-600",
+  },
+
+  // Custom rules
+  rules: [
+    ["custom-rule", { color: "red" }],
+  ],
+};
+```
+
+See [UnoCSS documentation](https://unocss.dev) for full configuration options.
+
+### Notes
+
+- UnoCSS is **opt-in** - only enabled when `uno.config.ts` exists
+- CSS generation happens once per build (not per page)
+- If config loading fails, build continues without UnoCSS (logs error)
+- Supports all UnoCSS presets and transformers
+- Compatible with Tailwind CSS syntax via `@unocss/preset-uno`
+
 ## API Reference
 
 ### `pages(options)`

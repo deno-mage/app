@@ -82,6 +82,7 @@ export async function loadHtmlTemplate(rootDir: string): Promise<HtmlTemplate> {
  * Injects head content, app wrapper, and scripts into rendered HTML.
  *
  * Automatically injects:
+ * - Stylesheet link (if UnoCSS enabled) before `</head>`
  * - Head content (from layouts) before `</head>`
  * - App wrapper div before `</body>`
  * - Props script before `</body>`
@@ -95,6 +96,7 @@ export async function loadHtmlTemplate(rootDir: string): Promise<HtmlTemplate> {
  * @param bodyContent Extracted body content from layouts
  * @param bundleUrl URL to client bundle
  * @param props Page props for serialization (html field removed before injection)
+ * @param stylesheetUrl Optional URL to UnoCSS stylesheet
  * @returns HTML with injected content
  */
 function injectContent(
@@ -103,9 +105,17 @@ function injectContent(
   bodyContent: string,
   bundleUrl: string,
   props: LayoutProps,
+  stylesheetUrl?: string,
 ): string {
+  // Build head injection content
+  let headInjection = headContent;
+  if (stylesheetUrl) {
+    const stylesheetLink = `<link rel="stylesheet" href="${stylesheetUrl}">`;
+    headInjection = stylesheetLink + "\n" + headContent;
+  }
+
   // Inject head content before </head>
-  let result = html.replace("</head>", `${headContent}\n</head>`);
+  let result = html.replace("</head>", `${headInjection}\n</head>`);
 
   // Build injection content for body
   const appHtml = `<div id="app" data-mage-layout="true">${bodyContent}</div>`;
@@ -136,6 +146,7 @@ function injectContent(
  * @param headContent Extracted head content from layouts
  * @param bodyContent Extracted body content from layouts
  * @param bundleUrl URL to client bundle
+ * @param stylesheetUrl Optional URL to UnoCSS stylesheet
  * @returns Complete HTML document string with DOCTYPE and injected content
  */
 export function renderWithTemplate(
@@ -144,6 +155,7 @@ export function renderWithTemplate(
   headContent: string,
   bodyContent: string,
   bundleUrl: string,
+  stylesheetUrl?: string,
 ): string {
   // Render template
   const jsx = template(templateProps);
@@ -156,6 +168,7 @@ export function renderWithTemplate(
     bodyContent,
     bundleUrl,
     templateProps.layoutProps,
+    stylesheetUrl,
   );
 
   return `<!DOCTYPE html>\n${finalHtml}`;

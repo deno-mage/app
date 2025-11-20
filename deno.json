@@ -75,6 +75,8 @@
     "@std/path": "jsr:@std/path@^1.0.8",
     "@std/testing": "jsr:@std/testing@^1.0.9",
     "@std/yaml": "jsr:@std/yaml@^1.0.10",
+    "@unocss/core": "npm:@unocss/core@^0.63.0",
+    "@unocss/preset-uno": "npm:@unocss/preset-uno@^0.63.0",
     "esbuild": "npm:esbuild@^0.24.2",
     "preact": "npm:preact@^10.24.3",
     "preact-render-to-string": "npm:preact-render-to-string@^6.5.11",
