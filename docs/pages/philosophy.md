@@ -6,4 +6,4 @@ layout: "article"
 
 # Philosophy
 
-Coming soon...
+TBD
