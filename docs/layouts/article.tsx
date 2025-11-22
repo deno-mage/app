@@ -1,48 +1,21 @@
 import type { LayoutProps } from "../../pages/mod.ts";
-import { Head } from "../components/head.tsx";
-import { ColorMode } from "../components/color-mode.tsx";
+import { Container } from "../components/container.tsx";
+import { Footer } from "../components/footer.tsx";
+import { Header } from "../components/header.tsx";
 
 export default function ArticleLayout(props: LayoutProps) {
   return (
     <>
-      <Head title={props.title} description={props.description} />
       <body>
-        <header>
-          <div>
-            <nav>
-              <ul>
-                <li>
-                  <a href="/" className="nav-hero">
-                    🧙‍♂️ Mage
-                  </a>
-                </li>
-              </ul>
-              <ul>
-                <li>
-                  <a href="/">Docs</a>
-                </li>
-                <li>
-                  <a href="https://github.com/deno-mage/app">GitHub</a>
-                </li>
-                <li>
-                  <a href="https://jsr.io/@mage/app">JSR</a>
-                </li>
-              </ul>
-            </nav>
-          </div>
-        </header>
-        <main
-          data-mage-layout
-          dangerouslySetInnerHTML={{ __html: props.html }}
-          className="prose"
-        />
-        <hr />
-        <footer>
-          <div className="container flex justify-between align-top">
-            <p>Mage - Simple, Fast Web Framework for Deno</p>
-            <ColorMode />
-          </div>
-        </footer>
+        <Header />
+        <Container>
+          <main
+            data-mage-layout
+            dangerouslySetInnerHTML={{ __html: props.html }}
+            className="prose"
+          />
+        </Container>
+        <Footer />
       </body>
     </>
   );
