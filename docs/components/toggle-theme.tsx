@@ -22,7 +22,12 @@ export function ToggleTheme() {
   };
 
   return (
-    <button type="button" onClick={toggleTheme} aria-label="Toggle theme">
+    <button
+      type="button"
+      onClick={toggleTheme}
+      aria-label="Toggle theme"
+      className="text-xl hover:cursor-pointer"
+    >
       {theme === "light" ? "🌙" : "☀️"}
     </button>
   );

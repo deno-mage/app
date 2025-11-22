@@ -1,3 +1,4 @@
+import type { ComponentChildren } from "preact";
 import { Container } from "./container.tsx";
 import { ToggleTheme } from "./toggle-theme.tsx";
 
@@ -8,10 +9,18 @@ interface LinkProps {
 
 const Link = (props: LinkProps) => {
   return (
-    <a href={props.href} className="text-blue-600 hover:underline">
+    <a href={props.href} className="block hover:underline">
       {props.children}
     </a>
   );
+};
+
+interface NavItemProps {
+  children: ComponentChildren;
+}
+
+const NavListItem = (props: NavItemProps) => {
+  return <li className="py-4">{props.children}</li>;
 };
 
 export const Header = () => {
@@ -20,23 +29,23 @@ export const Header = () => {
       <Container>
         <nav className="flex justify-between items-center">
           <ul>
-            <li>
+            <NavListItem>
               <Link href="/">🧙‍♂️ Mage</Link>
-            </li>
+            </NavListItem>
           </ul>
-          <ul className="flex gap-4">
-            <li>
+          <ul className="flex items-center gap-4">
+            <NavListItem>
               <Link href="/installation">Installation</Link>
-            </li>
-            <li>
+            </NavListItem>
+            <NavListItem>
               <Link href="https://github.com/deno-mage/app">GitHub</Link>
-            </li>
-            <li>
+            </NavListItem>
+            <NavListItem>
               <Link href="https://jsr.io/@mage/app">JSR</Link>
-            </li>
-            <li>
+            </NavListItem>
+            <NavListItem>
               <ToggleTheme />
-            </li>
+            </NavListItem>
           </ul>
         </nav>
       </Container>
