@@ -65,6 +65,33 @@ export async function loadLayout(
 }
 
 /**
+ * Loads a layout component from bundled code.
+ *
+ * Converts bundled ESM code to a data URL and imports it dynamically.
+ * Each import uses a unique cache-busting parameter to bypass Deno's module cache.
+ *
+ * @param bundledCode ESM module code containing the layout component
+ * @returns Layout component from the bundled code
+ * @throws Error if bundled code doesn't have a default export
+ */
+export async function loadLayoutFromBundle(
+  bundledCode: string,
+): Promise<LayoutComponent> {
+  // Add a unique comment to force Deno to treat each bundle as a new module
+  const uniqueCode =
+    `// Cache-bust: ${Date.now()}-${Math.random()}\n${bundledCode}`;
+  // Convert bundled code to data URL
+  const dataUrl = `data:application/javascript;base64,${btoa(uniqueCode)}`;
+  const module = await import(dataUrl);
+
+  if (!module.default) {
+    throw new Error("Bundled layout must have a default export");
+  }
+
+  return module.default as LayoutComponent;
+}
+
+/**
  * Resolves and loads a layout component from frontmatter.
  *
  * Combines path resolution and loading in one operation.

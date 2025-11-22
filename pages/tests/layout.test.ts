@@ -1,9 +1,11 @@
 import { describe, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
 import { join } from "@std/path";
+import type { VNode } from "preact";
 import {
   buildLayoutProps,
   loadLayout,
+  loadLayoutFromBundle,
   resolveLayout,
   resolveLayoutPath,
 } from "../layout.ts";
@@ -196,5 +198,70 @@ describe("layout - build props", () => {
     expect(props.title).toBe("Minimal");
     // Has html, title, and description (undefined)
     expect(Object.keys(props).length).toBe(3);
+  });
+});
+
+describe("layout - loading from bundle", () => {
+  it("should load layout from bundled code", async () => {
+    // Simple layout component as ESM module
+    const bundledCode = `
+      export default function Layout(props) {
+        return { type: 'div', props: { children: props.html } };
+      }
+    `;
+
+    const layout = await loadLayoutFromBundle(bundledCode);
+
+    expect(typeof layout).toBe("function");
+  });
+
+  it("should execute bundled layout component", async () => {
+    const bundledCode = `
+      export default function Layout(props) {
+        return { type: 'div', props: { children: props.html } };
+      }
+    `;
+
+    const layout = await loadLayoutFromBundle(bundledCode);
+    const result = layout({ html: "<p>Test</p>", title: "Test" }) as VNode;
+
+    expect(result).toBeTruthy();
+    expect(result.type).toBe("div");
+    expect(result.props.children).toBe("<p>Test</p>");
+  });
+
+  it("should fail when bundle has no default export", async () => {
+    const bundledCode = `
+      export function notDefault() {
+        return {};
+      }
+    `;
+
+    try {
+      await loadLayoutFromBundle(bundledCode);
+      expect(true).toBe(false); // Should not reach here
+    } catch (error) {
+      expect(error).toBeInstanceOf(Error);
+      expect((error as Error).message).toContain(
+        "Bundled layout must have a default export",
+      );
+    }
+  });
+
+  it("should handle complex bundled code with dependencies", async () => {
+    // Simulate bundled code with Preact
+    const bundledCode = `
+      const h = (type, props, ...children) => ({ type, props: { ...props, children } });
+      const Component = (props) => h('span', null, props.text);
+      export default function Layout(props) {
+        return h('div', null, Component({ text: props.title }));
+      }
+    `;
+
+    const layout = await loadLayoutFromBundle(bundledCode);
+    const result = layout({ html: "", title: "Hello" }) as VNode;
+
+    expect(result).toBeTruthy();
+    expect(result.type).toBe("div");
   });
 });

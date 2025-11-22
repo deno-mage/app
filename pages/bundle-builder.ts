@@ -180,6 +180,36 @@ export async function buildBundle(
 }
 
 /**
+ * Builds an SSR bundle for a layout component.
+ *
+ * Bundles the layout file and all its dependencies (components, etc.) into
+ * a single module for server-side rendering. This ensures layout changes
+ * are reflected immediately without Deno module cache issues.
+ *
+ * @param layoutPath Absolute path to the layout file
+ * @param rootDir Root directory of the project for import resolution
+ * @returns Bundled layout code as ESM module
+ * @throws Error if esbuild fails or bundle cannot be generated
+ */
+export async function buildSSRBundle(
+  layoutPath: string,
+  rootDir: string,
+): Promise<string> {
+  const buildResult = await esbuild.build({
+    entryPoints: [layoutPath],
+    bundle: true,
+    format: "esm",
+    platform: "neutral",
+    write: false,
+    jsxImportSource: "preact",
+    jsx: "automatic",
+    absWorkingDir: rootDir,
+  });
+
+  return buildResult.outputFiles[0].text;
+}
+
+/**
  * Stops the esbuild service and releases resources.
  *
  * Call this after all bundles are built (e.g., at end of static build or

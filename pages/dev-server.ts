@@ -17,7 +17,11 @@ import {
 } from "./hot-reload.ts";
 import { logger } from "./logger.ts";
 import type { DevServerOptions } from "./types.ts";
-import { buildBundle, stopBundleBuilder } from "./bundle-builder.ts";
+import {
+  buildBundle,
+  buildSSRBundle,
+  stopBundleBuilder,
+} from "./bundle-builder.ts";
 import type { BundleResult } from "./bundle-builder.ts";
 import { extractLayoutName } from "./frontmatter-parser.ts";
 import {
@@ -54,6 +58,8 @@ interface DevServerState {
   watchers: AbortController[];
   /** In-memory bundle cache to avoid rebuilding (pageId -> bundle) */
   bundleCache: Map<string, BundleResult>;
+  /** In-memory SSR bundle cache (layoutPath -> bundled code) */
+  ssrBundleCache: Map<string, string>;
   /** UnoCSS stylesheet URL (undefined if disabled) */
   stylesheetUrl?: string;
   /** UnoCSS generated CSS content */
@@ -92,6 +98,7 @@ export async function registerDevServer(
     assetMap: new Map(),
     watchers: [],
     bundleCache: new Map(),
+    ssrBundleCache: new Map(),
   };
 
   // Build initial asset map
@@ -135,6 +142,7 @@ export async function registerDevServer(
 
     // Clear bundle cache on any file change (layouts, components, etc.)
     state.bundleCache.clear();
+    state.ssrBundleCache.clear();
 
     // Notify WebSocket clients to reload
     notifyClients();
@@ -172,12 +180,13 @@ export async function registerDevServer(
         const content = await Deno.readTextFile(notFoundPath);
         const layoutName = extractLayoutName(content);
 
-        // Build or retrieve cached bundle for 404 page
+        // Build or retrieve cached bundles for 404 page
         const pageId = "404";
-        let bundle = state.bundleCache.get(pageId);
+        const layoutPath = resolve(rootDir, "layouts", `${layoutName}.tsx`);
 
+        // Build client bundle
+        let bundle = state.bundleCache.get(pageId);
         if (!bundle) {
-          const layoutPath = resolve(rootDir, "layouts", `${layoutName}.tsx`);
           bundle = await buildBundle({
             layoutPath,
             rootDir: Deno.cwd(),
@@ -185,6 +194,13 @@ export async function registerDevServer(
             pageId,
           });
           state.bundleCache.set(pageId, bundle);
+        }
+
+        // Build SSR bundle
+        let ssrBundle = state.ssrBundleCache.get(layoutPath);
+        if (!ssrBundle) {
+          ssrBundle = await buildSSRBundle(layoutPath, Deno.cwd());
+          state.ssrBundleCache.set(layoutPath, ssrBundle);
         }
 
         const bundleUrl = `${basePath}__bundles/${pageId}.js`;
@@ -195,6 +211,7 @@ export async function registerDevServer(
             assetMap: state.assetMap,
             bundleUrl,
             stylesheetUrl: state.stylesheetUrl,
+            ssrBundle,
           },
         );
 
@@ -221,15 +238,15 @@ export async function registerDevServer(
       const content = await Deno.readTextFile(page.filePath);
       const layoutName = extractLayoutName(content);
 
-      // Build or retrieve cached bundle
+      // Build or retrieve cached bundles (both client and SSR)
       const pageId = urlPath === "/"
         ? "index"
         : urlPath.slice(1).replace(/\//g, "-");
-      let bundle = state.bundleCache.get(pageId);
+      const layoutPath = resolve(rootDir, "layouts", `${layoutName}.tsx`);
 
+      // Build client bundle
+      let bundle = state.bundleCache.get(pageId);
       if (!bundle) {
-        // Resolve to absolute path for esbuild (handles both absolute and relative rootDir)
-        const layoutPath = resolve(rootDir, "layouts", `${layoutName}.tsx`);
         bundle = await buildBundle({
           layoutPath,
           rootDir: Deno.cwd(), // Use project root where deno.json is for import resolution
@@ -239,7 +256,14 @@ export async function registerDevServer(
         state.bundleCache.set(pageId, bundle);
       }
 
-      // Render page with bundle URL
+      // Build SSR bundle
+      let ssrBundle = state.ssrBundleCache.get(layoutPath);
+      if (!ssrBundle) {
+        ssrBundle = await buildSSRBundle(layoutPath, Deno.cwd());
+        state.ssrBundleCache.set(layoutPath, ssrBundle);
+      }
+
+      // Render page with bundle URL and SSR bundle
       const bundleUrl = `${basePath}__bundles/${pageId}.js`;
       const rendered = await renderPageFromFile(
         page.filePath,
@@ -248,6 +272,7 @@ export async function registerDevServer(
           assetMap: state.assetMap,
           bundleUrl,
           stylesheetUrl: state.stylesheetUrl,
+          ssrBundle,
         },
       );
 
@@ -270,12 +295,13 @@ export async function registerDevServer(
         const content = await Deno.readTextFile(errorPath);
         const layoutName = extractLayoutName(content);
 
-        // Build or retrieve cached bundle for 500 page
+        // Build or retrieve cached bundles for 500 page
         const pageId = "500";
-        let bundle = state.bundleCache.get(pageId);
+        const layoutPath = resolve(rootDir, "layouts", `${layoutName}.tsx`);
 
+        // Build client bundle
+        let bundle = state.bundleCache.get(pageId);
         if (!bundle) {
-          const layoutPath = resolve(rootDir, "layouts", `${layoutName}.tsx`);
           bundle = await buildBundle({
             layoutPath,
             rootDir: Deno.cwd(),
@@ -283,6 +309,13 @@ export async function registerDevServer(
             pageId,
           });
           state.bundleCache.set(pageId, bundle);
+        }
+
+        // Build SSR bundle
+        let ssrBundle = state.ssrBundleCache.get(layoutPath);
+        if (!ssrBundle) {
+          ssrBundle = await buildSSRBundle(layoutPath, Deno.cwd());
+          state.ssrBundleCache.set(layoutPath, ssrBundle);
         }
 
         const bundleUrl = `${basePath}__bundles/${pageId}.js`;
@@ -293,6 +326,7 @@ export async function registerDevServer(
             assetMap: state.assetMap,
             bundleUrl,
             stylesheetUrl: state.stylesheetUrl,
+            ssrBundle,
           },
         );
 
