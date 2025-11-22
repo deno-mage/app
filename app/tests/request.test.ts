@@ -40,22 +40,6 @@ beforeAll(() => {
     c.json({ name });
   });
 
-  // Test validation result storage and retrieval
-  server.app.post("/validation-missing", (c) => {
-    try {
-      c.req.valid("json"); // No validation result set
-      c.text("Should not reach here");
-    } catch (error) {
-      c.json({ error: (error as Error).message });
-    }
-  });
-
-  server.app.post("/validation-set-and-get", (c) => {
-    c.req.setValidationResult("json", { username: "test", age: 25 });
-    const result = c.req.valid<{ username: string; age: number }>("json");
-    c.json(result);
-  });
-
   // Test header and searchParam methods
   server.app.get("/header-access", (c) => {
     const contentType = c.req.header("Content-Type");
@@ -142,28 +126,6 @@ describe("MageRequest", () => {
       expect(response.status).toBe(200);
       const data = await response.json();
       expect(data.name).toBe("John Doe");
-    });
-  });
-
-  describe("validation results", () => {
-    it("should throw error when accessing validation result that doesn't exist", async () => {
-      const response = await fetch(server.url("/validation-missing"), {
-        method: "POST",
-      });
-
-      expect(response.status).toBe(200);
-      const data = await response.json();
-      expect(data.error).toBe("No validation result found for json");
-    });
-
-    it("should store and retrieve validation results", async () => {
-      const response = await fetch(server.url("/validation-set-and-get"), {
-        method: "POST",
-      });
-
-      expect(response.status).toBe(200);
-      const data = await response.json();
-      expect(data).toEqual({ username: "test", age: 25 });
     });
   });
 

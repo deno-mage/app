@@ -1,7 +1,4 @@
 import { memoize } from "@std/cache";
-import { MageError } from "./error.ts";
-
-type ValidationSource = "json" | "form" | "params" | "search-params";
 
 /**
  * Arguments for the MageRequest class
@@ -23,7 +20,6 @@ interface MageRequestArgs {
  */
 export class MageRequest {
   private _raw: Request;
-  private _validationResults: Map<ValidationSource, unknown>;
   private _wildcard?: string;
   private _params: { [key: string]: string };
 
@@ -64,7 +60,6 @@ export class MageRequest {
 
   public constructor(req: Request, options: MageRequestArgs) {
     this._raw = req;
-    this._validationResults = new Map<ValidationSource, unknown>();
     this._wildcard = options.wildcard;
     this._params = options.params;
 
@@ -83,28 +78,5 @@ export class MageRequest {
   /** Get a URL search parameter value */
   public searchParam(name: string): string | null {
     return this.url.searchParams.get(name);
-  }
-
-  /**
-   * Get validated data from a validation middleware.
-   *
-   * @throws MageError if no validation result exists for the source
-   */
-  public valid<TResult>(source: ValidationSource): TResult {
-    const result = this._validationResults.get(source);
-
-    if (!result) {
-      throw new MageError(`No validation result found for ${source}`);
-    }
-
-    return result as TResult;
-  }
-
-  /** Store validation result for later retrieval via `valid()` method */
-  public setValidationResult<TResult>(
-    source: ValidationSource,
-    result: TResult,
-  ) {
-    this._validationResults.set(source, result);
   }
 }
