@@ -4,6 +4,7 @@
 # Deno
 *.tsbuildinfo
 coverage
+.coverage
 
 # Node.js
 node_modules

@@ -48,7 +48,6 @@ export class MageApp {
 
   /**
    * Register middleware for GET and HEAD requests.
-   * Accepts optional route pattern to limit which paths the middleware runs for.
    */
   public get(
     routenameOrMiddleware: string | MageMiddleware | MageMiddleware[],
@@ -59,7 +58,6 @@ export class MageApp {
 
   /**
    * Register middleware for POST requests.
-   * Accepts optional route pattern to limit which paths the middleware runs for.
    */
   public post(
     routenameOrMiddleware: string | MageMiddleware | MageMiddleware[],
@@ -70,7 +68,6 @@ export class MageApp {
 
   /**
    * Register middleware for PUT requests.
-   * Accepts optional route pattern to limit which paths the middleware runs for.
    */
   public put(
     routenameOrMiddleware: string | MageMiddleware | MageMiddleware[],
@@ -81,7 +78,6 @@ export class MageApp {
 
   /**
    * Register middleware for DELETE requests.
-   * Accepts optional route pattern to limit which paths the middleware runs for.
    */
   public delete(
     routenameOrMiddleware: string | MageMiddleware | MageMiddleware[],
@@ -92,7 +88,6 @@ export class MageApp {
 
   /**
    * Register middleware for PATCH requests.
-   * Accepts optional route pattern to limit which paths the middleware runs for.
    */
   public patch(
     routenameOrMiddleware: string | MageMiddleware | MageMiddleware[],
@@ -103,7 +98,6 @@ export class MageApp {
 
   /**
    * Register middleware for OPTIONS requests.
-   * Accepts optional route pattern to limit which paths the middleware runs for.
    */
   public options(
     routenameOrMiddleware: string | MageMiddleware | MageMiddleware[],
@@ -114,7 +108,6 @@ export class MageApp {
 
   /**
    * Register middleware for HEAD requests.
-   * Accepts optional route pattern to limit which paths the middleware runs for.
    */
   public head(
     routenameOrMiddleware: string | MageMiddleware | MageMiddleware[],
