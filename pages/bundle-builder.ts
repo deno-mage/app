@@ -183,8 +183,21 @@ export async function buildBundle(
  * Builds an SSR bundle for a layout component.
  *
  * Bundles the layout file and all its dependencies (components, etc.) into
- * a single module for server-side rendering. This ensures layout changes
- * are reflected immediately without Deno module cache issues.
+ * a single module for server-side rendering. This solves Deno's module cache
+ * problem in development mode.
+ *
+ * The Problem:
+ * When a layout imports components (e.g., `import { Container } from "./container.tsx"`),
+ * even if we cache-bust the layout file with `?t=timestamp`, Deno's module cache
+ * still returns the old cached version of Container because the import path hasn't changed.
+ *
+ * The Solution:
+ * Bundle the layout AND all its dependencies into a single ESM module, then load it
+ * via a data URL. Each bundle gets a unique data URL (with timestamp + random ID),
+ * completely bypassing Deno's module cache. Changes to Container show up immediately.
+ *
+ * Note: Only used in development. Production builds use regular imports since they
+ * render each page exactly once (no cache issues).
  *
  * @param layoutPath Absolute path to the layout file
  * @param rootDir Root directory of the project for import resolution

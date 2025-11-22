@@ -256,7 +256,8 @@ export async function registerDevServer(
         state.bundleCache.set(pageId, bundle);
       }
 
-      // Build SSR bundle
+      // Build SSR bundle to bypass Deno module cache
+      // This ensures changes to layout components (Container, Header, etc.) show up immediately
       let ssrBundle = state.ssrBundleCache.get(layoutPath);
       if (!ssrBundle) {
         ssrBundle = await buildSSRBundle(layoutPath, Deno.cwd());
