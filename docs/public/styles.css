@@ -3,16 +3,22 @@
  */
 
 /**
+ * Hide anchor link in h1 headings, never need to scroll to h1 headings
+ */
+/* .prose > h1 > a.anchor {
+  display: none;
+} */
+
+/**
  * Initial state: hide anchor links in headings
  */
-h1 > a.anchor,
-h2 > a.anchor,
-h3 > a.anchor,
-h4 > a.anchor,
-h5 > a.anchor,
-h6 > a.anchor {
+.prose > h2 > a.anchor,
+.prose > h3 > a.anchor,
+.prose > h4 > a.anchor,
+.prose > h5 > a.anchor,
+.prose > h6 > a.anchor {
   display: inline-block;
-  opacity: 0.8;
+  opacity: 0;
   transition: opacity 0.2s ease-in-out;
   padding-right: 8px;
 }
@@ -20,12 +26,12 @@ h6 > a.anchor {
 /**
  * On hover: show anchor links in headings
  */
-h1:hover > a.anchor,
-h2:hover > a.anchor,
-h3:hover > a.anchor,
-h4:hover > a.anchor,
-h5:hover > a.anchor,
-h6:hover > a.anchor {
+.prose > h1:hover > a.anchor,
+.prose > h2:hover > a.anchor,
+.prose > h3:hover > a.anchor,
+.prose > h4:hover > a.anchor,
+.prose > h5:hover > a.anchor,
+.prose > h6:hover > a.anchor {
   opacity: 1;
 }
 

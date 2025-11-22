@@ -6,483 +6,236 @@ layout: "article"
 
 # Getting Started
 
-This guide walks you through building your first Mage application. You'll start
-with a simple "Hello World" and progressively add routes, middleware, and
+This guide walks you through building your first Mage application. We'll create
+a simple task API to demonstrate core concepts like routing, middleware, and
 request handling.
 
 ## Prerequisites
 
-Make sure you have Deno installed and have added Mage to your project:
+Make sure you've [installed Mage](/installation) first.
 
-```bash
-deno add jsr:@mage/app
-```
+## Create Your Application
 
-See the [Installation](/installation) guide if you need help getting set up.
-
-## Hello World
-
-Let's start with the simplest possible application. Create a file called
-`main.ts`:
+Create a new file `main.ts`:
 
 ```typescript
 import { MageApp } from "@mage/app";
 
 const app = new MageApp();
 
-app.get("/", (c) => {
-  c.text("Hello, world!");
-});
+// We'll add routes here
 
 Deno.serve(app.handler);
 ```
 
-This creates a new Mage application, registers a single route for the root path,
-and starts the server.
+## Adding Routes
 
-Run it with:
-
-```bash
-deno run --allow-all main.ts
-```
-
-Open your browser to `http://localhost:8000` and you'll see "Hello, world!".
-
-### What's happening here?
-
-- **`MageApp`** is the core application class that handles routing and
-  middleware
-- **`app.get()`** registers a route that responds to GET requests at the
-  specified path
-- **`c`** is the context object that contains the request and response, plus
-  helper methods
-- **`c.text()`** sends a plain text response
-- **`Deno.serve(app.handler)`** starts the server using Deno's built-in HTTP
-  server
-
-## Running Your App
-
-Mage uses Deno's standard `Deno.serve()` function. You can customize the server
-options:
-
-```typescript
-Deno.serve({
-  port: 3000,
-  hostname: "127.0.0.1",
-  onListen({ hostname, port }) {
-    console.log(`Server running at http://${hostname}:${port}`);
-  },
-}, app.handler);
-```
-
-For development, `--allow-all` is convenient, but in production you should use
-specific permissions:
-
-```bash
-deno run --allow-net --allow-read main.ts
-```
-
-## Adding More Routes
-
-Let's add more routes to handle different paths and HTTP methods:
+Let's start with a simple GET route that returns a list of tasks:
 
 ```typescript
 import { MageApp } from "@mage/app";
 
 const app = new MageApp();
 
-app.get("/", (c) => {
-  c.text("Home page");
-});
+const tasks = [
+  { id: 1, title: "Learn Mage", completed: false },
+  { id: 2, title: "Build an API", completed: false },
+];
 
-app.get("/about", (c) => {
-  c.text("About page");
-});
-
-app.post("/submit", (c) => {
-  c.text("Form submitted!", 201);
-});
-
-Deno.serve(app.handler);
-```
-
-Mage supports all standard HTTP methods:
-
-- `app.get()` - GET requests
-- `app.post()` - POST requests
-- `app.put()` - PUT requests
-- `app.patch()` - PATCH requests
-- `app.delete()` - DELETE requests
-- `app.options()` - OPTIONS requests
-- `app.head()` - HEAD requests
-- `app.all()` - All methods
-
-### Route Parameters
-
-Extract dynamic values from URLs using route parameters:
-
-```typescript
-app.get("/users/:id", (c) => {
-  const userId = c.req.params.id;
-  c.text(`User ID: ${userId}`);
-});
-
-app.get("/posts/:postId/comments/:commentId", (c) => {
-  const { postId, commentId } = c.req.params;
-  c.text(`Post ${postId}, Comment ${commentId}`);
-});
-```
-
-Visit `/users/123` and you'll see "User ID: 123".
-
-### Wildcard Routes
-
-Capture the rest of a path using wildcards:
-
-```typescript
-app.get("/files/*", (c) => {
-  const filePath = c.req.wildcard;
-  c.text(`File path: ${filePath}`);
-});
-```
-
-Visit `/files/docs/readme.md` and you'll see "File path: docs/readme.md".
-
-## Working with Requests and Responses
-
-The context object (`c`) provides everything you need to work with HTTP requests
-and responses.
-
-### Reading Request Data
-
-```typescript
-app.get("/search", (c) => {
-  // Get query parameters
-  const query = c.req.searchParam("q");
-  const page = c.req.searchParam("page") || "1";
-
-  c.text(`Searching for: ${query}, page ${page}`);
-});
-
-app.post("/users", async (c) => {
-  // Parse JSON body
-  const body = await c.req.json();
-  c.text(`Creating user: ${body.name}`);
-});
-
-app.get("/info", (c) => {
-  // Read request headers
-  const userAgent = c.req.header("user-agent");
-  c.text(`Your user agent: ${userAgent}`);
-});
-```
-
-### Sending Different Response Types
-
-```typescript
-app.get("/json", (c) => {
-  // Send JSON response
-  c.json({ message: "Hello", timestamp: Date.now() });
-});
-
-app.get("/html", (c) => {
-  // Send HTML response
-  c.html("<h1>Hello World</h1>");
-});
-
-app.get("/empty", (c) => {
-  // Send empty response (204 No Content)
-  c.empty();
-});
-
-app.get("/redirect", (c) => {
-  // Redirect to another URL
-  c.redirect("/", 302);
-});
-
-app.get("/file", (c) => {
-  // Send a file
-  c.file("./public/index.html");
-});
-```
-
-### Setting Response Headers
-
-```typescript
-app.get("/custom-headers", (c) => {
-  c.header("X-Custom-Header", "value");
-  c.header("Cache-Control", "max-age=3600");
-  c.json({ success: true });
-});
-```
-
-## Adding Middleware
-
-Middleware functions run before your route handlers. They're useful for logging,
-authentication, CORS, rate limiting, and more.
-
-### Global Middleware
-
-Add middleware that runs for all requests:
-
-```typescript
-import { MageApp } from "@mage/app";
-
-const app = new MageApp();
-
-// Logging middleware
-app.use((c, next) => {
-  const start = Date.now();
-  console.log(`→ ${c.req.method} ${c.req.url.pathname}`);
-
-  // Pass control to the next handler
-  const result = next();
-
-  const duration = Date.now() - start;
-  console.log(`← ${c.req.method} ${c.req.url.pathname} (${duration}ms)`);
-
-  return result;
-});
-
-app.get("/", (c) => {
-  c.text("Hello!");
-});
-
-Deno.serve(app.handler);
-```
-
-The `next()` function passes control to the next middleware or route handler.
-Always return the result of `next()` so the response makes it back to the
-client.
-
-### Route-Specific Middleware
-
-Apply middleware to specific routes:
-
-```typescript
-// Authentication middleware
-const requireAuth = (c, next) => {
-  const token = c.req.header("authorization");
-
-  if (!token) {
-    return c.json({ error: "Unauthorized" }, 401);
-  }
-
-  // Store user data in context for later handlers
-  c.set("userId", "123");
-  return next();
-};
-
-// Public route - no auth required
-app.get("/", (c) => {
-  c.text("Public page");
-});
-
-// Protected route - auth required
-app.get("/dashboard", requireAuth, (c) => {
-  const userId = c.get("userId");
-  c.text(`Welcome, user ${userId}!`);
-});
-```
-
-### Built-in Middleware
-
-Mage includes middleware for common tasks:
-
-```typescript
-import { MageApp } from "@mage/app";
-import { cors } from "@mage/app/cors";
-import { rateLimit } from "@mage/app/rate-limit";
-
-const app = new MageApp();
-
-// Enable CORS
-app.use(cors({
-  origins: ["https://example.com"],
-  methods: ["GET", "POST"],
-  credentials: true,
-}));
-
-// Rate limiting
-app.use(rateLimit({
-  max: 100, // 100 requests
-  windowMs: 60000, // per minute
-}));
-
-app.get("/api/data", (c) => {
-  c.json({ data: "protected" });
-});
-
-Deno.serve(app.handler);
-```
-
-See the [Middleware](/middleware) section for more built-in options.
-
-## A Complete Example
-
-Let's build a simple REST API for managing tasks:
-
-```typescript
-import { MageApp } from "@mage/app";
-import { cors } from "@mage/app/cors";
-import { rateLimit } from "@mage/app/rate-limit";
-
-const app = new MageApp();
-
-// Middleware
-app.use(cors());
-app.use(rateLimit({ max: 100, windowMs: 60000 }));
-
-// In-memory storage (use a database in production)
-const tasks = new Map<string, { id: string; title: string; done: boolean }>();
-let nextId = 1;
-
-// Logging middleware
-app.use((c, next) => {
-  console.log(`${c.req.method} ${c.req.url.pathname}`);
-  return next();
-});
-
-// List all tasks
 app.get("/tasks", (c) => {
-  const allTasks = Array.from(tasks.values());
-  c.json(allTasks);
+  return c.json(tasks);
 });
 
-// Get a specific task
+Deno.serve(app.handler);
+```
+
+Run it:
+
+```bash
+deno run --allow-net main.ts
+```
+
+Visit [http://localhost:8000/tasks](http://localhost:8000/tasks) and you'll see
+your tasks as JSON.
+
+## Understanding Context
+
+Every route handler receives a `MageContext` object (typically named `c`). This
+gives you access to:
+
+- `c.req` - The request (headers, body, params, etc.)
+- `c.res` - The response (set headers, status, etc.)
+- Helper methods - `c.json()`, `c.text()`, `c.html()`, `c.redirect()`, etc.
+
+## Route Parameters
+
+Add a route to get a specific task by ID:
+
+```typescript
 app.get("/tasks/:id", (c) => {
-  const task = tasks.get(c.req.params.id);
+  const id = parseInt(c.req.params.id);
+  const task = tasks.find((t) => t.id === id);
 
   if (!task) {
-    return c.notFound("Task not found");
+    return c.json({ error: "Task not found" }, 404);
   }
 
-  c.json(task);
+  return c.json(task);
 });
+```
 
-// Create a new task
+Try [http://localhost:8000/tasks/1](http://localhost:8000/tasks/1) to get the
+first task.
+
+## Handling Request Bodies
+
+Let's add a POST route to create tasks:
+
+```typescript
 app.post("/tasks", async (c) => {
   const body = await c.req.json();
 
-  if (!body.title || typeof body.title !== "string") {
-    return c.json({ error: "Title is required" }, 400);
-  }
-
-  const task = {
-    id: String(nextId++),
+  const newTask = {
+    id: tasks.length + 1,
     title: body.title,
-    done: false,
+    completed: false,
   };
 
-  tasks.set(task.id, task);
-  c.json(task, 201);
+  tasks.push(newTask);
+
+  return c.json(newTask, 201);
 });
-
-// Update a task
-app.patch("/tasks/:id", async (c) => {
-  const task = tasks.get(c.req.params.id);
-
-  if (!task) {
-    return c.notFound("Task not found");
-  }
-
-  const body = await c.req.json();
-
-  if (body.title !== undefined) {
-    task.title = body.title;
-  }
-  if (body.done !== undefined) {
-    task.done = body.done;
-  }
-
-  c.json(task);
-});
-
-// Delete a task
-app.delete("/tasks/:id", (c) => {
-  if (!tasks.has(c.req.params.id)) {
-    return c.notFound("Task not found");
-  }
-
-  tasks.delete(c.req.params.id);
-  c.empty(204);
-});
-
-Deno.serve({ port: 3000 }, app.handler);
 ```
 
-Try it out:
+Test it with curl:
 
 ```bash
-# Create a task
-curl -X POST http://localhost:3000/tasks \
+curl -X POST http://localhost:8000/tasks \
   -H "Content-Type: application/json" \
-  -d '{"title":"Learn Mage"}'
+  -d '{"title":"Deploy to production"}'
+```
 
-# List tasks
-curl http://localhost:3000/tasks
+## Using Middleware
 
-# Update a task
-curl -X PATCH http://localhost:3000/tasks/1 \
-  -H "Content-Type: application/json" \
-  -d '{"done":true}'
+Middleware runs before your route handlers. Let's add CORS support and body size
+limiting:
 
-# Delete a task
-curl -X DELETE http://localhost:3000/tasks/1
+```typescript
+import { MageApp } from "@mage/app";
+import { cors } from "@mage/cors";
+import { bodySize } from "@mage/body-size";
+
+const app = new MageApp();
+
+// Global middleware - runs on every request
+app.use(cors({ origins: "*" }));
+app.use(bodySize({ maxSize: 1024 * 1024 })); // 1MB limit
+
+// Your routes here...
+```
+
+You can also apply middleware to specific routes:
+
+```typescript
+import { requestId } from "@mage/request-id";
+
+app.get("/tasks", requestId(), (c) => {
+  console.log(`Request ID: ${c.get("requestId")}`);
+  return c.json(tasks);
+});
 ```
 
 ## Error Handling
 
-Mage provides a `MageError` class for throwing HTTP errors:
+Use `MageError` to throw HTTP errors:
 
 ```typescript
 import { MageApp, MageError } from "@mage/app";
 
-const app = new MageApp();
+app.delete("/tasks/:id", (c) => {
+  const id = parseInt(c.req.params.id);
+  const index = tasks.findIndex((t) => t.id === id);
 
-app.get("/admin", (c) => {
-  const isAdmin = c.req.header("x-admin") === "true";
-
-  if (!isAdmin) {
-    throw new MageError("Forbidden", 403);
+  if (index === -1) {
+    throw new MageError("Task not found", 404);
   }
 
-  c.text("Admin area");
+  tasks.splice(index, 1);
+  return c.empty(204);
+});
+```
+
+## Complete Example
+
+Here's the full application:
+
+```typescript
+import { MageApp, MageError } from "@mage/app";
+import { cors } from "@mage/cors";
+import { bodySize } from "@mage/body-size";
+
+const app = new MageApp();
+
+// Middleware
+app.use(cors({ origins: "*" }));
+app.use(bodySize({ maxSize: 1024 * 1024 }));
+
+// In-memory storage
+const tasks = [
+  { id: 1, title: "Learn Mage", completed: false },
+  { id: 2, title: "Build an API", completed: false },
+];
+
+// Routes
+app.get("/tasks", (c) => {
+  return c.json(tasks);
+});
+
+app.get("/tasks/:id", (c) => {
+  const id = parseInt(c.req.params.id);
+  const task = tasks.find((t) => t.id === id);
+
+  if (!task) {
+    throw new MageError("Task not found", 404);
+  }
+
+  return c.json(task);
+});
+
+app.post("/tasks", async (c) => {
+  const body = await c.req.json();
+
+  const newTask = {
+    id: tasks.length + 1,
+    title: body.title,
+    completed: false,
+  };
+
+  tasks.push(newTask);
+  return c.json(newTask, 201);
+});
+
+app.delete("/tasks/:id", (c) => {
+  const id = parseInt(c.req.params.id);
+  const index = tasks.findIndex((t) => t.id === id);
+
+  if (index === -1) {
+    throw new MageError("Task not found", 404);
+  }
+
+  tasks.splice(index, 1);
+  return c.empty(204);
 });
 
 Deno.serve(app.handler);
 ```
 
-When you throw a `MageError`, Mage automatically sends an appropriate error
-response. You can also use the context helper methods:
-
-```typescript
-app.get("/users/:id", (c) => {
-  const user = findUser(c.req.params.id);
-
-  if (!user) {
-    return c.notFound("User not found");
-  }
-
-  c.json(user);
-});
-```
-
 ## Next Steps
 
-You now know the fundamentals of building Mage applications! Here's what to
-explore next:
+You've learned the basics! Here's what to explore next:
 
-- **[Core Concepts](/core-concepts)** - Deep dive into routing, middleware, and
-  the context object
-- **[Middleware](/middleware)** - Explore built-in middleware for security,
-  validation, compression, and more
-- **[Request Validation](/validation)** - Validate request data with Zod,
-  Valibot, or ArkType
-- **[Static Sites](/static-sites)** - Build documentation sites and blogs with
-  the Pages module
-- **[Deployment](/deployment)** - Deploy to Deno Deploy, Docker, or traditional
-  servers
-
-For complete API documentation, see the README files in each module or browse
-the [API Reference](/api).
+- [Philosophy](/philosophy) - Understand Mage's design principles
+- [Core Concepts](#) - Deep dive into MageApp, MageContext, and more
+- [Middleware](#) - Explore all available middleware
+- [Validation](#) - Add schema validation with Zod or Valibot
+- [Deployment](#) - Deploy to Deno Deploy, Cloudflare Workers, or AWS Lambda

@@ -7,7 +7,11 @@
 import { render as renderToString } from "preact-render-to-string";
 import type { VNode } from "preact";
 import { parseAndRender } from "./markdown.ts";
-import { buildLayoutProps, resolveLayout } from "./layout.ts";
+import {
+  buildLayoutProps,
+  loadLayoutFromBundle,
+  resolveLayout,
+} from "./layout.ts";
 import { replaceAssetUrls } from "./assets.ts";
 import { extractHead } from "./head-extractor.ts";
 import { loadHtmlTemplate, renderWithTemplate } from "./html-template.tsx";
@@ -33,6 +37,8 @@ export interface RenderPageOptions {
   bundleUrl: string;
   /** Optional URL to UnoCSS stylesheet */
   stylesheetUrl?: string;
+  /** Optional pre-bundled SSR code (bypasses layout resolution and Deno module cache) */
+  ssrBundle?: string;
 }
 
 /**
@@ -52,13 +58,15 @@ export async function renderPage(
   rootDir: string,
   options: RenderPageOptions,
 ): Promise<RenderedPage> {
-  const { assetMap, bundleUrl, stylesheetUrl } = options;
+  const { assetMap, bundleUrl, stylesheetUrl, ssrBundle } = options;
 
   // Parse markdown and render to HTML
   const { frontmatter, html: contentHtml } = parseAndRender(markdownContent);
 
-  // Load the appropriate layout
-  const Layout = await resolveLayout(frontmatter, rootDir);
+  // Load the appropriate layout (from bundle if provided, otherwise resolve from file)
+  const Layout = ssrBundle
+    ? await loadLayoutFromBundle(ssrBundle)
+    : await resolveLayout(frontmatter, rootDir);
 
   // Build props for the layout
   const layoutProps = buildLayoutProps(contentHtml, frontmatter);

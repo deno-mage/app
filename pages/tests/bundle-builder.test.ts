@@ -3,6 +3,7 @@ import { expect } from "@std/expect";
 import { join } from "@std/path";
 import {
   buildBundle,
+  buildSSRBundle,
   generateEntryPoint,
   stopBundleBuilder,
 } from "../bundle-builder.ts";
@@ -199,5 +200,39 @@ describe("bundle-builder - production mode", {
 
     // Different page IDs in entry point = different code = different hash
     expect(result1.filename).not.toBe(result2.filename);
+  });
+});
+
+describe("bundle-builder - SSR bundling", {
+  sanitizeResources: false,
+  sanitizeOps: false,
+}, () => {
+  it("should build SSR bundle for layout", async () => {
+    const layoutPath = join(FIXTURES_DIR, "layouts", "default.tsx");
+
+    const bundledCode = await buildSSRBundle(layoutPath, FIXTURES_DIR);
+
+    expect(bundledCode).toBeTruthy();
+    expect(typeof bundledCode).toBe("string");
+    // Should be bundled ESM code
+    expect(bundledCode).toContain("export");
+  });
+
+  it("should bundle layout with dependencies", async () => {
+    const layoutPath = join(FIXTURES_DIR, "layouts", "default.tsx");
+
+    const bundledCode = await buildSSRBundle(layoutPath, FIXTURES_DIR);
+
+    // Should include Preact runtime since layout uses JSX
+    expect(bundledCode.length).toBeGreaterThan(1000);
+  });
+
+  it("should produce valid ESM module", async () => {
+    const layoutPath = join(FIXTURES_DIR, "layouts", "default.tsx");
+
+    const bundledCode = await buildSSRBundle(layoutPath, FIXTURES_DIR);
+
+    // Should have default export
+    expect(bundledCode).toContain("default");
   });
 });

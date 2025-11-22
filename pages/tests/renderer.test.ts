@@ -239,3 +239,97 @@ describe("renderer - file rendering", () => {
     expect(result.html).toContain("Getting started");
   });
 });
+
+describe("renderer - SSR bundle rendering", () => {
+  it("should render page with SSR bundle instead of loading layout from file", async () => {
+    const markdown = `---
+title: SSR Test
+---
+
+# Hello from SSR`;
+
+    const assetMap = new Map();
+
+    // Create a bundled layout component using actual Preact h function
+    const ssrBundle = `
+      import { h } from "preact";
+
+      export default function Layout(props) {
+        return h('html', { lang: 'en' }, [
+          h('head', null, [
+            h('title', null, props.title)
+          ]),
+          h('body', null, [
+            h('div', { dangerouslySetInnerHTML: { __html: props.html } })
+          ])
+        ]);
+      }
+    `;
+
+    const result = await renderPage(markdown, FIXTURES_DIR, {
+      assetMap,
+      bundleUrl: "/__bundles/test.js",
+      ssrBundle,
+    });
+
+    expect(result.html).toContain("SSR Test");
+    expect(result.html).toContain("Hello from SSR");
+    expect(result.frontmatter.title).toBe("SSR Test");
+  });
+
+  it("should use regular layout loading when ssrBundle is not provided", async () => {
+    const markdown = `---
+title: Regular Test
+---
+
+# Regular content`;
+
+    const assetMap = new Map();
+
+    const result = await renderPage(markdown, FIXTURES_DIR, {
+      assetMap,
+      bundleUrl: "/__bundles/test.js",
+      // No ssrBundle provided
+    });
+
+    expect(result.html).toContain("Regular Test");
+    expect(result.html).toContain("Regular content");
+  });
+
+  it("should pass all props to bundled layout", async () => {
+    const markdown = `---
+title: Props Test
+description: Testing props
+author: Jane Doe
+---
+
+# Content`;
+
+    const assetMap = new Map();
+
+    const ssrBundle = `
+      import { h } from "preact";
+
+      export default function Layout(props) {
+        const hasAuthor = props.additionalFrontmatter?.author ? 'has-author' : 'no-author';
+        return h('html', { lang: 'en' }, [
+          h('head', null, [
+            h('title', null, props.title)
+          ]),
+          h('body', { className: hasAuthor }, [
+            h('div', { dangerouslySetInnerHTML: { __html: props.html } })
+          ])
+        ]);
+      }
+    `;
+
+    const result = await renderPage(markdown, FIXTURES_DIR, {
+      assetMap,
+      bundleUrl: "/__bundles/test.js",
+      ssrBundle,
+    });
+
+    expect(result.frontmatter.author).toBe("Jane Doe");
+    expect(result.html).toContain("has-author");
+  });
+});
