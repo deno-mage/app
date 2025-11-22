@@ -23,7 +23,9 @@ export interface ExtractedHead {
  * Finds all <head data-mage-head="true">...</head> tags, extracts their
  * inner content, and removes the markers from the body HTML.
  *
- * Also extracts content from <body> wrapper if present (for hydration).
+ * Layouts should NOT render <body> tags - that's handled by _html.tsx.
+ * This function simply extracts <Head> component content and returns
+ * the rest as body content.
  *
  * If multiple Head components exist, concatenates all extracted content
  * in order.
@@ -43,18 +45,7 @@ export function extractHead(html: string): ExtractedHead {
   }
 
   // Remove all head markers from body
-  let bodyContent = html.replace(headRegex, "");
-
-  // Extract content from <body> wrapper if present
-  // This is needed for client-side hydration - the Layout renders <body>
-  // but we insert the content into <div id="app">, so we need just the inner content
-  // Only do this if we found a data-mage-head marker (indicating this is a layout)
-  if (headParts.length > 0) {
-    const bodyMatch = bodyContent.match(/<body[^>]*>([\s\S]*)<\/body>/);
-    if (bodyMatch) {
-      bodyContent = bodyMatch[1];
-    }
-  }
+  const bodyContent = html.replace(headRegex, "");
 
   // Concatenate all head content
   const headContent = headParts.join("\n");

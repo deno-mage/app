@@ -52,8 +52,11 @@ export interface BundleResult {
  * Generates a hydration entry point for a page.
  *
  * The entry point imports the layout, extracts article HTML from the DOM,
- * merges with window.__PAGE_PROPS__, and hydrates the layout wrapped in
- * an error boundary for graceful degradation.
+ * merges with window.__PAGE_PROPS__, and hydrates the layout component
+ * wrapped in an error boundary for graceful degradation.
+ *
+ * The Head component returns null on the client, so it doesn't interfere
+ * with hydration - only the actual content components are hydrated.
  *
  * @param layoutPath Absolute path to the layout file
  * @param _pageId Unique identifier for the page (currently unused)
@@ -66,23 +69,6 @@ export function generateEntryPoint(
   return `import { hydrate } from "preact";
 import { ErrorBoundary } from "${ERROR_BOUNDARY_PATH}";
 import LayoutComponent from "${layoutPath}";
-
-// Wrapper that extracts only the body children from the Layout
-// The Layout renders <><Head/><body>children</body></>, but we only want the body children
-function BodyContent(props) {
-  const layoutOutput = LayoutComponent(props);
-
-  // Layout returns a Fragment with [Head, body]
-  // Extract the body element
-  const children = Array.isArray(layoutOutput.props?.children)
-    ? layoutOutput.props.children
-    : [layoutOutput.props?.children];
-
-  const bodyElement = children.find(child => child?.type === 'body');
-
-  // Return just the body's children (without the body wrapper)
-  return bodyElement ? bodyElement.props.children : null;
-}
 
 // Extract layout content HTML from DOM before hydration
 const appRoot = document.getElementById("app");
@@ -98,10 +84,11 @@ if (!appRoot) {
   };
 
   try {
-    // Hydrate only the body content (not the full Layout with <body> tag)
+    // Hydrate the layout component directly
+    // Head component returns null on client, so it won't affect hydration
     hydrate(
       <ErrorBoundary>
-        <BodyContent {...props} />
+        <LayoutComponent {...props} />
       </ErrorBoundary>,
       appRoot
     );
@@ -196,6 +183,11 @@ export async function buildBundle(
  * via a data URL. Each bundle gets a unique data URL (with timestamp + random ID),
  * completely bypassing Deno's module cache. Changes to Container show up immediately.
  *
+ * IMPORTANT: Preact and preact/hooks are marked as external to ensure the bundled
+ * components use the same Preact instance as the main process. This is critical for
+ * hooks to work - if the bundle has its own Preact copy, hooks will fail because
+ * the rendering context is in a different Preact instance.
+ *
  * Note: Only used in development. Production builds use regular imports since they
  * render each page exactly once (no cache issues).
  *
@@ -217,6 +209,12 @@ export async function buildSSRBundle(
     jsxImportSource: "preact",
     jsx: "automatic",
     absWorkingDir: rootDir,
+    external: [
+      "preact",
+      "preact/hooks",
+      "preact/jsx-runtime",
+      "preact-render-to-string",
+    ],
   });
 
   return buildResult.outputFiles[0].text;

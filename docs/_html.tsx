@@ -62,6 +62,7 @@ export default function Html(props: HtmlTemplateProps): JSX.Element {
           }}
         />
       </head>
+      <body className="bg-zinc-50 dark:bg-zinc-900"></body>
     </html>
   );
 }
