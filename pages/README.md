@@ -157,6 +157,30 @@ Your markdown content here.
 - `layout` - Layout name (optional, defaults to "default")
 - Custom fields - Pass any data to your layouts
 
+## Architecture
+
+### HTML Template vs Layout
+
+The pages system separates document structure from content:
+
+**`_html.tsx` owns the document structure:**
+
+- `<html>` and `<body>` tags
+- Document-level attributes (lang, class, etc.)
+- Global scripts (theme initialization, analytics, etc.)
+- Loaded from project root (optional, falls back to default)
+
+**Layouts own the content:**
+
+- Page-specific UI (header, footer, navigation)
+- Content wrapper and styling
+- Interactive components with hooks
+- **NO `<html>` or `<body>` tags**
+
+**Important:** Layouts should never include `<html>` or `<body>` tags. These are
+managed by `_html.tsx`. Layouts only render their content and use the `<Head>`
+component for injecting additional content into the document head.
+
 ## Layouts
 
 Layouts are Preact components that wrap your markdown content. They support

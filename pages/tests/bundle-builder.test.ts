@@ -36,8 +36,7 @@ describe("bundle-builder - entry point generation", {
     expect(entry).toContain("window.__PAGE_PROPS__");
     expect(entry).toContain("querySelector('[data-mage-layout=\"true\"]')");
     expect(entry).toContain("<ErrorBoundary>");
-    expect(entry).toContain("function BodyContent(props)");
-    expect(entry).toContain("<BodyContent {...props} />");
+    expect(entry).toContain("<LayoutComponent {...props} />");
     expect(entry).toContain("</ErrorBoundary>");
   });
 
@@ -223,8 +222,10 @@ describe("bundle-builder - SSR bundling", {
 
     const bundledCode = await buildSSRBundle(layoutPath, FIXTURES_DIR);
 
-    // Should include Preact runtime since layout uses JSX
-    expect(bundledCode.length).toBeGreaterThan(1000);
+    // Should produce bundled code (Preact is external, so bundle is smaller)
+    expect(bundledCode.length).toBeGreaterThan(500);
+    // Should contain import statements for external Preact
+    expect(bundledCode).toContain('from "preact/jsx-runtime"');
   });
 
   it("should produce valid ESM module", async () => {

@@ -5,7 +5,7 @@
  */
 
 import { render as renderToString } from "preact-render-to-string";
-import type { VNode } from "preact";
+import { h } from "preact";
 import { parseAndRender } from "./markdown.ts";
 import {
   buildLayoutProps,
@@ -74,7 +74,7 @@ export async function renderPage(
   const layoutProps = buildLayoutProps(contentHtml, frontmatter);
 
   // Render the layout with Preact
-  const layoutHtml = renderToString(Layout(layoutProps) as VNode);
+  const layoutHtml = renderToString(h(Layout, layoutProps));
 
   // Extract head content from layout
   const { headContent, bodyContent } = extractHead(layoutHtml);

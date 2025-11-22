@@ -1,4 +1,5 @@
 import { Container } from "./container.tsx";
+import { ToggleTheme } from "./toggle-theme.tsx";
 
 interface LinkProps {
   href: string;
@@ -32,6 +33,9 @@ export const Header = () => {
             </li>
             <li>
               <Link href="https://jsr.io/@mage/app">JSR</Link>
+            </li>
+            <li>
+              <ToggleTheme />
             </li>
           </ul>
         </nav>
