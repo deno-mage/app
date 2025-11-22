@@ -110,6 +110,8 @@ export async function build(
       await Deno.writeTextFile(bundlePath, bundle.code);
 
       // Render page with bundle URL (respecting base path)
+      // Note: No SSR bundle needed in production - each page renders once,
+      // so Deno's module cache doesn't cause issues with component updates
       const bundleUrl = `${basePath}__bundles/${bundle.filename}`;
       const rendered = await renderPageFromFile(
         page.filePath,
