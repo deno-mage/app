@@ -18,7 +18,10 @@ export default function Html(props: HtmlTemplateProps): JSX.Element {
             (function() {
               const stored = localStorage.getItem('theme');
               const system = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-              document.documentElement.setAttribute('data-theme', stored || system);
+              const theme = stored || system;
+              if (theme === 'dark') {
+                document.documentElement.classList.add('dark');
+              }
             })();
           `,
           }}
@@ -59,7 +62,6 @@ export default function Html(props: HtmlTemplateProps): JSX.Element {
           }}
         />
       </head>
-      <body></body>
     </html>
   );
 }
