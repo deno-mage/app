@@ -110,7 +110,7 @@ import { pages } from "@mage/app/pages";
 import { MageApp } from "@mage/app";
 import { cors } from "@mage/app/cors";
 import { rateLimit } from "@mage/app/rate-limit";
-import { validate } from "@mage/app/validate";
+import { validator } from "@mage/app/validate";
 import { z } from "npm:zod";
 
 const app = new MageApp();
@@ -125,9 +125,11 @@ const createUserSchema = z.object({
   email: z.string().email(),
 });
 
-app.post("/users", validate("json", createUserSchema), async (c) => {
-  const data = c.req.valid("json");
-  const user = await db.users.create(data);
+const { validate, valid } = validator({ json: createUserSchema });
+
+app.post("/users", validate, async (c) => {
+  const { json } = valid(c);
+  const user = await db.users.create(json);
   c.json(user, 201);
 });
 

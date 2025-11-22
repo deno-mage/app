@@ -8,18 +8,6 @@ export type { MageMiddleware, MageRouter, MatchResult } from "./router.ts";
 export { LinearRouter } from "../linear-router/mod.ts";
 export { MageError } from "./error.ts";
 export { MageResponse } from "./response.ts";
-export { RouteBuilder, ValidatedRouteBuilder } from "./route-builder.ts";
-
-// Re-export validation types for convenience
-export type {
-  InferOutput,
-  ValidatedContext,
-  ValidatedData,
-  ValidateOptions,
-  ValidationConfig,
-  ValidationError,
-  ValidationSource,
-} from "../validate/types.ts";
 
 /**
  * Context object that is passed to each middleware. It persists throughout the

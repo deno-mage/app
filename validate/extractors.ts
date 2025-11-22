@@ -8,6 +8,13 @@ import { MageError } from "../app/error.ts";
  * Single values remain strings, multiple values become string arrays.
  * This handles cases where a form field or query param appears multiple times.
  *
+ * Algorithm: State machine with three states to minimize allocations:
+ * - undefined → string (first occurrence, no array created)
+ * - string → [string, string] (second occurrence, create array)
+ * - array → array.push(string) (third+ occurrence, append to existing array)
+ *
+ * This avoids creating arrays until absolutely necessary (2nd occurrence).
+ *
  * @example
  * ```ts
  * // Input: [["name", "John"], ["tags", "a"], ["tags", "b"]]
@@ -82,7 +89,7 @@ export const extractSourceData = async (
 
     default: {
       throw new MageError(
-        `[Validation] Invalid source: ${source}`,
+        `[Validator] Invalid source: ${source}`,
       );
     }
   }

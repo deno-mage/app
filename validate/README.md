@@ -1,12 +1,12 @@
 # validate
 
-Type-safe request validation using the builder pattern with automatic type
-inference.
+Type-safe request validation using a factory function pattern with automatic
+type inference.
 
 ## Installation
 
 ```typescript
-import { MageApp } from "@mage/app";
+import { validator } from "@mage/app/validate";
 import { z } from "zod";
 ```
 
@@ -20,13 +20,13 @@ const loginSchema = z.object({
   password: z.string().min(8),
 });
 
-app.post("/login")
-  .validate({ json: loginSchema })
-  .handle((c) => {
-    // c.valid.json is automatically typed as { email: string; password: string }
-    const { email, password } = c.valid.json;
-    c.json({ success: true });
-  });
+const { validate, valid } = validator({ json: loginSchema });
+
+app.post("/login", validate, (c) => {
+  // valid(c).json is automatically typed as { email: string; password: string }
+  const { json } = valid(c);
+  c.json({ email: json.email });
+});
 ```
 
 **Multiple source validation:**
@@ -38,44 +38,38 @@ const userSchema = z.object({
   email: z.string().email(),
 });
 
-app.post("/users/:id")
-  .validate({
-    params: idSchema,
-    json: userSchema,
-  })
-  .handle((c) => {
-    // Both c.valid.params and c.valid.json are automatically typed
-    const { id } = c.valid.params;
-    const { name, email } = c.valid.json;
-    c.json({ id, name, email });
-  });
+const { validate, valid } = validator({
+  params: idSchema,
+  json: userSchema,
+});
+
+app.post("/users/:id", validate, (c) => {
+  // Both params and json are automatically typed
+  const { params, json } = valid(c);
+  c.json({ id: params.id, name: json.name, email: json.email });
+});
 ```
 
-**With middleware:**
+**With other middleware:**
 
 ```typescript
-app.post("/protected")
-  .validate({ json: loginSchema })
-  .handle(
-    async (c, next) => {
-      // Auth middleware
-      await next();
-    },
-    (c) => {
-      // c.valid is still typed here!
-      c.json(c.valid.json);
-    },
-  );
+const { validate, valid } = validator({ json: loginSchema });
+
+app.post("/protected", auth, logging, validate, (c) => {
+  const { json } = valid(c);
+  c.json(json);
+});
 ```
 
 ## API
 
-**Builder Pattern:**
+**Factory Pattern:**
 
 ```typescript
-app.post(path)
-  .validate(config, options?)
-  .handle(...middleware, handler)
+const { validate, valid } = validator(config, options?);
+app.post(path, validate, (c) => {
+  const validated = valid(c);
+});
 ```
 
 **Validation Config:**
@@ -100,31 +94,33 @@ Specify which request sources to validate:
 
 ```typescript
 // Simple error reporting
-app.post("/users")
-  .validate(
-    { json: userSchema },
-    { reportErrors: true },
-  )
-  .handle((c) => {
-    c.json(c.valid.json);
-  });
+const { validate, valid } = validator(
+  { json: userSchema },
+  { reportErrors: true },
+);
+
+app.post("/users", validate, (c) => {
+  const { json } = valid(c);
+  c.json(json);
+});
 
 // Custom error handler
-app.post("/users")
-  .validate(
-    { json: userSchema },
-    {
-      onError: (errors) => {
-        return new Response(
-          JSON.stringify({ message: "Validation failed", errors }),
-          { status: 422 },
-        );
-      },
+const { validate: v2, valid: v2Valid } = validator(
+  { json: userSchema },
+  {
+    onError: (errors) => {
+      return new Response(
+        JSON.stringify({ message: "Validation failed", errors }),
+        { status: 422 },
+      );
     },
-  )
-  .handle((c) => {
-    c.json(c.valid.json);
-  });
+  },
+);
+
+app.post("/users", v2, (c) => {
+  const { json } = v2Valid(c);
+  c.json(json);
+});
 ```
 
 ## Notes
@@ -132,9 +128,10 @@ app.post("/users")
 - Uses [Standard Schema V1](https://github.com/standard-schema/standard-schema)
   specification (works with Zod, Valibot, ArkType, etc.)
 - Type inference is automatic - no manual type annotations needed
-- `c.valid` and its properties are readonly to prevent accidental modification
+- Validated data is readonly to prevent accidental modification
 - Validates all sources before returning errors (error accumulation, not
   fail-fast)
 - Returns 400 Bad Request by default on validation failure
-- Supports unlimited middleware without losing type information
-- Empty config `validate({})` is a no-op but adds `c.valid` to context
+- Uses unique string-based context storage to avoid key collisions
+- Empty config `validator({})` is a no-op but still provides `valid(c)`
+- Standard middleware pattern - works with all other Mage middleware

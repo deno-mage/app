@@ -1,105 +1,115 @@
 import type { MageContext } from "../app/context.ts";
 import type {
+  ValidatedData,
   ValidateOptions,
   ValidationConfig,
   ValidationError,
   ValidationSource,
+  Validator,
 } from "./types.ts";
 import { extractSourceData } from "./extractors.ts";
 import { MageError } from "../app/error.ts";
 
-// Types for error categorization
-type ProgrammerError = Error & { status: 500 };
-type ValidationFailure = Error;
-
 /**
- * Perform validation and extend context with validated data.
+ * Create a validation middleware with type-safe data accessor.
  *
- * This is used internally by ValidatedRouteBuilder.
- * Returns true if validation passed, false otherwise.
- *
- * @param c - Mage context
  * @param config - Validation configuration mapping sources to schemas
  * @param options - Validation options (reportErrors, onError)
- * @returns True if validation passed, false if failed and response was set
- * @throws MageError if validation fails and no custom error handling
+ * @returns Validator instance with validate middleware and valid() getter
  */
-export async function performValidation(
-  c: MageContext,
-  config: ValidationConfig,
+export function validator<TConfig extends ValidationConfig>(
+  config: TConfig,
   options?: ValidateOptions,
-): Promise<boolean> {
-  // Empty config = no-op
-  if (Object.keys(config).length === 0) {
-    Object.defineProperty(c, "valid", {
-      value: {},
-      writable: false,
-      enumerable: true,
-      configurable: false,
-    });
-    return true;
-  }
+): Validator<TConfig> {
+  // Use unique UUID-based key to avoid collisions in context storage
+  const storageKey = `__mage_validator_${crypto.randomUUID()}__`;
 
-  const validated: Record<string, unknown> = {};
-  const errors: ValidationError[] = [];
-
-  // Validate each source (accumulate errors)
-  for (const [source, schema] of Object.entries(config)) {
-    const sourceKey = source as ValidationSource;
-
-    try {
-      const data = await extractSourceData(c, sourceKey);
-      const result = await schema["~standard"].validate(data);
-
-      if (result.issues) {
-        errors.push({ source: sourceKey, issues: result.issues });
-      } else {
-        validated[sourceKey] = result.value;
-      }
-    } catch (error) {
-      // Re-throw programmer errors (e.g., invalid source)
-      if (error instanceof MageError && error.status === 500) {
-        throw error;
-      }
-      // Treat other errors as validation failures
-      errors.push({
-        source: sourceKey,
-        issues: [{
-          message: error instanceof Error ? error.message : "Extraction failed",
-        }],
-      });
+  // Validation middleware function
+  const validate = async (c: MageContext, next: () => Promise<void> | void) => {
+    // Empty config = no-op (early exit for performance)
+    if (!config.json && !config.form && !config.params && !config.search) {
+      c.set(storageKey, {});
+      await next();
+      return;
     }
-  }
 
-  // Handle validation failures
-  if (errors.length > 0) {
-    if (options?.onError) {
-      const response = options.onError(errors);
-      if (response) {
-        c.res.setExternal(response);
-        return false;
+    const validated: Record<string, unknown> = {};
+    let errors: ValidationError[] | undefined;
+
+    // Validate each source (accumulate errors)
+    for (const [source, schema] of Object.entries(config)) {
+      const sourceKey = source as ValidationSource;
+
+      try {
+        const data = await extractSourceData(c, sourceKey);
+        const result = await schema["~standard"].validate(data);
+
+        if (result.issues) {
+          if (!errors) errors = [];
+          errors.push({ source: sourceKey, issues: result.issues });
+        } else {
+          validated[sourceKey] = result.value;
+        }
+      } catch (error) {
+        // Re-throw programmer errors (e.g., invalid source)
+        if (error instanceof MageError && error.status === 500) {
+          throw error;
+        }
+        // Treat other errors as validation failures
+        if (!errors) errors = [];
+        errors.push({
+          source: sourceKey,
+          issues: [{
+            message: error instanceof Error
+              ? error.message
+              : "Extraction failed",
+          }],
+        });
       }
     }
 
-    if (options?.reportErrors) {
-      c.json({ errors }, 400);
-      return false;
+    // Handle validation failures
+    if (errors) {
+      if (options?.onError) {
+        const response = options.onError(errors);
+        if (response) {
+          c.res.setExternal(response);
+          return;
+        }
+      }
+
+      if (options?.reportErrors) {
+        c.json({ errors }, 400);
+        return;
+      }
+
+      const sources = errors.map((e) => e.source).join(", ");
+      throw new MageError(
+        `[Validator] Validation failed for: ${sources}`,
+        400,
+      );
     }
 
-    const sources = errors.map((e) => e.source).join(", ");
-    throw new MageError(
-      `[Validation] Validation failed for: ${sources}`,
-      400,
-    );
-  }
+    // Success - store in context
+    c.set(storageKey, validated);
+    await next();
+  };
 
-  // Success - extend context
-  Object.defineProperty(c, "valid", {
-    value: validated,
-    writable: false,
-    enumerable: true,
-    configurable: false,
-  });
+  // Typed data getter function
+  const valid = (c: MageContext): ValidatedData<TConfig> => {
+    const result = c.get(storageKey);
 
-  return true;
+    if (result === undefined) {
+      throw new MageError(
+        "[Validator] No validation data found - did you forget to add the validator middleware?",
+      );
+    }
+
+    return result as ValidatedData<TConfig>;
+  };
+
+  return {
+    validate,
+    valid,
+  };
 }

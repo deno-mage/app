@@ -1,13 +1,9 @@
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import type { MageContext } from "../app/context.ts";
+import type { MageMiddleware } from "../app/router.ts";
 
 /**
  * Validation sources for request data.
- *
- * - `json`: Request body as JSON
- * - `form`: Form data (application/x-www-form-urlencoded or multipart/form-data)
- * - `search`: URL search/query parameters
- * - `params`: Route/path parameters (e.g., /users/:id)
  */
 export type ValidationSource = "json" | "form" | "search" | "params";
 
@@ -19,14 +15,6 @@ export type InferOutput<T extends StandardSchemaV1> = T extends
 
 /**
  * Validation configuration object mapping sources to schemas.
- *
- * @example
- * ```ts
- * const config = {
- *   params: z.object({ id: z.string().uuid() }),
- *   json: z.object({ name: z.string() }),
- * };
- * ```
  */
 export type ValidationConfig = {
   [K in ValidationSource]?: StandardSchemaV1;
@@ -36,7 +24,7 @@ export type ValidationConfig = {
  * Build validated data type from config.
  *
  * Only includes sources that were actually validated.
- * Properties are readonly to prevent reassignment (e.g., c.valid.json = {}).
+ * Properties are readonly to prevent reassignment.
  */
 export type ValidatedData<TConfig extends ValidationConfig> = {
   readonly [K in keyof TConfig]: TConfig[K] extends StandardSchemaV1
@@ -45,16 +33,14 @@ export type ValidatedData<TConfig extends ValidationConfig> = {
 };
 
 /**
- * Extended context with validated data.
- *
- * This context type is used by ValidatedRouteBuilder and provides
- * type-safe access to validated request data via c.valid.
+ * Validation error for a single source.
  */
-export type ValidatedContext<TConfig extends ValidationConfig> =
-  & MageContext
-  & {
-    readonly valid: ValidatedData<TConfig>;
-  };
+export interface ValidationError {
+  /** The source that failed validation */
+  source: ValidationSource;
+  /** Validation issues from the schema validator */
+  issues: readonly unknown[];
+}
 
 /**
  * Options for validation.
@@ -81,16 +67,21 @@ export interface ValidateOptions {
 }
 
 /**
- * Validation error for a single source.
+ * Validator instance with validation middleware and typed data getter.
  */
-export interface ValidationError {
+export interface Validator<TConfig extends ValidationConfig> {
   /**
-   * The source that failed validation.
+   * Validation middleware function.
+   * Can be passed directly to route registration.
    */
-  source: ValidationSource;
+  readonly validate: MageMiddleware;
 
   /**
-   * Validation issues from the schema validator.
+   * Get validated data from context (fully typed).
+   *
+   * @param c - Mage context
+   * @returns Validated data with inferred types
+   * @throws MageError if validation data not found in context
    */
-  issues: readonly unknown[];
+  valid(c: MageContext): ValidatedData<TConfig>;
 }

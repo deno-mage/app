@@ -9,7 +9,6 @@ import { statusText } from "../status/mod.ts";
 import type { Status } from "../status/mod.ts";
 import { MageRequest } from "./request.ts";
 import { MageError } from "./error.ts";
-import { RouteBuilder } from "./route-builder.ts";
 
 /**
  * Options for creating a MageApp
@@ -49,134 +48,71 @@ export class MageApp {
 
   /**
    * Register middleware for GET and HEAD requests.
-   * Returns a RouteBuilder when called with just a path.
    */
-  public get(path: string): RouteBuilder;
   public get(
     routenameOrMiddleware: string | MageMiddleware | MageMiddleware[],
     ...middleware: (MageMiddleware | MageMiddleware[])[]
-  ): void;
-  public get(
-    routenameOrMiddleware: string | MageMiddleware | MageMiddleware[],
-    ...middleware: (MageMiddleware | MageMiddleware[])[]
-  ): RouteBuilder | void {
-    if (typeof routenameOrMiddleware === "string" && middleware.length === 0) {
-      return new RouteBuilder(this._router, "GET", routenameOrMiddleware);
-    }
+  ): void {
     this._router.get(routenameOrMiddleware, ...middleware);
   }
 
   /**
    * Register middleware for POST requests.
-   * Returns a RouteBuilder when called with just a path.
    */
-  public post(path: string): RouteBuilder;
   public post(
     routenameOrMiddleware: string | MageMiddleware | MageMiddleware[],
     ...middleware: (MageMiddleware | MageMiddleware[])[]
-  ): void;
-  public post(
-    routenameOrMiddleware: string | MageMiddleware | MageMiddleware[],
-    ...middleware: (MageMiddleware | MageMiddleware[])[]
-  ): RouteBuilder | void {
-    if (typeof routenameOrMiddleware === "string" && middleware.length === 0) {
-      return new RouteBuilder(this._router, "POST", routenameOrMiddleware);
-    }
+  ): void {
     this._router.post(routenameOrMiddleware, ...middleware);
   }
 
   /**
    * Register middleware for PUT requests.
-   * Returns a RouteBuilder when called with just a path.
    */
-  public put(path: string): RouteBuilder;
   public put(
     routenameOrMiddleware: string | MageMiddleware | MageMiddleware[],
     ...middleware: (MageMiddleware | MageMiddleware[])[]
-  ): void;
-  public put(
-    routenameOrMiddleware: string | MageMiddleware | MageMiddleware[],
-    ...middleware: (MageMiddleware | MageMiddleware[])[]
-  ): RouteBuilder | void {
-    if (typeof routenameOrMiddleware === "string" && middleware.length === 0) {
-      return new RouteBuilder(this._router, "PUT", routenameOrMiddleware);
-    }
+  ): void {
     this._router.put(routenameOrMiddleware, ...middleware);
   }
 
   /**
    * Register middleware for DELETE requests.
-   * Returns a RouteBuilder when called with just a path.
    */
-  public delete(path: string): RouteBuilder;
   public delete(
     routenameOrMiddleware: string | MageMiddleware | MageMiddleware[],
     ...middleware: (MageMiddleware | MageMiddleware[])[]
-  ): void;
-  public delete(
-    routenameOrMiddleware: string | MageMiddleware | MageMiddleware[],
-    ...middleware: (MageMiddleware | MageMiddleware[])[]
-  ): RouteBuilder | void {
-    if (typeof routenameOrMiddleware === "string" && middleware.length === 0) {
-      return new RouteBuilder(this._router, "DELETE", routenameOrMiddleware);
-    }
+  ): void {
     this._router.delete(routenameOrMiddleware, ...middleware);
   }
 
   /**
    * Register middleware for PATCH requests.
-   * Returns a RouteBuilder when called with just a path.
    */
-  public patch(path: string): RouteBuilder;
   public patch(
     routenameOrMiddleware: string | MageMiddleware | MageMiddleware[],
     ...middleware: (MageMiddleware | MageMiddleware[])[]
-  ): void;
-  public patch(
-    routenameOrMiddleware: string | MageMiddleware | MageMiddleware[],
-    ...middleware: (MageMiddleware | MageMiddleware[])[]
-  ): RouteBuilder | void {
-    if (typeof routenameOrMiddleware === "string" && middleware.length === 0) {
-      return new RouteBuilder(this._router, "PATCH", routenameOrMiddleware);
-    }
+  ): void {
     this._router.patch(routenameOrMiddleware, ...middleware);
   }
 
   /**
    * Register middleware for OPTIONS requests.
-   * Returns a RouteBuilder when called with just a path.
    */
-  public options(path: string): RouteBuilder;
   public options(
     routenameOrMiddleware: string | MageMiddleware | MageMiddleware[],
     ...middleware: (MageMiddleware | MageMiddleware[])[]
-  ): void;
-  public options(
-    routenameOrMiddleware: string | MageMiddleware | MageMiddleware[],
-    ...middleware: (MageMiddleware | MageMiddleware[])[]
-  ): RouteBuilder | void {
-    if (typeof routenameOrMiddleware === "string" && middleware.length === 0) {
-      return new RouteBuilder(this._router, "OPTIONS", routenameOrMiddleware);
-    }
+  ): void {
     this._router.options(routenameOrMiddleware, ...middleware);
   }
 
   /**
    * Register middleware for HEAD requests.
-   * Returns a RouteBuilder when called with just a path.
    */
-  public head(path: string): RouteBuilder;
   public head(
     routenameOrMiddleware: string | MageMiddleware | MageMiddleware[],
     ...middleware: (MageMiddleware | MageMiddleware[])[]
-  ): void;
-  public head(
-    routenameOrMiddleware: string | MageMiddleware | MageMiddleware[],
-    ...middleware: (MageMiddleware | MageMiddleware[])[]
-  ): RouteBuilder | void {
-    if (typeof routenameOrMiddleware === "string" && middleware.length === 0) {
-      return new RouteBuilder(this._router, "HEAD", routenameOrMiddleware);
-    }
+  ): void {
     this._router.head(routenameOrMiddleware, ...middleware);
   }
 

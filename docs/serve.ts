@@ -6,4 +6,4 @@ const { registerStaticServer } = pages();
 const app = new MageApp();
 registerStaticServer(app, { rootDir: "./docs/dist" });
 
-Deno.serve({ port: 8000 }, app.handler);
+Deno.serve({ port: 3000 }, app.handler);
