@@ -9,6 +9,7 @@ export default function Html(props: HtmlTemplateProps): JSX.Element {
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Mage | {props.layoutProps.title}</title>
         <link rel="stylesheet" href="/public/styles.css" />
+        <link rel="icon" href="/public/favicon.png" />
         {
           // Theme initialization script
         }
