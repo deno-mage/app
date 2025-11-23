@@ -1,6 +1,7 @@
 import type { ComponentChildren } from "preact";
 import { ToggleTheme } from "./toggle-theme.tsx";
 import { GithubIcon } from "./icons/github.tsx";
+import { MageLogo } from "./icons/mage.tsx";
 
 interface LinkProps {
   href: string;
@@ -30,7 +31,9 @@ export const Header = () => {
         <ul>
           <NavListItem>
             <Link href="/">
-              <span className="font-bold text-2xl">Mage</span>
+              <div className="w-[135px] h-[62px]">
+                <MageLogo />
+              </div>
             </Link>
           </NavListItem>
         </ul>
