@@ -3,22 +3,16 @@
  */
 
 /**
- * Hide anchor link in h1 headings, never need to scroll to h1 headings
- */
-/* .prose > h1 > a.anchor {
-  display: none;
-} */
-
-/**
  * Initial state: hide anchor links in headings
  */
+.prose > h1 > a.anchor,
 .prose > h2 > a.anchor,
 .prose > h3 > a.anchor,
 .prose > h4 > a.anchor,
 .prose > h5 > a.anchor,
 .prose > h6 > a.anchor {
   display: inline-block;
-  opacity: 0;
+  opacity: 0.5;
   transition: opacity 0.2s ease-in-out;
   padding-right: 8px;
 }
@@ -34,8 +28,3 @@
 .prose > h6:hover > a.anchor {
   opacity: 1;
 }
-
-/**
- * Note: Utility classes like .flex, .justify-between, .container, etc.
- * are now provided by UnoCSS (see uno.config.ts in project root)
- */

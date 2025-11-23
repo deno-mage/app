@@ -1,4 +1,6 @@
 import { useEffect, useState } from "preact/hooks";
+import { SunIcon } from "./icons/sun.tsx";
+import { MoonIcon } from "./icons/moon.tsx";
 
 export function ToggleTheme() {
   const [theme, setTheme] = useState<"light" | "dark">("light");
@@ -22,8 +24,13 @@ export function ToggleTheme() {
   };
 
   return (
-    <button type="button" onClick={toggleTheme} aria-label="Toggle theme">
-      {theme === "light" ? "🌙" : "☀️"}
+    <button
+      type="button"
+      onClick={toggleTheme}
+      aria-label="Toggle theme"
+      className="text-xl hover:cursor-pointer"
+    >
+      {theme === "light" ? <MoonIcon /> : <SunIcon />}
     </button>
   );
 }
