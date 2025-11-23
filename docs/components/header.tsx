@@ -39,7 +39,7 @@ export const Header = () => {
       <nav className="flex justify-between items-center mx-auto max-w-[1280px]">
         <ul>
           <NavListItem>
-            <Link href="/">
+            <Link href="/" label="Mage Documentation Home">
               <div className="w-[135px] h-[62px]">
                 <MageLogo />
               </div>
