@@ -166,6 +166,8 @@ export async function registerDevServer(
 
   // Register routes for pages
   app.get(`${basePath}*`, async (c) => {
+    const startTime = performance.now();
+
     let pathname = c.req.url.pathname;
 
     // Normalize pathname: if it matches basePath without trailing slash, add it
@@ -225,6 +227,9 @@ export async function registerDevServer(
             ssrBundle,
           },
         );
+
+        const duration = (performance.now() - startTime).toFixed(2);
+        logger.ephemeral(`Rendered page: ${urlPath} [${duration}ms]`);
 
         // Inject hot reload script
         const reloadEndpoint = `${basePath}__reload`;
@@ -288,7 +293,8 @@ export async function registerDevServer(
         },
       );
 
-      logger.ephemeral(`Rendered page: ${urlPath}`);
+      const duration = (performance.now() - startTime).toFixed(2);
+      logger.ephemeral(`Rendered page: ${urlPath} [${duration}ms]`);
 
       // Inject hot reload script
       const reloadEndpoint = `${basePath}__reload`;
@@ -341,6 +347,9 @@ export async function registerDevServer(
             ssrBundle,
           },
         );
+
+        const duration = (performance.now() - startTime).toFixed(2);
+        logger.ephemeral(`Rendered page: ${urlPath} [${duration}ms]`);
 
         // Inject hot reload script
         const reloadEndpoint = `${basePath}__reload`;
