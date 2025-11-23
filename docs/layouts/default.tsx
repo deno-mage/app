@@ -79,7 +79,7 @@ export default function ArticleLayout(props: LayoutProps) {
       </Head>
       <Header />
       <main className="max-w-7xl mx-auto">
-        <div className="flex gap-8">
+        <div className="flex lg:gap-8">
           <SideNav items={navigationItems} />
           <article
             id="mage-article"
