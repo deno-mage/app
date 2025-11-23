@@ -118,7 +118,7 @@ function injectContent(
   let result = html.replace("</head>", `${headInjection}\n</head>`);
 
   // Build injection content for body
-  const appHtml = `<div id="app" data-mage-layout="true">${bodyContent}</div>`;
+  const appHtml = `<div id="app" data-mage-content="true">${bodyContent}</div>`;
 
   // Remove html field from props (it's extracted from DOM on client)
   const { html: _html, ...propsWithoutHtml } = props;

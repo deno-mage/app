@@ -223,7 +223,7 @@ export default function DefaultLayout({
 
       <main>
         <article
-          data-mage-layout="true"
+          data-mage-content="true"
           dangerouslySetInnerHTML={{ __html: html }}
         />
       </main>
@@ -235,7 +235,7 @@ export default function DefaultLayout({
 **Key features:**
 
 - Use the `<Head>` component for declarative head management
-- Mark content containers with `data-mage-layout="true"` for hydration
+- Mark content containers with `data-mage-content="true"` for hydration
 - Return body content only (wrapped in document by `_html.tsx`)
 - Supports interactive Preact components and hooks
 
@@ -259,7 +259,7 @@ Production builds include client-side hydration for interactive components.
 
 - Development mode: No client bundles (just hot reload)
 - Production build: Generates one bundle per page with cache-busting
-- Content marked with `data-mage-layout="true"` is extracted for hydration
+- Content marked with `data-mage-content="true"` is extracted for hydration
 - Error boundaries catch failures - SSR'd content always visible
 
 **Using interactive components:**
@@ -284,7 +284,7 @@ export default function InteractiveLayout(props: LayoutProps) {
       <Counter />
 
       <article
-        data-mage-layout="true"
+        data-mage-content="true"
         dangerouslySetInnerHTML={{ __html: props.html }}
       />
     </>
@@ -325,7 +325,7 @@ export default function DocsLayout(props: LayoutProps) {
       </ErrorBoundary>
 
       <article
-        data-mage-layout="true"
+        data-mage-content="true"
         dangerouslySetInnerHTML={{ __html: props.html }}
       />
     </>
@@ -460,7 +460,7 @@ export default function Layout({ html, title }: LayoutProps) {
 
       <main class="container mx-auto">
         <article
-          data-mage-layout="true"
+          data-mage-content="true"
           dangerouslySetInnerHTML={{ __html: html }}
         />
       </main>

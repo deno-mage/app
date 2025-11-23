@@ -34,7 +34,7 @@ describe("bundle-builder - entry point generation", {
     );
     expect(entry).toContain('document.getElementById("app")');
     expect(entry).toContain("window.__PAGE_PROPS__");
-    expect(entry).toContain("querySelector('[data-mage-layout=\"true\"]')");
+    expect(entry).toContain("querySelector('[data-mage-content=\"true\"]')");
     expect(entry).toContain("<ErrorBoundary>");
     expect(entry).toContain("<LayoutComponent {...props} />");
     expect(entry).toContain("</ErrorBoundary>");
@@ -74,7 +74,7 @@ describe("bundle-builder - development mode", {
     // Check for strings from our entry point that won't be mangled
     expect(result.code).toContain("[Mage Pages]");
     expect(result.code).toContain("__PAGE_PROPS__");
-    expect(result.code).toContain("data-mage-layout");
+    expect(result.code).toContain("data-mage-content");
     expect(result.filename).toBeUndefined();
   });
 

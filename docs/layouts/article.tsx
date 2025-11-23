@@ -15,7 +15,7 @@ export default function ArticleLayout(props: LayoutProps) {
         <div className="flex gap-8">
           <article
             id="mage-article"
-            data-mage-layout
+            data-mage-content
             className="flex-1 prose dark:prose-invert max-w-3xl"
             dangerouslySetInnerHTML={{ __html: props.html }}
           >
