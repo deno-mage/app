@@ -37,52 +37,8 @@ Deno.serve(app.handler);
 ## MageRequest
 
 `MageRequest` wraps the standard Request object to solve a fundamental
-limitation: request bodies can only be read once.
-
-### Why MageRequest Exists
-
-In the standard Fetch API, reading the request body consumes it:
-
-```typescript
-// Standard Request - body can only be read once
-const request = new Request(url, { method: "POST", body: json });
-
-await request.json(); // Works
-await request.json(); // Error: body already consumed
-```
-
-This creates problems in middleware chains where multiple handlers need to
-access the body:
-
-```typescript
-// Without MageRequest - doesn't work
-app.use(async (c, next) => {
-  const body = await c.req.raw.json(); // Consumes body
-  console.log("Logging:", body);
-  await next();
-});
-
-app.post("/users", async (c) => {
-  const body = await c.req.raw.json(); // Error: already consumed
-  return c.json(body);
-});
-```
-
-MageRequest memoizes body parsing so you can read it multiple times:
-
-```typescript
-// With MageRequest - works perfectly
-app.use(async (c, next) => {
-  const body = await c.req.json(); // First read - parses and memoizes
-  console.log("Logging:", body);
-  await next();
-});
-
-app.post("/users", async (c) => {
-  const body = await c.req.json(); // Second read - returns memoized value
-  return c.json(body);
-});
-```
+limitation: request bodies can only be read once. MageRequest memoizes body
+parsing so multiple middleware can read the same body.
 
 ### Body Parsing
 
@@ -283,55 +239,8 @@ pattern.
 ## MageResponse
 
 `MageResponse` delays Response object creation until the end of the middleware
-chain. This allows middleware to modify headers even after the body has been
-set.
-
-### Why MageResponse Exists
-
-In the standard Fetch API, Response objects are immutable once created:
-
-```typescript
-// Standard Response - immutable
-const response = new Response("Hello", {
-  status: 200,
-  headers: { "content-type": "text/plain" },
-});
-
-// Cannot modify headers after creation
-response.headers.set("x-custom", "value"); // Doesn't work
-```
-
-This creates problems when middleware needs to add headers after a handler has
-returned a response:
-
-```typescript
-// Without MageResponse - doesn't work as expected
-app.use(async (c, next) => {
-  const response = await next();
-  // Cannot modify response headers here
-  return response;
-});
-
-app.get("/", (c) => {
-  return new Response("Hello"); // Immutable Response
-});
-```
-
-MageResponse solves this by storing response state (body, status, headers) and
-creating the final Response object only once at the end:
-
-```typescript
-// With MageResponse - works perfectly
-app.use(async (c, next) => {
-  await next();
-  // Can modify headers even after handler set body
-  c.res.headers.set("x-custom", "value");
-});
-
-app.get("/", (c) => {
-  return c.text("Hello"); // Sets body, but Response not created yet
-});
-```
+chain. This allows middleware to modify headers, body, and status even after
+handlers have set them. The final Response is created once at the end.
 
 ### Setting Response Body
 
@@ -395,34 +304,6 @@ app.post("/users", (c) => {
   // Setting status directly
   c.res.setStatus(201, "Created");
   c.res.setBody(JSON.stringify({ created: true }));
-  return;
-});
-```
-
-Common status codes:
-
-```typescript
-app.get("/status", (c) => {
-  // Success
-  c.res.setStatus(200, "OK"); // Default
-  c.res.setStatus(201, "Created");
-  c.res.setStatus(204, "No Content");
-
-  // Redirection
-  c.res.setStatus(301, "Moved Permanently");
-  c.res.setStatus(302, "Found");
-  c.res.setStatus(304, "Not Modified");
-
-  // Client errors
-  c.res.setStatus(400, "Bad Request");
-  c.res.setStatus(401, "Unauthorized");
-  c.res.setStatus(403, "Forbidden");
-  c.res.setStatus(404, "Not Found");
-
-  // Server errors
-  c.res.setStatus(500, "Internal Server Error");
-  c.res.setStatus(503, "Service Unavailable");
-
   return;
 });
 ```
@@ -551,49 +432,8 @@ app.get("/ws", (c) => {
 
 ### Response Finalization
 
-MageResponse creates the final Response object only once when `finalize()` is
-called. This happens automatically at the end of the middleware chain - you
-never need to call it manually:
-
-```typescript
-// Conceptual flow - MageApp does this internally
-async function handler(request: Request): Promise<Response> {
-  const context = new MageContext(request);
-
-  // Middleware chain executes
-  await runMiddleware(context);
-
-  // Response is finalized once at the end
-  return context.res.finalize();
-}
-```
-
-Finalization creates a single Response object from the accumulated state:
-
-```typescript
-app.use(async (c, next) => {
-  c.res.headers.set("x-start", "value");
-  await next();
-  c.res.headers.set("x-end", "value");
-});
-
-app.get("/", (c) => {
-  c.res.setBody("Hello");
-  c.res.setStatus(200);
-  c.res.headers.set("content-type", "text/plain");
-  return;
-});
-
-// When finalize() is called (automatically):
-// Creates: new Response("Hello", {
-//   status: 200,
-//   headers: {
-//     "content-type": "text/plain",
-//     "x-start": "value",
-//     "x-end": "value",
-//   }
-// })
-```
+MageResponse creates the final Response object automatically at the end of the
+middleware chain via `finalize()`. You never need to call it manually.
 
 ### Checking Response State
 

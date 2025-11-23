@@ -533,7 +533,7 @@ app.use(validateApiKey);
 ```
 
 For comprehensive error handling patterns, see
-[Error Handling](/advanced/error-handling).
+[Error Handling](/core/error-handling).
 
 ## Important Notes
 
@@ -583,5 +583,5 @@ Choose the appropriate scope for your middleware:
 
 - [MageApp](/core/mage-app) - Registering middleware with the app
 - [MageContext](/core/mage-context) - The context object passed to middleware
-- [Error Handling](/advanced/error-handling) - Handling errors in middleware
+- [Error Handling](/core/error-handling) - Handling errors in middleware
 - [Routing](/core/routing) - Route patterns and wildcards for middleware

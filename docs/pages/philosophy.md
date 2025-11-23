@@ -150,7 +150,6 @@ These aren't afterthoughts—they're part of the core design.
 Mage isn't trying to be everything:
 
 - Not a full-stack framework with opinions on database, auth, and frontend
-- Not the fastest framework (that's Hono)
 - Not a mature ecosystem with hundreds of plugins
 - Not a Rails or Django equivalent with scaffolding and conventions for
   everything

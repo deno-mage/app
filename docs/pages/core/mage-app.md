@@ -217,8 +217,8 @@ app.get("/users/:id", (c) => {
 Errors are converted to HTTP responses with the appropriate status code.
 Unhandled errors return 500 Internal Server Error.
 
-See [Error Handling](/advanced/error-handling) for error handling patterns and
-best practices.
+See [Error Handling](/core/error-handling) for error handling patterns and best
+practices.
 
 ## Options
 
@@ -236,4 +236,4 @@ Configuration options when creating a MageApp instance.
 - [Routing](/core/routing) - Route patterns, parameters, and custom routers
 - [Middleware](/core/middleware) - Middleware patterns and execution order
 - [MageContext](/core/mage-context) - The context object passed to handlers
-- [Error Handling](/advanced/error-handling) - Error handling patterns
+- [Error Handling](/core/error-handling) - Error handling patterns

@@ -63,7 +63,7 @@ Every documentation page must follow this structure:
 ---
 title: Component Name
 description: One sentence describing what it does and why it matters.
-layout: docs
+layout: article
 ---
 ```
 
@@ -94,9 +94,11 @@ import { cors } from "@mage/middleware/cors";
 
 const app = new MageApp();
 
-app.use(cors({
-  origin: "https://example.com",
-}));
+app.use(
+  cors({
+    origin: "https://example.com",
+  }),
+);
 
 app.get("/api/users", (c) => c.json({ users: [] }));
 
@@ -191,11 +193,13 @@ import { rateLimit } from "@mage/middleware/rate-limit";
 const app = new MageApp();
 
 // Limit to 100 requests per minute per IP
-app.use(rateLimit({
-  max: 100,
-  window: 60_000,
-  keyGenerator: (c) => c.req.header("cf-connecting-ip") || "unknown",
-}));
+app.use(
+  rateLimit({
+    max: 100,
+    window: 60_000,
+    keyGenerator: (c) => c.req.header("cf-connecting-ip") || "unknown",
+  }),
+);
 
 app.get("/api/data", (c) => {
   return c.json({ message: "Rate limited endpoint" });
@@ -311,7 +315,7 @@ Use this standardized structure for all middleware:
 ---
 title: [Middleware Name]
 description: [One sentence: what it does]
-layout: docs
+layout: article
 ---
 
 # [Middleware Name]
