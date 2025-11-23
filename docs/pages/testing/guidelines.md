@@ -504,4 +504,4 @@ Testing Mage applications follows standard HTTP API testing patterns:
 3. **Cleanup:** Always consume response bodies and shut down servers
 
 That's it. No magic, no special utilities—just HTTP testing with clean resource
-management.r
+management.
