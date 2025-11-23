@@ -1,10 +1,10 @@
 import type { ComponentChildren } from "preact";
-import { Container } from "./container.tsx";
 import { ToggleTheme } from "./toggle-theme.tsx";
+import { GithubIcon } from "./icons/github.tsx";
 
 interface LinkProps {
   href: string;
-  children: string;
+  children: ComponentChildren;
 }
 
 const Link = (props: LinkProps) => {
@@ -25,30 +25,29 @@ const NavListItem = (props: NavItemProps) => {
 
 export const Header = () => {
   return (
-    <header>
-      <Container>
-        <nav className="flex justify-between items-center">
-          <ul>
-            <NavListItem>
-              <Link href="/">🧙‍♂️ Mage</Link>
-            </NavListItem>
-          </ul>
-          <ul className="flex items-center gap-4">
-            <NavListItem>
-              <Link href="/installation">Installation</Link>
-            </NavListItem>
-            <NavListItem>
-              <Link href="https://github.com/deno-mage/app">GitHub</Link>
-            </NavListItem>
-            <NavListItem>
-              <Link href="https://jsr.io/@mage/app">JSR</Link>
-            </NavListItem>
-            <NavListItem>
-              <ToggleTheme />
-            </NavListItem>
-          </ul>
-        </nav>
-      </Container>
+    <header className="sticky top-0 z-50 bg-zinc-100  dark:bg-gray-900 px-6 border-b border-b-zinc-300 dark:border-b-gray-700 mb-6">
+      <nav className="flex justify-between items-center">
+        <ul>
+          <NavListItem>
+            <Link href="/">
+              <span className="font-bold text-2xl">Mage</span>
+            </Link>
+          </NavListItem>
+        </ul>
+        <ul className="flex items-center gap-6">
+          <NavListItem>
+            <Link href="/installation">Docs</Link>
+          </NavListItem>
+          <NavListItem>
+            <Link href="https://github.com/deno-mage/app">
+              <GithubIcon />
+            </Link>
+          </NavListItem>
+          <NavListItem>
+            <ToggleTheme />
+          </NavListItem>
+        </ul>
+      </nav>
     </header>
   );
 };
