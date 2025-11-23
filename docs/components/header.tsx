@@ -6,11 +6,20 @@ import { MageLogo } from "./icons/mage.tsx";
 interface LinkProps {
   href: string;
   children: ComponentChildren;
+  target?: string;
+  rel?: string;
+  label?: string;
 }
 
 const Link = (props: LinkProps) => {
   return (
-    <a href={props.href} className="block hover:underline">
+    <a
+      href={props.href}
+      className="block hover:underline"
+      target={props.target}
+      rel={props.rel}
+      aria-label={props.label}
+    >
       {props.children}
     </a>
   );
@@ -39,10 +48,12 @@ export const Header = () => {
         </ul>
         <ul className="flex items-center gap-6">
           <NavListItem>
-            <Link href="/installation">Docs</Link>
-          </NavListItem>
-          <NavListItem>
-            <Link href="https://github.com/deno-mage/app">
+            <Link
+              href="https://github.com/deno-mage/app"
+              target="_blank"
+              rel="noopener noreferrer"
+              label="GitHub Repository"
+            >
               <GithubIcon />
             </Link>
           </NavListItem>

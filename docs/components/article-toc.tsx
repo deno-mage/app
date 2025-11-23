@@ -63,7 +63,7 @@ export function ArticleToc({ articleId = "mage-article" }: ArticleTocProps) {
         });
       },
       {
-        rootMargin: "-80px 0px -66% 0px", // Trigger when heading is in top third of viewport
+        rootMargin: "-110px 0px -66% 0px", // Trigger when heading is in top third of viewport
         threshold: 1.0,
       },
     );
