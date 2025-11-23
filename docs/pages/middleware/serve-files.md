@@ -1,7 +1,6 @@
 ---
 title: "Serve Files"
 description: "Serve static files from a directory with path traversal protection"
-layout: "article"
 ---
 
 # Serve Files
@@ -256,10 +255,12 @@ import { cacheControl } from "@mage/middleware/cache-control";
 const app = new MageApp();
 
 // Cache static assets for a long time
-app.use(cacheControl({
-  match: "/assets/*",
-  directive: "public, max-age=31536000, immutable",
-}));
+app.use(
+  cacheControl({
+    match: "/assets/*",
+    directive: "public, max-age=31536000, immutable",
+  }),
+);
 
 app.get(
   "/assets/*",

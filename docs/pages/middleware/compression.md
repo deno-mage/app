@@ -1,7 +1,6 @@
 ---
 title: "Compression"
 description: "Compress response bodies using gzip to reduce bandwidth usage"
-layout: "article"
 ---
 
 # Compression
@@ -73,10 +72,12 @@ import { compression } from "@mage/compression";
 const app = new MageApp();
 
 // Only compress responses above 5KB, don't compress over 50MB
-app.use(compression({
-  threshold: 5 * 1024, // 5KB minimum
-  maxSize: 50 * 1024 * 1024, // 50MB maximum
-}));
+app.use(
+  compression({
+    threshold: 5 * 1024, // 5KB minimum
+    maxSize: 50 * 1024 * 1024, // 50MB maximum
+  }),
+);
 
 app.get("/api/large", (c) => {
   return c.json({ data: largeDataset });
@@ -92,15 +93,17 @@ import { compression } from "@mage/compression";
 const app = new MageApp();
 
 // Compress standard types plus XML and custom formats
-app.use(compression({
-  contentTypes: [
-    "text/html",
-    "application/json",
-    "application/xml",
-    "text/plain",
-    "application/custom+json",
-  ],
-}));
+app.use(
+  compression({
+    contentTypes: [
+      "text/html",
+      "application/json",
+      "application/xml",
+      "text/plain",
+      "application/custom+json",
+    ],
+  }),
+);
 
 app.get("/api/custom", (c) => {
   c.header("Content-Type", "application/custom+json");
@@ -117,9 +120,11 @@ import { compression } from "@mage/compression";
 const app = new MageApp();
 
 // Aggressively stream large responses without buffering
-app.use(compression({
-  bufferThreshold: 256 * 1024, // 256KB - stream anything larger
-}));
+app.use(
+  compression({
+    bufferThreshold: 256 * 1024, // 256KB - stream anything larger
+  }),
+);
 
 app.get("/large-file", (c) => {
   // This large response will use streaming compression

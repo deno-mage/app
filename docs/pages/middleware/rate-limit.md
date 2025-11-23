@@ -1,7 +1,6 @@
 ---
 title: "Rate Limit"
 description: "Limit request rates to prevent abuse and DoS attacks"
-layout: "article"
 ---
 
 # Rate Limit
@@ -19,10 +18,12 @@ import { rateLimit } from "@mage/rate-limit";
 const app = new MageApp();
 
 // Limit to 100 requests per minute per IP
-app.use(rateLimit({
-  max: 100,
-  windowMs: 60000,
-}));
+app.use(
+  rateLimit({
+    max: 100,
+    windowMs: 60000,
+  }),
+);
 
 app.get("/api/data", (c) => {
   return c.json({ message: "This endpoint is rate limited" });
@@ -67,11 +68,13 @@ const store = new InMemoryRateLimitStore({
   maxKeys: 5000, // Maximum unique IP addresses to track
 });
 
-app.use(rateLimit({
-  max: 100,
-  windowMs: 60000,
-  store,
-}));
+app.use(
+  rateLimit({
+    max: 100,
+    windowMs: 60000,
+    store,
+  }),
+);
 ```
 
 The in-memory store automatically removes expired timestamps and uses LRU
@@ -122,10 +125,12 @@ import { rateLimit } from "@mage/rate-limit";
 const app = new MageApp();
 
 // 30 requests per 5 minutes per IP
-app.use(rateLimit({
-  max: 30,
-  windowMs: 5 * 60 * 1000,
-}));
+app.use(
+  rateLimit({
+    max: 30,
+    windowMs: 5 * 60 * 1000,
+  }),
+);
 ```
 
 ### Custom Key Generation
@@ -138,17 +143,19 @@ import { rateLimit } from "@mage/rate-limit";
 
 const app = new MageApp();
 
-app.use(rateLimit({
-  max: 1000,
-  windowMs: 60000,
-  keyGenerator: (c) => {
-    // Rate limit per user if authenticated, fallback to IP
-    const userId = c.get("userId");
-    return userId
-      ? `user:${userId}`
-      : `ip:${c.req.header("x-forwarded-for") || "unknown"}`;
-  },
-}));
+app.use(
+  rateLimit({
+    max: 1000,
+    windowMs: 60000,
+    keyGenerator: (c) => {
+      // Rate limit per user if authenticated, fallback to IP
+      const userId = c.get("userId");
+      return userId
+        ? `user:${userId}`
+        : `ip:${c.req.header("x-forwarded-for") || "unknown"}`;
+    },
+  }),
+);
 
 app.get("/api/protected", (c) => {
   const userId = c.get("userId");
@@ -205,11 +212,13 @@ import { rateLimit } from "@mage/rate-limit";
 
 const app = new MageApp();
 
-app.use(rateLimit({
-  max: 100,
-  windowMs: 60000,
-  message: "Rate limit exceeded. Please try again later.",
-}));
+app.use(
+  rateLimit({
+    max: 100,
+    windowMs: 60000,
+    message: "Rate limit exceeded. Please try again later.",
+  }),
+);
 
 // Or respond with JSON
 app.use((c, next) => {
@@ -227,11 +236,13 @@ import { rateLimit } from "@mage/rate-limit";
 
 const app = new MageApp();
 
-app.use(rateLimit({
-  max: 100,
-  windowMs: 60000,
-  headers: true, // Ensures headers are included
-}));
+app.use(
+  rateLimit({
+    max: 100,
+    windowMs: 60000,
+    headers: true, // Ensures headers are included
+  }),
+);
 
 app.get("/api/stats", (c) => {
   // Client can read rate limit headers from response

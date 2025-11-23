@@ -1,7 +1,6 @@
 ---
 title: "Philosophy"
 description: "Understanding Mage's design principles and goals"
-layout: "article"
 ---
 
 # Philosophy
@@ -39,7 +38,9 @@ Mage includes security features because developers shouldn't have to remember
 them:
 
 - Path traversal protection is automatic in routing and file serving
-- Schema validation with Standard Schema support (Zod, Valibot, ArkType)
+- Schema validation with [Standard Schema](https://standardschema.dev) support
+  ([Zod](https://zod.dev), [Valibot](https://valibot.dev),
+  [ArkType](https://arktype.io))
 - CSRF middleware uses modern browser security features (Sec-Fetch-Site)
 - Rate limiting, security headers, CSP, CORS are available out of the box
 - Body size limits prevent simple DoS attacks
@@ -50,12 +51,12 @@ built-in, not afterthoughts.
 
 ## Type Safety Without Configuration
 
-TypeScript's value is catching mistakes before production. Mage is
-TypeScript-native: if it compiles, you haven't misspelled a method, passed the
-wrong type, or forgotten a parameter.
+[TypeScript](https://www.typescriptlang.org)'s value is catching mistakes before
+production. Mage is TypeScript-native: if it compiles, you haven't misspelled a
+method, passed the wrong type, or forgotten a parameter.
 
-No configuration needed. No tsconfig.json to get right. Just import and use—Deno
-handles the rest.
+No configuration needed. No tsconfig.json to get right. Just import and
+use—[Deno](https://deno.com) handles the rest.
 
 Type inference means you don't fight the type system. When you call
 `c.req.valid("json")`, TypeScript knows the type based on your schema. When you
@@ -75,14 +76,15 @@ Mage's abstractions are thin:
   of passing three parameters
 
 These solve real problems (reading body multiple times causes errors in vanilla
-Deno, creating multiple Response objects is wasteful), but you can still see
-through them. You know you're handling HTTP requests, not framework-specific
-constructs.
+[Deno](https://deno.com), creating multiple Response objects is wasteful), but
+you can still see through them. You know you're handling HTTP requests, not
+framework-specific constructs.
 
 ## Fast Enough
 
 Mage prioritizes developer experience and security over raw performance. It's
-fast enough for production, but it's not the fastest Deno framework.
+fast enough for production, but it's not the fastest [Deno](https://deno.com)
+framework.
 
 We use linear search (O(n)) for routing instead of radix trees. Why? Linear
 search has near-zero overhead at startup, making it ideal for serverless where

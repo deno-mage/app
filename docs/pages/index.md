@@ -1,13 +1,13 @@
 ---
 title: "Introduction"
 description: "Learn about Mage, a modern web framework for Deno"
-layout: "article"
 ---
 
 # Introduction
 
-Mage is a web framework for Deno. No magic, no surprises—just routes,
-middleware, and HTTP handling with TypeScript type safety.
+Mage is a web framework for [Deno](https://deno.com). No magic, no
+surprises—just routes, middleware, and HTTP handling with
+[TypeScript](https://www.typescriptlang.org) type safety.
 
 ```typescript
 import { MageApp } from "@mage/app";

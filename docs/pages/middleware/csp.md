@@ -1,7 +1,6 @@
 ---
 title: "CSP"
 description: "Set Content Security Policy headers to prevent injection attacks"
-layout: "article"
 ---
 
 # CSP
@@ -80,16 +79,18 @@ import { csp } from "@mage/csp";
 
 const app = new MageApp();
 
-app.use(csp({
-  directives: {
-    defaultSrc: ["'self'"],
-    scriptSrc: ["'self'", "https://cdn.example.com"],
-    styleSrc: ["'self'", "https://fonts.googleapis.com"],
-    imgSrc: ["'self'", "https:", "data:"],
-    connectSrc: ["'self'", "https://api.example.com"],
-    fontSrc: ["'self'", "https://fonts.gstatic.com"],
-  },
-}));
+app.use(
+  csp({
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "https://cdn.example.com"],
+      styleSrc: ["'self'", "https://fonts.googleapis.com"],
+      imgSrc: ["'self'", "https:", "data:"],
+      connectSrc: ["'self'", "https://api.example.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+    },
+  }),
+);
 
 app.get("/", (c) => c.text("Hello!"));
 ```
@@ -106,22 +107,25 @@ import { crypto } from "@std/crypto";
 
 const app = new MageApp();
 
-app.use(csp({
-  directives: (c) => {
-    // Generate a unique nonce for this request
-    const nonce = crypto.getRandomValues(new Uint8Array(16))
-      .reduce((acc, byte) => acc + byte.toString(16).padStart(2, "0"), "");
+app.use(
+  csp({
+    directives: (c) => {
+      // Generate a unique nonce for this request
+      const nonce = crypto
+        .getRandomValues(new Uint8Array(16))
+        .reduce((acc, byte) => acc + byte.toString(16).padStart(2, "0"), "");
 
-    // Store it on context for use in templates
-    c.set("nonce", nonce);
+      // Store it on context for use in templates
+      c.set("nonce", nonce);
 
-    return {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", `'nonce-${nonce}'`],
-      styleSrc: ["'self'", `'nonce-${nonce}'`],
-    };
-  },
-}));
+      return {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", `'nonce-${nonce}'`],
+        styleSrc: ["'self'", `'nonce-${nonce}'`],
+      };
+    },
+  }),
+);
 
 app.get("/", (c) => {
   const nonce = c.get<string>("nonce");
@@ -151,19 +155,21 @@ Deno.serve(app.handler);
 Apply a stricter policy for maximum security:
 
 ```typescript
-app.use(csp({
-  directives: {
-    defaultSrc: ["'none'"],
-    scriptSrc: ["'self'"],
-    styleSrc: ["'self'"],
-    imgSrc: ["'self'", "data:"],
-    fontSrc: ["'self'"],
-    connectSrc: ["'self'"],
-    formAction: ["'self'"],
-    frameAncestors: ["'none'"],
-    upgradeInsecureRequests: true,
-  },
-}));
+app.use(
+  csp({
+    directives: {
+      defaultSrc: ["'none'"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'"],
+      imgSrc: ["'self'", "data:"],
+      fontSrc: ["'self'"],
+      connectSrc: ["'self'"],
+      formAction: ["'self'"],
+      frameAncestors: ["'none'"],
+      upgradeInsecureRequests: true,
+    },
+  }),
+);
 ```
 
 ### Report Violations
@@ -171,14 +177,16 @@ app.use(csp({
 Configure CSP to report violations to a server endpoint:
 
 ```typescript
-app.use(csp({
-  directives: {
-    defaultSrc: ["'self'"],
-    scriptSrc: ["'self'"],
-    styleSrc: ["'self'"],
-    reportTo: ["csp-endpoint"],
-  },
-}));
+app.use(
+  csp({
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'"],
+      reportTo: ["csp-endpoint"],
+    },
+  }),
+);
 
 // Add a header to define where violations are reported
 app.use((c, next) => {
@@ -187,9 +195,7 @@ app.use((c, next) => {
     JSON.stringify({
       group: "csp-endpoint",
       max_age: 10886400,
-      endpoints: [
-        { url: "https://your-domain.com/csp-report" },
-      ],
+      endpoints: [{ url: "https://your-domain.com/csp-report" }],
     }),
   );
   return next();

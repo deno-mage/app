@@ -49,6 +49,34 @@ export function SideNav({ items }: SideNavProps) {
   }, []);
 
   useEffect(() => {
+    // Scroll to active link in sidebar
+    if (currentPath) {
+      const aside = document.querySelector("aside");
+      const activeLink = document.querySelector(
+        `aside nav a[href="${currentPath}"]`,
+      ) as HTMLElement;
+
+      if (aside && activeLink) {
+        const asideRect = aside.getBoundingClientRect();
+        const linkRect = activeLink.getBoundingClientRect();
+
+        const isVisible = linkRect.top >= asideRect.top &&
+          linkRect.bottom <= asideRect.bottom;
+
+        if (!isVisible) {
+          const relativeTop = linkRect.top - asideRect.top;
+          const scrollTop = aside.scrollTop +
+            relativeTop -
+            asideRect.height / 2 +
+            linkRect.height / 2;
+
+          aside.scrollTo({ top: scrollTop, behavior: "smooth" });
+        }
+      }
+    }
+  }, [currentPath]);
+
+  useEffect(() => {
     // Listen for escape key to close nav
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape" && isOpen) {
@@ -84,7 +112,7 @@ export function SideNav({ items }: SideNavProps) {
 
       {/* Navigation sidebar */}
       <aside
-        className={`fixed lg:sticky top-[94px] bottom-0 z-30 w-64 flex-shrink-0 h-[calc(100vh-94px)] bg-zinc-50 dark:bg-zinc-900 border-r border-zinc-300 dark:border-zinc-700 overflow-y-auto transition-transform duration-300 ${
+        className={`fixed lg:sticky top-[94px] bottom-0 z-30 w-64 flex-shrink-0 h-[calc(100vh-94px)] bg-zinc-50 dark:bg-zinc-900 border-r border-zinc-300 dark:border-zinc-700 overflow-y-auto transition-all duration-300 ${
           isOpen ? "block" : "hidden lg:block"
         }`}
       >
@@ -104,7 +132,7 @@ export function SideNav({ items }: SideNavProps) {
                           <li key={itemIndex}>
                             <a
                               href={item.href}
-                              className={`block px-3 py-2 rounded text-sm transition-colors ${
+                              className={`block px-3 py-2 rounded text-sm ${
                                 active
                                   ? "bg-zinc-900 dark:bg-zinc-300 text-zinc-100 dark:text-zinc-900 font-bold"
                                   : "text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-100"

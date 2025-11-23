@@ -1,7 +1,6 @@
 ---
 title: "Middleware"
 description: "How middleware works in Mage and patterns for composition"
-layout: "article"
 ---
 
 # Middleware
@@ -91,13 +90,17 @@ app.use(async (c, next) => {
 
 // 2. Route middleware - runs second
 // 3. Handler - runs last
-app.get("/users", async (c, next) => {
-  console.log("Route middleware");
-  await next();
-}, (c) => {
-  console.log("Handler");
-  return c.json({ users: [] });
-});
+app.get(
+  "/users",
+  async (c, next) => {
+    console.log("Route middleware");
+    await next();
+  },
+  (c) => {
+    console.log("Handler");
+    return c.json({ users: [] });
+  },
+);
 
 // Output on GET /users:
 // Global middleware
@@ -438,10 +441,12 @@ const logger = (options?: LogOptions): MageMiddleware => {
 };
 
 // Use with options
-app.use(logger({
-  includeTimestamp: true,
-  includeHeaders: false,
-}));
+app.use(
+  logger({
+    includeTimestamp: true,
+    includeHeaders: false,
+  }),
+);
 ```
 
 ### Middleware with Before/After Logic

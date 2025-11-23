@@ -1,7 +1,6 @@
 ---
 title: "CORS"
 description: "Handle Cross-Origin Resource Sharing requests with proper header configuration"
-layout: "article"
 ---
 
 # CORS
@@ -19,10 +18,12 @@ import { cors } from "@mage/cors";
 const app = new MageApp();
 
 // Allow requests from a specific origin
-app.use(cors({
-  origins: "https://example.com",
-  credentials: true,
-}));
+app.use(
+  cors({
+    origins: "https://example.com",
+    credentials: true,
+  }),
+);
 
 app.get("/api/users", (c) => c.json({ users: [] }));
 
@@ -59,9 +60,11 @@ import { cors } from "@mage/cors";
 
 const app = new MageApp();
 
-app.use(cors({
-  origins: "*",
-}));
+app.use(
+  cors({
+    origins: "*",
+  }),
+);
 
 app.get("/api/data", (c) => c.json({ data: "public" }));
 ```
@@ -76,13 +79,12 @@ import { cors } from "@mage/cors";
 
 const app = new MageApp();
 
-app.use(cors({
-  origins: [
-    "https://example.com",
-    "https://app.example.com",
-  ],
-  credentials: true,
-}));
+app.use(
+  cors({
+    origins: ["https://example.com", "https://app.example.com"],
+    credentials: true,
+  }),
+);
 
 app.get("/api/protected", (c) => c.json({ secret: "data" }));
 ```
@@ -97,11 +99,13 @@ import { cors } from "@mage/cors";
 
 const app = new MageApp();
 
-app.use(cors({
-  origins: "https://app.example.com",
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-  headers: ["Content-Type", "Authorization", "X-Custom-Header"],
-}));
+app.use(
+  cors({
+    origins: "https://app.example.com",
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+    headers: ["Content-Type", "Authorization", "X-Custom-Header"],
+  }),
+);
 
 app.post("/api/users", (c) => c.json({ created: true }, 201));
 ```
@@ -114,11 +118,13 @@ import { cors } from "@mage/cors";
 
 const app = new MageApp();
 
-app.use(cors({
-  origins: "https://app.example.com",
-  methods: ["GET"],
-  exposeHeaders: ["X-Total-Count", "X-Page-Number"],
-}));
+app.use(
+  cors({
+    origins: "https://app.example.com",
+    methods: ["GET"],
+    exposeHeaders: ["X-Total-Count", "X-Page-Number"],
+  }),
+);
 
 app.get("/api/users", (c) => {
   c.header("X-Total-Count", "100");
@@ -139,12 +145,14 @@ import { cors } from "@mage/cors";
 
 const app = new MageApp();
 
-app.use(cors({
-  origins: "https://app.example.com",
-  methods: ["GET", "POST"],
-  headers: ["Content-Type"],
-  maxAge: 86400, // Cache for 1 day
-}));
+app.use(
+  cors({
+    origins: "https://app.example.com",
+    methods: ["GET", "POST"],
+    headers: ["Content-Type"],
+    maxAge: 86400, // Cache for 1 day
+  }),
+);
 
 app.post("/api/data", (c) => c.json({ saved: true }));
 ```
@@ -160,10 +168,12 @@ network overhead for repeated requests.
 
 ```typescript
 // ❌ This will throw an error
-app.use(cors({
-  origins: "*",
-  credentials: true, // CORS spec violation!
-}));
+app.use(
+  cors({
+    origins: "*",
+    credentials: true, // CORS spec violation!
+  }),
+);
 ```
 
 The CORS specification forbids this because it would allow any website to access
@@ -173,16 +183,20 @@ user credentials. The middleware validates this and throws an error immediately.
 
 ```typescript
 // ✅ More secure - only allow your frontend
-app.use(cors({
-  origins: ["https://app.example.com"],
-  credentials: true,
-}));
+app.use(
+  cors({
+    origins: ["https://app.example.com"],
+    credentials: true,
+  }),
+);
 
 // ❌ Less secure - allows any origin with credentials
-app.use(cors({
-  origins: "*",
-  credentials: false, // Still not ideal
-}));
+app.use(
+  cors({
+    origins: "*",
+    credentials: false, // Still not ideal
+  }),
+);
 ```
 
 Always specify exact origins when possible. This prevents malicious sites from
@@ -220,16 +234,20 @@ enable this when necessary:
 
 ```typescript
 // ✅ Explicit about intent
-app.use(cors({
-  origins: "https://app.example.com",
-  credentials: true, // Will send cookies
-}));
+app.use(
+  cors({
+    origins: "https://app.example.com",
+    credentials: true, // Will send cookies
+  }),
+);
 
 // ❌ Might not work with credentials
-app.use(cors({
-  origins: "*",
-  // credentials: undefined implicitly false
-}));
+app.use(
+  cors({
+    origins: "*",
+    // credentials: undefined implicitly false
+  }),
+);
 ```
 
 ## Notes

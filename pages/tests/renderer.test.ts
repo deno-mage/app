@@ -34,7 +34,6 @@ This is a test.`;
   it("should use article layout when specified", async () => {
     const markdown = `---
 title: Article Page
-layout: article
 ---
 
 # Article Content`;

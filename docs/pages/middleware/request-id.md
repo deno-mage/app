@@ -1,7 +1,6 @@
 ---
 title: "Request ID"
 description: "Add unique IDs to requests for tracing, logging, and incident investigation"
-layout: "article"
 ---
 
 # Request ID
@@ -75,9 +74,11 @@ Some systems use different header conventions. Configure the header name to
 match your infrastructure:
 
 ```typescript
-app.use(requestId({
-  headerName: "X-Trace-ID",
-}));
+app.use(
+  requestId({
+    headerName: "X-Trace-ID",
+  }),
+);
 
 app.get("/api/data", (c) => {
   const id = c.get("requestId");
@@ -93,13 +94,15 @@ function:
 ```typescript
 let requestCounter = 0;
 
-app.use(requestId({
-  generator: () => {
-    const timestamp = Date.now();
-    const counter = ++requestCounter;
-    return `req-${timestamp}-${counter}`;
-  },
-}));
+app.use(
+  requestId({
+    generator: () => {
+      const timestamp = Date.now();
+      const counter = ++requestCounter;
+      return `req-${timestamp}-${counter}`;
+    },
+  }),
+);
 
 app.get("/api/status", (c) => {
   const id = c.get("requestId");

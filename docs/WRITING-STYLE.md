@@ -63,7 +63,6 @@ Every documentation page must follow this structure:
 ---
 title: Component Name
 description: One sentence describing what it does and why it matters.
-layout: article
 ---
 ```
 
@@ -315,7 +314,6 @@ Use this standardized structure for all middleware:
 ---
 title: [Middleware Name]
 description: [One sentence: what it does]
-layout: article
 ---
 
 # [Middleware Name]
