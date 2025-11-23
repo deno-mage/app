@@ -237,7 +237,7 @@ Deno.serve(app.handler);
 You've learned the basics! Here's what to explore next:
 
 - [Philosophy](/philosophy) - Understand Mage's design principles
-- [Core Concepts](#) - Deep dive into MageApp, MageContext, and more
-- [Middleware](#) - Explore all available middleware
-- [Validation](#) - Add schema validation with Zod or Valibot
-- [Deployment](#) - Deploy to Deno Deploy, Cloudflare Workers, or AWS Lambda
+- [MageApp](/core/mage-app) - Learn about MageApp
+- [MageContext](/core/mage-context) - Learn about MageContext
+- [Request & Response](/core/request-response) - Detailed guide on request and
+  response handling

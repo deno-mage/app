@@ -207,7 +207,7 @@ app.get("/public/status", publicLimiter, (c) => {
 ### Custom Error Response
 
 ```typescript
-import { MageApp } from "@mage/app";
+import { MageApp, MageError } from "@mage/app";
 import { rateLimit } from "@mage/rate-limit";
 
 const app = new MageApp();
@@ -220,11 +220,20 @@ app.use(
   }),
 );
 
-// Or respond with JSON
-app.use((c, next) => {
-  // This is a pattern to customize the rate limit response
-  // by catching the 429 and transforming it
-  return next();
+// Or handle rate limit errors with custom JSON response
+app.use(async (c, next) => {
+  try {
+    await next();
+  } catch (err) {
+    if (err instanceof MageError && err.status === 429) {
+      return c.json({
+        error: "Rate limit exceeded",
+        message: "Please try again later",
+        retryAfter: c.res.headers.get("Retry-After"),
+      }, 429);
+    }
+    throw err;
+  }
 });
 ```
 

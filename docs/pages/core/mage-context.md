@@ -17,7 +17,7 @@ import { MageApp } from "@mage/app";
 const app = new MageApp();
 
 app.get("/users/:id", (c) => {
-  const id = c.req.param("id");
+  const id = c.req.params.id;
   return c.json({ id, name: "Alice" });
 });
 
@@ -30,7 +30,7 @@ Access the incoming request through `c.req`:
 
 ```typescript
 app.get("/profile", (c) => {
-  const userId = c.req.param("id");
+  const userId = c.req.params.id;
   const authHeader = c.req.header("authorization");
   const userAgent = c.req.header("user-agent");
 
@@ -100,7 +100,7 @@ Send responses with no body:
 
 ```typescript
 app.delete("/users/:id", (c) => {
-  deleteUser(c.req.param("id"));
+  deleteUser(c.req.params.id);
   return c.empty(); // 204 No Content
 });
 
@@ -226,7 +226,7 @@ import { MageApp } from "@mage/app";
 const app = new MageApp();
 
 app.get("/files/:filename", async (c) => {
-  const filename = c.req.param("filename");
+  const filename = c.req.params.filename;
   const filepath = `./public/${filename}`;
 
   try {
@@ -274,11 +274,11 @@ Proxy requests to another URL using `c.rewrite()`:
 ```typescript
 app.get("/api/*", async (c) => {
   // Proxy to backend API
-  await c.rewrite("https://backend.example.com" + c.req.path);
+  await c.rewrite("https://backend.example.com" + c.req.url.pathname);
 });
 
 app.get("/proxy/:path", async (c) => {
-  const path = c.req.param("path");
+  const path = c.req.params.path;
   await c.rewrite(`https://api.example.com/${path}`);
 });
 ```
@@ -295,7 +295,7 @@ Query strings from the original request are preserved:
 // GET /api/users?limit=10
 app.get("/api/*", async (c) => {
   // Rewrites to https://backend.example.com/api/users?limit=10
-  await c.rewrite("https://backend.example.com" + c.req.path);
+  await c.rewrite("https://backend.example.com" + c.req.url.pathname);
 });
 ```
 

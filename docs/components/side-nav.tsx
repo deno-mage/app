@@ -2,6 +2,8 @@ import { useEffect, useState } from "preact/hooks";
 import { CloseIcon } from "./icons/close.tsx";
 import { MenuIcon } from "./icons/menu.tsx";
 
+const normalizePath = (path: string) => path.replace(/\/+$/, "") || "/";
+
 interface NavItem {
   label: string;
   href: string;
@@ -95,7 +97,7 @@ export function SideNav({ items }: SideNavProps) {
   };
 
   const isActive = (href: string) => {
-    return currentPath === href;
+    return normalizePath(currentPath) === normalizePath(href);
   };
 
   return (

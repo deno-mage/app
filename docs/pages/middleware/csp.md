@@ -103,7 +103,6 @@ content:
 ```typescript
 import { MageApp } from "@mage/app";
 import { csp } from "@mage/csp";
-import { crypto } from "@std/crypto";
 
 const app = new MageApp();
 

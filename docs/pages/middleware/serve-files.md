@@ -249,21 +249,19 @@ configured directory, even with URL encoding or symbolic links.
 
 ```typescript
 import { MageApp } from "@mage/app";
-import { serveFiles } from "@mage/middleware/serve-files";
-import { cacheControl } from "@mage/middleware/cache-control";
+import { serveFiles } from "@mage/serve-files";
+import { cacheControl } from "@mage/cache-control";
 
 const app = new MageApp();
 
 // Cache static assets for a long time
-app.use(
-  cacheControl({
-    match: "/assets/*",
-    directive: "public, max-age=31536000, immutable",
-  }),
-);
-
 app.get(
   "/assets/*",
+  cacheControl({
+    public: true,
+    maxAge: 31536000,
+    immutable: true,
+  }),
   serveFiles({
     directory: "./dist/assets",
   }),
