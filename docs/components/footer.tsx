@@ -1,6 +1,6 @@
 export const Footer = () => {
   return (
-    <footer className="bg-zinc-100  dark:bg-gray-900 p-6 border-t border-t-zinc-300 dark:border-t-gray-700 mt-6 text-center">
+    <footer className="bg-zinc-100  dark:bg-zinc-800 p-6 border-t border-t-zinc-300 dark:border-t-zinc-700 mt-6 text-center">
       <p>
         <b>Mage</b> - Simple, Fast Web Framework for Deno
       </p>
