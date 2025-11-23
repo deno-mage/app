@@ -44,8 +44,8 @@ const navigationItems = [
     items: [{ label: "Cookies", href: "/utilities/cookies" }],
   },
   {
-    title: "Advanced",
-    items: [{ label: "Testing", href: "/advanced/testing" }],
+    title: "Testing",
+    items: [{ label: "Guidelines", href: "/testing/guidelines" }],
   },
   {
     title: "Pages",

@@ -54,28 +54,31 @@ export function SideNav({ items }: SideNavProps) {
   useEffect(() => {
     // Scroll to active link in sidebar
     if (currentPath) {
-      const aside = document.querySelector("aside");
-      const activeLink = document.querySelector(
-        `aside nav a[href="${currentPath}"]`,
-      ) as HTMLElement;
+      // Wait for layout to be complete before measuring
+      requestAnimationFrame(() => {
+        const aside = document.querySelector("aside");
+        const activeLink = document.querySelector(
+          `aside nav a[href="${currentPath}"]`,
+        ) as HTMLElement;
 
-      if (aside && activeLink) {
-        const asideRect = aside.getBoundingClientRect();
-        const linkRect = activeLink.getBoundingClientRect();
+        if (aside && activeLink) {
+          const asideRect = aside.getBoundingClientRect();
+          const linkRect = activeLink.getBoundingClientRect();
 
-        const isVisible = linkRect.top >= asideRect.top &&
-          linkRect.bottom <= asideRect.bottom;
+          const isVisible = linkRect.top >= asideRect.top &&
+            linkRect.bottom <= asideRect.bottom;
 
-        if (!isVisible) {
-          const relativeTop = linkRect.top - asideRect.top;
-          const scrollTop = aside.scrollTop +
-            relativeTop -
-            asideRect.height / 2 +
-            linkRect.height / 2;
+          if (!isVisible) {
+            const relativeTop = linkRect.top - asideRect.top;
+            const scrollTop = aside.scrollTop +
+              relativeTop -
+              asideRect.height / 2 +
+              linkRect.height / 2;
 
-          aside.scrollTo({ top: scrollTop, behavior: "smooth" });
+            aside.scrollTo({ top: scrollTop, behavior: "smooth" });
+          }
         }
-      }
+      });
     }
   }, [currentPath]);
 
