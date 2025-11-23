@@ -165,6 +165,9 @@ app.delete("/tasks/:id", (c) => {
 });
 ```
 
+For comprehensive error handling patterns including error handler middleware,
+see [Error Handling](/advanced/error-handling).
+
 ## Complete Example
 
 Here's the full application:

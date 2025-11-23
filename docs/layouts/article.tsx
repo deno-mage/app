@@ -17,8 +17,8 @@ const navigationItems = [
       { label: "Routing", href: "/core/routing" },
       { label: "MageContext", href: "/core/mage-context" },
       { label: "Middleware", href: "/core/middleware" },
-      { label: "MageRequest", href: "/core/mage-request" },
-      { label: "MageResponse", href: "/mage-response" },
+      { label: "Request & Response", href: "/core/request-response" },
+      { label: "Error handling", href: "/core/error-handling" },
     ],
   },
   {
@@ -39,15 +39,12 @@ const navigationItems = [
     ],
   },
   {
-    title: "Utillities",
+    title: "Utilities",
     items: [{ label: "Cookies", href: "/advanced/cookies" }],
   },
   {
     title: "Advanced",
-    items: [
-      { label: "Testing", href: "/advanced/testing" },
-      { label: "Error handling", href: "/advanced/error-handling" },
-    ],
+    items: [{ label: "Testing", href: "/advanced/testing" }],
   },
   {
     title: "Pages",
