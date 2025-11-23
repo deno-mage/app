@@ -5,7 +5,9 @@ description: "Black-box HTTP testing patterns for Mage applications"
 
 # Testing Mage Applications
 
-Testing Mage applications is straightforward: spin up an ephemeral HTTP server, make requests with `fetch`, and assert on responses. No special testing utilities needed—it's just HTTP API testing.
+Testing Mage applications is straightforward: spin up an ephemeral HTTP server,
+make requests with `fetch`, and assert on responses. No special testing
+utilities needed—it's just HTTP API testing.
 
 ## Quick Start
 
@@ -56,7 +58,9 @@ deno test --allow-all
 
 ### Use Port 0
 
-Always use `port: 0` when starting test servers. Deno assigns an available port automatically, preventing "address already in use" errors in CI or when running tests in parallel:
+Always use `port: 0` when starting test servers. Deno assigns an available port
+automatically, preventing "address already in use" errors in CI or when running
+tests in parallel:
 
 ```typescript
 server = Deno.serve({ port: 0 }, app.handler);
@@ -82,7 +86,7 @@ export class MageTestServer {
   url(path: string) {
     return new URL(
       path,
-      `http://${this._server?.addr.hostname}:${this._server?.addr.port}`
+      `http://${this._server?.addr.hostname}:${this._server?.addr.port}`,
     );
   }
 
@@ -212,7 +216,8 @@ it("should handle form data", async () => {
 
 ### Middleware
 
-Test middleware by verifying its side effects (headers, context values, response modifications):
+Test middleware by verifying its side effects (headers, context values, response
+modifications):
 
 ```typescript
 import type { MageMiddleware } from "@mage/app";
@@ -380,7 +385,7 @@ beforeAll(() => {
       const { id } = c.validated.params;
       const { status } = c.validated.json;
       c.json({ id, status });
-    }
+    },
   );
 
   server.start();
@@ -393,7 +398,7 @@ it("should validate params and body", async () => {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status: "active" }),
-    }
+    },
   );
 
   expect(response.status).toBe(200);
@@ -405,7 +410,8 @@ it("should validate params and body", async () => {
 
 ## Resource Management
 
-**Critical:** Always consume response bodies to prevent resource leaks. Deno tracks open resources and will fail tests if bodies aren't consumed.
+**Critical:** Always consume response bodies to prevent resource leaks. Deno
+tracks open resources and will fail tests if bodies aren't consumed.
 
 **Correct patterns:**
 
@@ -497,4 +503,5 @@ Testing Mage applications follows standard HTTP API testing patterns:
 2. **Test:** Make requests with `fetch` and assert on responses
 3. **Cleanup:** Always consume response bodies and shut down servers
 
-That's it. No magic, no special utilities—just HTTP testing with clean resource management.
+That's it. No magic, no special utilities—just HTTP testing with clean resource
+management.r
