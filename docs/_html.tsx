@@ -3,7 +3,7 @@ import type { HtmlTemplateProps } from "../pages/mod.ts";
 
 export default function Html(props: HtmlTemplateProps): JSX.Element {
   return (
-    <html lang="en" style="scroll-padding-top: 80px;">
+    <html lang="en" style="scroll-padding-top: 110px;">
       <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />

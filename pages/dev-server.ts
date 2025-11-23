@@ -91,7 +91,7 @@ export async function registerDevServer(
   const basePath = normalizeBasePath(options.basePath ?? "/");
 
   const pagesDir = join(rootDir, "pages");
-  const publicDir = join(rootDir, "public");
+  const publicDir = resolve(join(rootDir, "public"));
 
   // Initialize dev server state
   const state: DevServerState = {

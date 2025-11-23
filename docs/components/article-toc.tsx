@@ -63,7 +63,7 @@ export function ArticleToc({ articleId = "mage-article" }: ArticleTocProps) {
         });
       },
       {
-        rootMargin: "-80px 0px -66% 0px", // Trigger when heading is in top third of viewport
+        rootMargin: "-110px 0px -66% 0px", // Trigger when heading is in top third of viewport
         threshold: 1.0,
       },
     );
@@ -91,30 +91,32 @@ export function ArticleToc({ articleId = "mage-article" }: ArticleTocProps) {
   }
 
   return (
-    <nav className="sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto">
-      <h2 className="text-sm font-bold uppercase tracking-wide text-zinc-600 dark:text-zinc-400 mb-4">
-        On This Page
-      </h2>
-      <ul className="space-y-2 text-sm">
-        {tocItems.map((item) => (
-          <li
-            key={item.id}
-            style={{ paddingLeft: `${(item.level - 1) * 0.75}rem` }}
-          >
-            <a
-              href={`#${item.id}`}
-              onClick={(e) => handleClick(e, item.id)}
-              className={`block py-1 border-l-2 pl-3 transition-colors hover:text-zinc-900 dark:hover:text-zinc-100 ${
-                activeId === item.id
-                  ? "border-zinc-900 dark:border-zinc-100 font-bold text-zinc-900 dark:text-zinc-100"
-                  : "border-zinc-300 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400"
-              }`}
+    <aside className="hidden lg:block w-64 flex-shrink-0 pt-6 sticky top-[94px] max-h-[calc(100vh-94px)] overflow-y-auto">
+      <nav>
+        <h2 className="text-sm font-bold uppercase tracking-wide text-zinc-600 dark:text-zinc-400 mb-4">
+          On This Page
+        </h2>
+        <ul className="space-y-2 text-sm">
+          {tocItems.map((item) => (
+            <li
+              key={item.id}
+              style={{ paddingLeft: `${(item.level - 1) * 0.75}rem` }}
             >
-              {item.text}
-            </a>
-          </li>
-        ))}
-      </ul>
-    </nav>
+              <a
+                href={`#${item.id}`}
+                onClick={(e) => handleClick(e, item.id)}
+                className={`block py-1 border-l-2 pl-3 transition-colors hover:text-zinc-900 dark:hover:text-zinc-100 ${
+                  activeId === item.id
+                    ? "border-zinc-900 dark:border-zinc-100 font-bold text-zinc-900 dark:text-zinc-100"
+                    : "border-zinc-300 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400"
+                }`}
+              >
+                {item.text}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </nav>
+    </aside>
   );
 }
