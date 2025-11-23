@@ -72,6 +72,7 @@ export default function ArticleLayout(props: LayoutProps) {
     <>
       <Head>
         <title>{props.title}</title>
+        <meta name="description" content={props.description} />
       </Head>
       <Header />
       <main className="max-w-7xl mx-auto">
