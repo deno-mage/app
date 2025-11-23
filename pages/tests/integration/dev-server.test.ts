@@ -357,6 +357,51 @@ describe("dev server - hot reload endpoint", {
       // Ignore if directory not empty
     }
   });
+
+  it("should debounce reload messages for rapid file changes", async () => {
+    const wsUrl = server.url("/__reload").toString().replace(
+      "http://",
+      "ws://",
+    );
+    const ws = new WebSocket(wsUrl);
+
+    // Wait for connection
+    await new Promise<void>((resolve) => {
+      ws.onopen = () => resolve();
+    });
+
+    // Track all received messages
+    const messages: string[] = [];
+    ws.onmessage = (event) => {
+      messages.push(event.data);
+    };
+
+    // Trigger multiple rapid file changes
+    const tempFile = join(FIXTURES_DIR, "pages", "_rapid-test.md");
+    await Deno.writeTextFile(
+      tempFile,
+      "---\ntitle: Test1\n---\n\n# Test",
+    );
+    await Deno.writeTextFile(
+      tempFile,
+      "---\ntitle: Test2\n---\n\n# Test",
+    );
+    await Deno.writeTextFile(
+      tempFile,
+      "---\ntitle: Test3\n---\n\n# Test",
+    );
+
+    // Wait for debounce period plus buffer
+    await new Promise((resolve) => setTimeout(resolve, 300));
+
+    // Should receive only one reload message despite multiple changes
+    expect(messages.length).toBe(1);
+    expect(messages[0]).toBe("reload");
+
+    // Cleanup
+    ws.close();
+    await Deno.remove(tempFile);
+  });
 });
 
 describe("dev server - custom base route", {

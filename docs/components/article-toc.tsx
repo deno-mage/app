@@ -91,7 +91,7 @@ export function ArticleToc({ articleId = "mage-article" }: ArticleTocProps) {
   }
 
   return (
-    <aside className="hidden lg:block w-64 flex-shrink-0 pt-6 sticky top-[94px] max-h-[calc(100vh-94px)] overflow-y-auto">
+    <aside className="hidden xl:block w-64 flex-shrink-0 pt-6 sticky top-[94px] max-h-[calc(100vh-94px)] overflow-y-auto">
       <nav>
         <h2 className="text-sm font-bold uppercase tracking-wide text-zinc-600 dark:text-zinc-400 mb-4">
           On This Page

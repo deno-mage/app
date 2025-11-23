@@ -21,7 +21,7 @@ const app = new MageApp();
 app.use(bodySize({ maxSize: 5 * 1024 * 1024 }));
 
 app.post("/upload", async (c) => {
-  const data = await c.req.body();
+  const data = await c.req.json();
   return c.json({ received: true });
 });
 

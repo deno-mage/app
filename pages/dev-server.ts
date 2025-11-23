@@ -119,6 +119,10 @@ export async function registerDevServer(
     }
   }
 
+  // Debounce reload notifications to prevent race conditions
+  // File watchers often fire multiple events for a single save
+  let reloadTimeout: number | undefined;
+
   // Watch entire rootDir for changes
   const watchCallback = async (path: string) => {
     // Rebuild asset map if public/ changed
@@ -144,8 +148,15 @@ export async function registerDevServer(
     state.bundleCache.clear();
     state.ssrBundleCache.clear();
 
-    // Notify WebSocket clients to reload
-    notifyClients();
+    // Debounce client notification to prevent race conditions
+    // where cache is cleared while browser is fetching bundles
+    if (reloadTimeout !== undefined) {
+      clearTimeout(reloadTimeout);
+    }
+    reloadTimeout = setTimeout(() => {
+      notifyClients();
+      reloadTimeout = undefined;
+    }, 100);
   };
 
   state.watchers = watchDirectories(
@@ -419,6 +430,10 @@ export async function registerDevServer(
 
   // Return cleanup function
   return () => {
+    // Clear any pending reload timeout
+    if (reloadTimeout !== undefined) {
+      clearTimeout(reloadTimeout);
+    }
     for (const watcher of state.watchers) {
       watcher.abort();
     }

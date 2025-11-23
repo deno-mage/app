@@ -143,20 +143,24 @@ catch-all error handler.
 ### Custom Error Handling
 
 ```typescript
-import { MageApp } from "@mage/app";
+import { MageApp, MageError } from "@mage/app";
 import { timeout } from "@mage/timeout";
 
 const app = new MageApp();
 
-app.use(timeout({ ms: 30000 }));
-
-// Handle timeout errors specifically
-app.onError((err, c) => {
-  if (err.status === 408) {
-    return c.json({ error: "Request took too long. Please try again." }, 408);
+// Custom error handling middleware
+app.use(async (c, next) => {
+  try {
+    await next();
+  } catch (err) {
+    if (err instanceof MageError && err.status === 408) {
+      return c.json({ error: "Request took too long. Please try again." }, 408);
+    }
+    throw err;
   }
-  throw err;
 });
+
+app.use(timeout({ ms: 30000 }));
 
 app.get("/api/search", async (c) => {
   const results = await searchDatabase();
