@@ -40,7 +40,7 @@ const navigationItems = [
   },
   {
     title: "Utilities",
-    items: [{ label: "Cookies", href: "/advanced/cookies" }],
+    items: [{ label: "Cookies", href: "/utilities/cookies" }],
   },
   {
     title: "Advanced",
