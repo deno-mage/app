@@ -82,11 +82,8 @@ export default function ArticleLayout(props: LayoutProps) {
             data-mage-content
             className="flex-1 min-w-0 prose dark:prose-invert px-6 lg:px-0 pt-6"
             dangerouslySetInnerHTML={{ __html: props.html }}
-          >
-          </article>
-          <aside className="hidden lg:block w-64 flex-shrink-0 pt-6">
-            <ArticleToc />
-          </aside>
+          />
+          <ArticleToc />
         </div>
       </main>
       <Footer />

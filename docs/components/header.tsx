@@ -35,8 +35,8 @@ const NavListItem = (props: NavItemProps) => {
 
 export const Header = () => {
   return (
-    <header className="sticky top-0 z-50 bg-zinc-100  dark:bg-zinc-800 px-6 border-b border-b-zinc-300 dark:border-b-zinc-700 mb-6">
-      <nav className="flex justify-between items-center">
+    <header className="h-[94px] sticky top-0 z-50 bg-zinc-100  dark:bg-zinc-800 px-6 border-b border-b-zinc-300 dark:border-b-zinc-700">
+      <nav className="flex justify-between items-center mx-auto max-w-[1280px]">
         <ul>
           <NavListItem>
             <Link href="/">

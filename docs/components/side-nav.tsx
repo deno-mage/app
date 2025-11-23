@@ -48,6 +48,20 @@ export function SideNav({ items }: SideNavProps) {
     return () => mediaQuery.removeEventListener("change", handleChange);
   }, []);
 
+  useEffect(() => {
+    // Listen for escape key to close nav
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isOpen) {
+        setIsOpen(false);
+      }
+    };
+
+    globalThis.addEventListener("keydown", handleKeyDown);
+    return () => {
+      globalThis.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen]);
+
   const toggleNav = () => {
     setIsOpen(!isOpen);
   };
@@ -63,21 +77,16 @@ export function SideNav({ items }: SideNavProps) {
         type="button"
         onClick={toggleNav}
         aria-label={isOpen ? "Close navigation" : "Open navigation"}
-        className={`lg:hidden fixed top-24 z-40 bg-zinc-900 dark:bg-zinc-100 text-zinc-100 dark:text-zinc-900 p-2 rounded shadow-lg hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-all duration-300 ${
-          isOpen ? "left-[17rem]" : "left-4"
-        }`}
+        className="fixed top-[110px] z-30 right-4 cursor-pointer lg:hidden bg-zinc-100 dark:bg-zinc-300 text-zinc-900 dark:text-zinc-900 p-2 rounded shadow-lg hover:bg-zinc-300 dark:hover:bg-zinc-200 transition-all duration-300"
       >
         {isOpen ? <CloseIcon /> : <MenuIcon />}
       </button>
 
       {/* Navigation sidebar */}
       <aside
-        className={`
-          fixed lg:sticky top-20 left-0 h-[calc(100vh-5rem)] w-64
-          bg-zinc-50 dark:bg-zinc-900 border-r border-zinc-300 dark:border-zinc-700
-          overflow-y-auto transition-transform duration-300 z-30
-          ${isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
-        `}
+        className={`fixed lg:sticky top-[94px] bottom-0 z-30 w-64 flex-shrink-0 h-[calc(100vh-94px)] bg-zinc-50 dark:bg-zinc-900 border-r border-zinc-300 dark:border-zinc-700 overflow-y-auto transition-transform duration-300 ${
+          isOpen ? "block" : "hidden lg:block"
+        }`}
       >
         <nav className="p-4">
           <ul className="space-y-1">
@@ -134,7 +143,7 @@ export function SideNav({ items }: SideNavProps) {
       {/* Overlay for mobile when open */}
       {isOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-20"
+          className="fixed top-[94px] lg:hidden fixed inset-0 bg-black bg-opacity-50 z-20"
           onClick={toggleNav}
         />
       )}
