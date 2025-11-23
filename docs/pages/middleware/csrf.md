@@ -1,7 +1,6 @@
 ---
 title: "CSRF"
 description: "Prevent Cross-Site Request Forgery attacks with Fetch Metadata and Origin validation"
-layout: "article"
 ---
 
 # CSRF
@@ -73,13 +72,15 @@ If your application is served from multiple domains, specify all allowed
 origins:
 
 ```typescript
-app.use(csrf({
-  origin: [
-    "https://example.com",
-    "https://app.example.com",
-    "https://staging.example.com",
-  ],
-}));
+app.use(
+  csrf({
+    origin: [
+      "https://example.com",
+      "https://app.example.com",
+      "https://staging.example.com",
+    ],
+  }),
+);
 ```
 
 ### Custom Origin Validation
@@ -88,21 +89,23 @@ For complex scenarios, use a custom validation function to determine allowed
 origins dynamically:
 
 ```typescript
-app.use(csrf({
-  origin: (origin, context) => {
-    // Allow any subdomain of example.com
-    if (origin.endsWith(".example.com") || origin === "https://example.com") {
-      return true;
-    }
+app.use(
+  csrf({
+    origin: (origin, context) => {
+      // Allow any subdomain of example.com
+      if (origin.endsWith(".example.com") || origin === "https://example.com") {
+        return true;
+      }
 
-    // Allow localhost in development
-    if (context.env === "development" && origin === "http://localhost:3000") {
-      return true;
-    }
+      // Allow localhost in development
+      if (context.env === "development" && origin === "http://localhost:3000") {
+        return true;
+      }
 
-    return false;
-  },
-}));
+      return false;
+    },
+  }),
+);
 ```
 
 ### Allowing Same-Site Requests
@@ -111,9 +114,11 @@ Some applications serve content from multiple subdomains that should trust each
 other. Use `same-site` to allow requests between subdomains:
 
 ```typescript
-app.use(csrf({
-  secFetchSite: "same-site",
-}));
+app.use(
+  csrf({
+    secFetchSite: "same-site",
+  }),
+);
 ```
 
 This allows requests where the origin is on the same registrable domain (e.g.,
@@ -124,21 +129,23 @@ This allows requests where the origin is on the same registrable domain (e.g.,
 For advanced scenarios, validate the Fetch Metadata header with custom logic:
 
 ```typescript
-app.use(csrf({
-  secFetchSite: (secFetchSite, context) => {
-    // Allow same-origin in all environments
-    if (secFetchSite === "same-origin") {
-      return true;
-    }
+app.use(
+  csrf({
+    secFetchSite: (secFetchSite, context) => {
+      // Allow same-origin in all environments
+      if (secFetchSite === "same-origin") {
+        return true;
+      }
 
-    // Allow same-site cross-origin requests in development
-    if (context.env === "development" && secFetchSite === "same-site") {
-      return true;
-    }
+      // Allow same-site cross-origin requests in development
+      if (context.env === "development" && secFetchSite === "same-site") {
+        return true;
+      }
 
-    return false;
-  },
-}));
+      return false;
+    },
+  }),
+);
 ```
 
 ## Security Considerations

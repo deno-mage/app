@@ -1,7 +1,6 @@
 ---
 title: "Error Handling"
 description: "Error handling with MageError and custom error middleware"
-layout: "article"
 ---
 
 # Error Handling
@@ -182,16 +181,10 @@ app.use(async (c, next) => {
 
     // Return appropriate response
     if (error instanceof MageError) {
-      return c.json(
-        { error: error.message },
-        error.status,
-      );
+      return c.json({ error: error.message }, error.status);
     }
 
-    return c.json(
-      { error: "Internal Server Error" },
-      500,
-    );
+    return c.json({ error: "Internal Server Error" }, 500);
   }
 });
 
@@ -223,11 +216,7 @@ async function fetchUserData(id: string) {
   try {
     return await externalApi.getUser(id);
   } catch (error) {
-    throw new MageError(
-      "Failed to fetch user data",
-      502,
-      { cause: error },
-    );
+    throw new MageError("Failed to fetch user data", 502, { cause: error });
   }
 }
 

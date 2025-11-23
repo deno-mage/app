@@ -7,7 +7,6 @@ describe("markdown - frontmatter parsing", () => {
     const markdown = `---
 title: Test Page
 description: A test page
-layout: article
 ---
 
 # Hello World`;

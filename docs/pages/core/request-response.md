@@ -1,7 +1,6 @@
 ---
 title: "Request & Response"
 description: "MageRequest and MageResponse wrappers around Web APIs"
-layout: "article"
 ---
 
 # Request & Response
@@ -216,13 +215,13 @@ pattern.
 
 #### Properties
 
-| Property   | Type                        | Description                             |
-| ---------- | --------------------------- | --------------------------------------- |
-| `raw`      | `Request`                   | Underlying Web API Request object       |
-| `url`      | `URL`                       | Parsed URL object                       |
-| `method`   | `string`                    | HTTP method (GET, POST, etc.)           |
-| `params`   | `{ [key: string]: string }` | Route parameters matched by router      |
-| `wildcard` | `string \| undefined`       | Wildcard path segment (if route uses *) |
+| Property   | Type                        | Description                              |
+| ---------- | --------------------------- | ---------------------------------------- |
+| `raw`      | `Request`                   | Underlying Web API Request object        |
+| `url`      | `URL`                       | Parsed URL object                        |
+| `method`   | `string`                    | HTTP method (GET, POST, etc.)            |
+| `params`   | `{ [key: string]: string }` | Route parameters matched by router       |
+| `wildcard` | `string \| undefined`       | Wildcard path segment (if route uses \*) |
 
 #### Methods
 

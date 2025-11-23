@@ -4,6 +4,7 @@ import { Footer } from "../components/footer.tsx";
 import { Header } from "../components/header.tsx";
 import { ArticleToc } from "../components/article-toc.tsx";
 import { SideNav } from "../components/side-nav.tsx";
+import { useEffect } from "preact/hooks";
 
 const navigationItems = [
   { label: "Introduction", href: "/" },
@@ -51,20 +52,25 @@ const navigationItems = [
     items: [
       { label: "Overview", href: "/pages/overview" },
       { label: "Getting started", href: "/pages/getting-started" },
-      { label: "Routing", href: "/pages/routing" },
-      { label: "Markdown pages", href: "/pages/markdown-pages" },
+      { label: "Markdown", href: "/pages/markdown" },
       { label: "Layouts", href: "/pages/layouts" },
       { label: "Styles", href: "/pages/styles" },
-      { label: "Static assets", href: "/pages/static-assets" },
-      { label: "Head management", href: "/pages/head-management" },
-      { label: "HTML", href: "/pages/html" },
-      { label: "Not found", href: "/pages/not-found" },
-      { label: "Error", href: "/pages/error" },
+      { label: "Assets", href: "/pages/assets" },
+      { label: "HTML template", href: "/pages/html-template" },
+      { label: "Error pages", href: "/pages/error-pages" },
     ],
   },
 ];
 
 export default function ArticleLayout(props: LayoutProps) {
+  useEffect(() => {
+    // Scroll to the main content area, respecting scroll-padding-top
+    const main = document.querySelector("main");
+    if (main) {
+      main.scrollIntoView({ behavior: "instant", block: "start" });
+    }
+  }, [props.title]);
+
   return (
     <>
       <Head>

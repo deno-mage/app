@@ -1,7 +1,6 @@
 ---
 title: "Body Size"
 description: "Limit request body size to prevent DoS attacks and memory exhaustion"
-layout: article
 ---
 
 # Body Size

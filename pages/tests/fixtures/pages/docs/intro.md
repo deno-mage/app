@@ -1,7 +1,6 @@
 ---
 title: Introduction
 description: Getting started guide
-layout: article
 ---
 
 # Introduction

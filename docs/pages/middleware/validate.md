@@ -1,7 +1,6 @@
 ---
 title: "Validate"
 description: "Validate request data with Standard Schema support"
-layout: "article"
 ---
 
 # Validate

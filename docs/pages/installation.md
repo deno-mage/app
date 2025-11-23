@@ -1,14 +1,13 @@
 ---
 title: "Installation"
 description: "Install Mage and set up your development environment"
-layout: "article"
 ---
 
 # Installation
 
 ## Prerequisites
 
-Mage requires [Deno](https://deno.land/) 2.0 or later.
+Mage requires [Deno](https://deno.com) 2.0 or later.
 
 ```bash
 # Install Deno (macOS/Linux)

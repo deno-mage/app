@@ -1,7 +1,6 @@
 ---
 title: "MageContext"
 description: "The context object passed to middleware and handlers"
-layout: "article"
 ---
 
 # MageContext

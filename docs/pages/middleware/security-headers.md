@@ -1,7 +1,6 @@
 ---
 title: "Security Headers"
 description: "Set common security headers to protect against attacks"
-layout: "article"
 ---
 
 # Security Headers
@@ -35,7 +34,7 @@ safe defaults.
 
 Sets multiple HTTP security headers to instruct browsers on content handling.
 Includes CSP, cross-origin policies, HSTS, referrer policy, feature permissions,
-and legacy X-* headers. See
+and legacy X-\* headers. See
 [OWASP: Security Headers](https://owasp.org/www-project-secure-headers/) for
 details.
 
@@ -89,10 +88,12 @@ This sets all headers with safe defaults. You get protection against:
 Control how much referrer information is sent to other sites:
 
 ```typescript
-app.use(...securityHeaders({
-  // Send only the origin, no path information
-  referrerPolicy: "strict-origin-when-cross-origin",
-}));
+app.use(
+  ...securityHeaders({
+    // Send only the origin, no path information
+    referrerPolicy: "strict-origin-when-cross-origin",
+  }),
+);
 ```
 
 **Policy options:**
@@ -109,14 +110,18 @@ app.use(...securityHeaders({
 Prevent your site from being embedded in frames on other domains:
 
 ```typescript
-app.use(...securityHeaders({
-  xFrameOptions: "DENY", // Never allow framing
-}));
+app.use(
+  ...securityHeaders({
+    xFrameOptions: "DENY", // Never allow framing
+  }),
+);
 
 // Or allow same-origin framing
-app.use(...securityHeaders({
-  xFrameOptions: "SAMEORIGIN", // Allow framing only from your domain
-}));
+app.use(
+  ...securityHeaders({
+    xFrameOptions: "SAMEORIGIN", // Allow framing only from your domain
+  }),
+);
 ```
 
 Use `"DENY"` for maximum security. Use `"SAMEORIGIN"` if your application needs
@@ -127,14 +132,16 @@ to be framed by your own pages.
 Control access to sensitive browser features like geolocation and camera:
 
 ```typescript
-app.use(...securityHeaders({
-  permissionsPolicy: {
-    geolocation: ["self"], // Allow geolocation only for your origin
-    camera: ["none"], // Disable camera entirely
-    microphone: ["self", "https://trusted-service.com"], // Allow specific services
-    payment: [], // Disable payment request API
-  },
-}));
+app.use(
+  ...securityHeaders({
+    permissionsPolicy: {
+      geolocation: ["self"], // Allow geolocation only for your origin
+      camera: ["none"], // Disable camera entirely
+      microphone: ["self", "https://trusted-service.com"], // Allow specific services
+      payment: [], // Disable payment request API
+    },
+  }),
+);
 ```
 
 Features you might want to restrict:
@@ -154,10 +161,12 @@ Use `["none"]` or `[]` to disable, `["self"]` to allow only your origin, or
 Enforce HTTPS with longer cache duration:
 
 ```typescript
-app.use(...securityHeaders({
-  // Cache for 2 years, include subdomains, add to preload list
-  strictTransportSecurity: "max-age=63072000; includeSubDomains; preload",
-}));
+app.use(
+  ...securityHeaders({
+    // Cache for 2 years, include subdomains, add to preload list
+    strictTransportSecurity: "max-age=63072000; includeSubDomains; preload",
+  }),
+);
 ```
 
 **HSTS options:**
@@ -171,18 +180,20 @@ app.use(...securityHeaders({
 Override Content-Security-Policy with a stricter policy:
 
 ```typescript
-app.use(...securityHeaders({
-  csp: {
-    directives: {
-      defaultSrc: ["'none'"],
-      scriptSrc: ["'self'"],
-      styleSrc: ["'self'"],
-      imgSrc: ["'self'", "https:"],
-      fontSrc: ["'self'"],
-      connectSrc: ["'self'"],
+app.use(
+  ...securityHeaders({
+    csp: {
+      directives: {
+        defaultSrc: ["'none'"],
+        scriptSrc: ["'self'"],
+        styleSrc: ["'self'"],
+        imgSrc: ["'self'", "https:"],
+        fontSrc: ["'self'"],
+        connectSrc: ["'self'"],
+      },
     },
-  },
-}));
+  }),
+);
 ```
 
 See the [CSP middleware](/middleware/csp) documentation for detailed information
@@ -193,9 +204,11 @@ about Content Security Policy configuration.
 Prevent attackers from learning about your server software:
 
 ```typescript
-app.use(...securityHeaders({
-  removeXPoweredBy: true, // Remove X-Powered-By (default)
-}));
+app.use(
+  ...securityHeaders({
+    removeXPoweredBy: true, // Remove X-Powered-By (default)
+  }),
+);
 
 // X-Powered-By headers will be removed from all responses
 ```
@@ -209,12 +222,14 @@ tech stack.
 Only override what you need:
 
 ```typescript
-app.use(...securityHeaders({
-  xFrameOptions: "DENY",
-  permissionsPolicy: {
-    geolocation: ["none"],
-  },
-}));
+app.use(
+  ...securityHeaders({
+    xFrameOptions: "DENY",
+    permissionsPolicy: {
+      geolocation: ["none"],
+    },
+  }),
+);
 ```
 
 All other headers use their defaults. This is the recommended approach for most

@@ -142,7 +142,6 @@ No extensions in URLs, no routing configuration needed.
 ---
 title: "Getting Started"
 description: "Learn the basics"
-layout: "article"
 ---
 
 # Getting Started

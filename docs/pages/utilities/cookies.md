@@ -1,7 +1,6 @@
 ---
 title: "Cookies"
 description: "Set, get, and delete HTTP cookies with optional signing"
-layout: article
 ---
 
 # Cookies

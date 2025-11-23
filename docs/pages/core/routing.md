@@ -1,7 +1,6 @@
 ---
 title: "Routing"
 description: "Route patterns, matching, and URL parameter extraction in Mage"
-layout: "article"
 ---
 
 # Routing

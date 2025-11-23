@@ -1,7 +1,6 @@
 ---
 title: "MageApp"
 description: "The main class for creating and running Mage applications"
-layout: "article"
 ---
 
 # MageApp
@@ -142,10 +141,13 @@ Deno.serve(app.handler);
 Configure the server with options:
 
 ```typescript
-Deno.serve({
-  port: 3000,
-  hostname: "0.0.0.0",
-}, app.handler);
+Deno.serve(
+  {
+    port: 3000,
+    hostname: "0.0.0.0",
+  },
+  app.handler,
+);
 ```
 
 ## Automatic Behavior

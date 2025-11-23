@@ -1,7 +1,6 @@
 ---
 title: "Timeout"
 description: "Abort requests that take too long to process"
-layout: "article"
 ---
 
 # Timeout
@@ -154,10 +153,7 @@ app.use(timeout({ ms: 30000 }));
 // Handle timeout errors specifically
 app.onError((err, c) => {
   if (err.status === 408) {
-    return c.json(
-      { error: "Request took too long. Please try again." },
-      408,
-    );
+    return c.json({ error: "Request took too long. Please try again." }, 408);
   }
   throw err;
 });

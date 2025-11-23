@@ -1,7 +1,6 @@
 ---
 title: "Not found"
 description: "Learn about Mage, a modern web framework for Deno"
-layout: "article"
 ---
 
 # 404 - Not Found

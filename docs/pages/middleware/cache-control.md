@@ -1,7 +1,6 @@
 ---
 title: "Cache Control"
 description: "Set HTTP Cache-Control headers to control how browsers and CDNs cache your responses"
-layout: article
 ---
 
 # Cache Control
