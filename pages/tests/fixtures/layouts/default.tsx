@@ -13,7 +13,7 @@ export default function DefaultLayout(props: LayoutProps) {
       </Head>
 
       <article
-        data-mage-layout="true"
+        data-mage-content="true"
         dangerouslySetInnerHTML={{ __html: props.html }}
       />
     </>

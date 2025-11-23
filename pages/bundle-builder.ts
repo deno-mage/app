@@ -76,7 +76,7 @@ if (!appRoot) {
   console.error("[Mage Pages] Failed to find #app element - hydration aborted");
   // Page still works with SSR'd content, just no interactivity
 } else {
-  const layoutContainer = appRoot.querySelector('[data-mage-layout="true"]');
+  const layoutContainer = appRoot.querySelector('[data-mage-content="true"]');
 
   const props = {
     ...window.__PAGE_PROPS__,

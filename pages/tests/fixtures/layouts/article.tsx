@@ -14,7 +14,7 @@ export default function ArticleLayout(props: LayoutProps) {
       <article>
         <h1>{props.title}</h1>
         <div
-          data-mage-layout="true"
+          data-mage-content="true"
           dangerouslySetInnerHTML={{ __html: props.html }}
         />
       </article>

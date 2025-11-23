@@ -39,7 +39,7 @@ describe("html-template - loading", () => {
     expect(html).toContain("<!DOCTYPE html>");
     expect(html).toContain("<title>Default</title>");
     expect(html).toContain("<p>Body content</p>");
-    expect(html).toContain('<div id="app" data-mage-layout="true">');
+    expect(html).toContain('<div id="app" data-mage-content="true">');
   });
 
   it("should throw error when _html.tsx exists but has no default export", async () => {
@@ -84,7 +84,7 @@ describe("html-template - injection", () => {
       "/__bundles/test.js",
     );
 
-    expect(html).toContain('<div id="app" data-mage-layout="true">');
+    expect(html).toContain('<div id="app" data-mage-content="true">');
     expect(html).toContain("<main><h1>Hello</h1><p>World</p></main>");
     expect(html).toContain("</div>");
   });
@@ -175,7 +175,7 @@ describe("html-template - custom template", () => {
     expect(html).toContain("<title>Custom</title>");
     expect(html).toContain("<div>Custom body</div>");
     // Injected elements should still be present
-    expect(html).toContain('<div id="app" data-mage-layout="true">');
+    expect(html).toContain('<div id="app" data-mage-content="true">');
     expect(html).toContain("window.__PAGE_PROPS__");
   });
 
