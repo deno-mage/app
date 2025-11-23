@@ -2,7 +2,8 @@ import { useEffect, useState } from "preact/hooks";
 import { CloseIcon } from "./icons/close.tsx";
 import { MenuIcon } from "./icons/menu.tsx";
 
-const normalizePath = (path: string) => path.replace(/\/+$/, "") || "/";
+const normalizePath = (path?: string) =>
+  path === "/" ? "/" : path?.replace(/\/+$/, "");
 
 interface NavItem {
   label: string;
@@ -31,7 +32,7 @@ function isNavGroup(entry: NavEntry): entry is NavGroup {
  */
 export function SideNav({ items }: SideNavProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [currentPath, setCurrentPath] = useState("");
+  const [currentPath, setCurrentPath] = useState<string>();
 
   useEffect(() => {
     // Set current pathname
