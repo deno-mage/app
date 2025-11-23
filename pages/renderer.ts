@@ -61,7 +61,9 @@ export async function renderPage(
   const { assetMap, bundleUrl, stylesheetUrl, ssrBundle } = options;
 
   // Parse markdown and render to HTML
-  const { frontmatter, html: contentHtml } = parseAndRender(markdownContent);
+  const { frontmatter, html: contentHtml } = await parseAndRender(
+    markdownContent,
+  );
 
   // Load the appropriate layout:
   // - Dev mode: Use SSR bundle (bypasses Deno module cache for hot reload)

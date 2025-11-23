@@ -207,7 +207,7 @@ console.log(x);
 });
 
 describe("markdown - parseAndRender", () => {
-  it("should parse frontmatter and render markdown in one step", () => {
+  it("should parse frontmatter and render markdown in one step", async () => {
     const markdown = `---
 title: Combined Test
 description: Testing combined operation
@@ -217,7 +217,7 @@ description: Testing combined operation
 
 This is **bold** text.`;
 
-    const result = parseAndRender(markdown);
+    const result = await parseAndRender(markdown);
 
     expect(result.frontmatter.title).toBe("Combined Test");
     expect(result.frontmatter.description).toBe("Testing combined operation");
@@ -226,12 +226,12 @@ This is **bold** text.`;
     expect(result.html).toContain("<strong>bold</strong>");
   });
 
-  it("should handle markdown without frontmatter", () => {
+  it("should handle markdown without frontmatter", async () => {
     const markdown = `# Simple Content
 
 No frontmatter.`;
 
-    const result = parseAndRender(markdown);
+    const result = await parseAndRender(markdown);
 
     expect(result.frontmatter.title).toBe("");
     expect(result.html).toContain("<h1");
