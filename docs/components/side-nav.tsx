@@ -54,51 +54,33 @@ export function SideNav({ items }: SideNavProps) {
   useEffect(() => {
     // Scroll to active link in sidebar
     if (currentPath) {
-      const performScroll = () => {
-        // Wait for layout to be complete before measuring
-        requestAnimationFrame(() => {
-          const aside = document.querySelector("aside");
-          const activeLink = document.querySelector(
-            `aside nav a[href="${currentPath}"]`,
-          ) as HTMLElement;
+      // Wait for layout to be complete before measuring
+      requestAnimationFrame(() => {
+        const aside = document.querySelector("aside");
+        // Normalize path to match how hrefs are stored (without trailing slashes)
+        const normalizedPath = normalizePath(currentPath);
+        const activeLink = document.querySelector(
+          `aside nav a[href="${normalizedPath}"]`,
+        ) as HTMLElement;
 
-          if (aside && activeLink) {
-            const asideRect = aside.getBoundingClientRect();
-            const linkRect = activeLink.getBoundingClientRect();
+        if (aside && activeLink) {
+          const asideRect = aside.getBoundingClientRect();
+          const linkRect = activeLink.getBoundingClientRect();
 
-            const isVisible = linkRect.top >= asideRect.top &&
-              linkRect.bottom <= asideRect.bottom;
+          const isVisible = linkRect.top >= asideRect.top &&
+            linkRect.bottom <= asideRect.bottom;
 
-            if (!isVisible) {
-              const relativeTop = linkRect.top - asideRect.top;
-              const scrollTop = aside.scrollTop +
-                relativeTop -
-                asideRect.height / 2 +
-                linkRect.height / 2;
+          if (!isVisible) {
+            const relativeTop = linkRect.top - asideRect.top;
+            const scrollTop = aside.scrollTop +
+              relativeTop -
+              asideRect.height / 2 +
+              linkRect.height / 2;
 
-              aside.scrollTo({ top: scrollTop, behavior: "smooth" });
-            }
+            aside.scrollTo({ top: scrollTop, behavior: "smooth" });
           }
-        });
-      };
-
-      // Wait for all resources (including CSS) to be loaded before scrolling
-      // This prevents race conditions in production where CSS might not be applied yet
-      if (document.readyState === "complete") {
-        // All resources already loaded
-        performScroll();
-      } else {
-        // Wait for the load event (fires when all resources including CSS are loaded)
-        const handleLoad = () => {
-          performScroll();
-          globalThis.removeEventListener("load", handleLoad);
-        };
-        globalThis.addEventListener("load", handleLoad);
-
-        return () => {
-          globalThis.removeEventListener("load", handleLoad);
-        };
-      }
+        }
+      });
     }
   }, [currentPath]);
 
