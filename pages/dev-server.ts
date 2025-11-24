@@ -225,6 +225,7 @@ export async function registerDevServer(
             bundleUrl,
             stylesheetUrl: state.stylesheetUrl,
             ssrBundle,
+            markdownOptions: options.markdownOptions,
           },
         );
 
@@ -290,6 +291,7 @@ export async function registerDevServer(
           bundleUrl,
           stylesheetUrl: state.stylesheetUrl,
           ssrBundle,
+          markdownOptions: options.markdownOptions,
         },
       );
 
@@ -345,6 +347,7 @@ export async function registerDevServer(
             bundleUrl,
             stylesheetUrl: state.stylesheetUrl,
             ssrBundle,
+            markdownOptions: options.markdownOptions,
           },
         );
 

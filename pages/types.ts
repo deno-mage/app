@@ -52,11 +52,24 @@ export interface SiteMetadata {
 }
 
 /**
+ * Options for markdown rendering.
+ */
+export interface MarkdownOptions {
+  /**
+   * Shiki theme for syntax highlighting.
+   * @default "github-dark"
+   */
+  shikiTheme?: string;
+}
+
+/**
  * Options for the pages module.
  */
 export interface PagesOptions {
   /** Site-wide metadata (only required for build, not dev server) */
   siteMetadata?: SiteMetadata;
+  /** Markdown rendering options */
+  markdownOptions?: MarkdownOptions;
 }
 
 /**
@@ -67,6 +80,8 @@ export interface DevServerOptions {
   rootDir?: string;
   /** Base path for development (e.g., "/docs/" for http://localhost:8000/docs/) */
   basePath?: string;
+  /** Markdown rendering options */
+  markdownOptions?: MarkdownOptions;
 }
 
 /**
@@ -79,6 +94,8 @@ export interface BuildOptions {
   outDir?: string;
   /** Base path for deployment (e.g., "/docs/" for https://example.com/docs/) */
   basePath?: string;
+  /** Markdown rendering options */
+  markdownOptions?: MarkdownOptions;
 }
 
 /**

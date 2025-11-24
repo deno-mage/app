@@ -39,6 +39,8 @@ export interface RenderPageOptions {
   stylesheetUrl?: string;
   /** Optional pre-bundled SSR code (bypasses layout resolution and Deno module cache) */
   ssrBundle?: string;
+  /** Markdown rendering options */
+  markdownOptions?: import("./types.ts").MarkdownOptions;
 }
 
 /**
@@ -58,11 +60,13 @@ export async function renderPage(
   rootDir: string,
   options: RenderPageOptions,
 ): Promise<RenderedPage> {
-  const { assetMap, bundleUrl, stylesheetUrl, ssrBundle } = options;
+  const { assetMap, bundleUrl, stylesheetUrl, ssrBundle, markdownOptions } =
+    options;
 
   // Parse markdown and render to HTML
   const { frontmatter, html: contentHtml } = await parseAndRender(
     markdownContent,
+    markdownOptions,
   );
 
   // Load the appropriate layout:

@@ -7,7 +7,7 @@
 import { parse as parseYaml } from "@std/yaml";
 import { render as renderMarkdown } from "@deno/gfm";
 import { codeToHtml } from "@shikijs/shiki";
-import type { Frontmatter, ParsedMarkdown } from "./types.ts";
+import type { Frontmatter, MarkdownOptions, ParsedMarkdown } from "./types.ts";
 
 /**
  * Extracts frontmatter and content from a markdown string.
@@ -53,9 +53,13 @@ export function parseFrontmatter(markdown: string): ParsedMarkdown {
 /**
  * Extracts code blocks from markdown, highlights them, and replaces with placeholders.
  *
+ * @param options Markdown rendering options including Shiki theme
  * @returns Object with processed markdown and map of placeholders to highlighted HTML
  */
-async function extractAndHighlightCodeBlocks(markdown: string): Promise<{
+async function extractAndHighlightCodeBlocks(
+  markdown: string,
+  options?: MarkdownOptions,
+): Promise<{
   processedMarkdown: string;
   replacements: Map<string, string>;
 }> {
@@ -68,6 +72,7 @@ async function extractAndHighlightCodeBlocks(markdown: string): Promise<{
 
   const replacements = new Map<string, string>();
   let processedMarkdown = markdown;
+  const theme = options?.shikiTheme || "github-dark";
 
   // Process each code block
   for (let i = 0; i < matches.length; i++) {
@@ -79,7 +84,7 @@ async function extractAndHighlightCodeBlocks(markdown: string): Promise<{
     try {
       const highlighted = await codeToHtml(code.trim(), {
         lang: lang || "text",
-        theme: "github-dark",
+        theme,
       });
 
       replacements.set(`<p>${placeholder}</p>`, highlighted);
@@ -99,14 +104,21 @@ async function extractAndHighlightCodeBlocks(markdown: string): Promise<{
 /**
  * Renders markdown content to HTML with syntax highlighting.
  *
- * Extracts code blocks, highlights them with Shiki (dual theme support),
+ * Extracts code blocks, highlights them with Shiki,
  * renders remaining markdown with @deno/gfm, then reinserts highlighted code.
+ *
+ * @param markdown Markdown content to render
+ * @param options Markdown rendering options including Shiki theme
  */
-export async function renderToHtml(markdown: string): Promise<string> {
+export async function renderToHtml(
+  markdown: string,
+  options?: MarkdownOptions,
+): Promise<string> {
   // Extract and highlight code blocks first
   const { processedMarkdown, replacements } =
     await extractAndHighlightCodeBlocks(
       markdown,
+      options,
     );
 
   // Render markdown without code blocks
@@ -127,14 +139,18 @@ export async function renderToHtml(markdown: string): Promise<string> {
  * Combines frontmatter extraction and markdown rendering into a single operation.
  *
  * @param markdown Raw markdown content with optional frontmatter
+ * @param options Markdown rendering options including Shiki theme
  * @throws Error if frontmatter is invalid or markdown cannot be rendered
  */
-export async function parseAndRender(markdown: string): Promise<{
+export async function parseAndRender(
+  markdown: string,
+  options?: MarkdownOptions,
+): Promise<{
   frontmatter: Frontmatter;
   html: string;
 }> {
   const { frontmatter, content } = parseFrontmatter(markdown);
-  const html = await renderToHtml(content);
+  const html = await renderToHtml(content, options);
 
   return {
     frontmatter,
