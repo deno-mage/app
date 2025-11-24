@@ -70,11 +70,15 @@ interface LayoutProps {
 ```markdown
 ---
 title: "Blog Post"
+layout: "blog"
 author: "Jane Doe"
 date: "2024-01-15"
 tags: ["preact", "typescript"]
 ---
 ```
+
+Note: `title`, `description`, and `layout` are extracted as top-level props. All
+other fields go into `additionalFrontmatter`.
 
 ```tsx
 export default function BlogLayout({
@@ -281,13 +285,35 @@ export default function LandingLayout({ html }: LayoutProps) {
 }
 ```
 
-Specify in frontmatter:
+Specify which layout to use in frontmatter:
+
+**For `layouts/article.tsx`:**
+
+```markdown
+---
+title: "Article Title"
+layout: "article"
+---
+```
+
+**For `layouts/landing.tsx`:**
+
+```markdown
+---
+title: "Welcome"
+layout: "landing"
+---
+```
+
+**Default layout (when omitted):**
 
 ```markdown
 ---
 title: "Article Title"
 ---
 ```
+
+Pages without a `layout` field default to `layouts/default.tsx`
 
 ## Navigation
 
