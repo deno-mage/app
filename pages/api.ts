@@ -34,7 +34,7 @@ export function pages(options: PagesOptions = {}): {
     staticOptions?: StaticServerOptions,
   ) => void;
 } {
-  const { siteMetadata } = options;
+  const { siteMetadata, markdownOptions } = options;
 
   return {
     /**
@@ -51,7 +51,10 @@ export function pages(options: PagesOptions = {}): {
       app: MageApp,
       devOptions: DevServerOptions = {},
     ): Promise<() => void> {
-      return await registerDev(app, devOptions);
+      return await registerDev(app, {
+        ...devOptions,
+        markdownOptions: devOptions.markdownOptions ?? markdownOptions,
+      });
     },
 
     /**
@@ -71,7 +74,10 @@ export function pages(options: PagesOptions = {}): {
           "siteMetadata is required for build(). Provide it in pages() options.",
         );
       }
-      await buildStatic(siteMetadata, buildOptions);
+      await buildStatic(siteMetadata, {
+        ...buildOptions,
+        markdownOptions: buildOptions.markdownOptions ?? markdownOptions,
+      });
     },
 
     /**

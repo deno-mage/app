@@ -116,7 +116,12 @@ export async function build(
       const rendered = await renderPageFromFile(
         page.filePath,
         rootDir,
-        { assetMap, bundleUrl, stylesheetUrl },
+        {
+          assetMap,
+          bundleUrl,
+          stylesheetUrl,
+          markdownOptions: options.markdownOptions,
+        },
       );
 
       // Determine output file path
@@ -165,6 +170,7 @@ export async function build(
         assetMap,
         bundleUrl: `${basePath}__bundles/${notFoundBundle.filename}`,
         stylesheetUrl,
+        markdownOptions: options.markdownOptions,
       },
     );
     await Deno.writeTextFile(join(outDir, "404.html"), rendered.html);
@@ -196,6 +202,7 @@ export async function build(
         assetMap,
         bundleUrl: `${basePath}__bundles/${errorBundle.filename}`,
         stylesheetUrl,
+        markdownOptions: options.markdownOptions,
       },
     );
     await Deno.writeTextFile(join(outDir, "500.html"), rendered.html);

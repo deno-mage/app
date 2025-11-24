@@ -114,12 +114,25 @@ Pages uses [GitHub-flavored Markdown](https://github.github.com/gfm/).
 
 ### Code Blocks
 
-````markdown
+Code blocks are automatically highlighted with [Shiki](https://shiki.style). Use
+triple backticks with a language identifier:
+
 ```typescript
 const app = new MageApp();
 app.get("/", (c) => c.text("Hello"));
 ```
-````
+
+The default theme is `github-dark`. Change it in your `pages()` setup:
+
+```typescript
+const { registerDevServer, build } = pages({
+  markdownOptions: {
+    shikiTheme: "github-light",
+  },
+});
+```
+
+See [Shiki themes](https://shiki.style/themes) for available themes.
 
 ### Lists
 
@@ -201,8 +214,9 @@ error pages. See [Error Pages](/pages/error-pages) for details.
 ## Notes
 
 - Frontmatter must be valid YAML
-- Markdown is converted to HTML with [marked](https://marked.js.org/)
-- Code blocks support syntax highlighting (via CSS)
+- Markdown is converted to HTML using [@deno/gfm](https://jsr.io/@deno/gfm)
+- Code blocks are automatically highlighted with [Shiki](https://shiki.style)
+  (theme configurable via `markdownOptions`)
 - All standard GitHub-flavored Markdown features supported
 - Invalid frontmatter causes build error with line number
 

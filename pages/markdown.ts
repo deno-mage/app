@@ -6,7 +6,8 @@
 
 import { parse as parseYaml } from "@std/yaml";
 import { render as renderMarkdown } from "@deno/gfm";
-import type { Frontmatter, ParsedMarkdown } from "./types.ts";
+import { codeToHtml } from "@shikijs/shiki";
+import type { Frontmatter, MarkdownOptions, ParsedMarkdown } from "./types.ts";
 
 /**
  * Extracts frontmatter and content from a markdown string.
@@ -50,12 +51,86 @@ export function parseFrontmatter(markdown: string): ParsedMarkdown {
 }
 
 /**
- * Renders markdown content to HTML.
+ * Extracts code blocks from markdown, highlights them, and replaces with placeholders.
  *
- * Uses @deno/gfm for GitHub Flavored Markdown rendering with syntax highlighting.
+ * @param options Markdown rendering options including Shiki theme
+ * @returns Object with processed markdown and map of placeholders to highlighted HTML
  */
-export function renderToHtml(markdown: string): string {
-  return renderMarkdown(markdown);
+async function extractAndHighlightCodeBlocks(
+  markdown: string,
+  options?: MarkdownOptions,
+): Promise<{
+  processedMarkdown: string;
+  replacements: Map<string, string>;
+}> {
+  const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
+  const matches = [...markdown.matchAll(codeBlockRegex)];
+
+  if (matches.length === 0) {
+    return { processedMarkdown: markdown, replacements: new Map() };
+  }
+
+  const replacements = new Map<string, string>();
+  let processedMarkdown = markdown;
+  const theme = options?.shikiTheme || "github-dark";
+
+  // Process each code block
+  for (let i = 0; i < matches.length; i++) {
+    const match = matches[i];
+    const [fullMatch, lang, code] = match;
+    // Use span element with unique ID - @deno/gfm preserves inline HTML
+    const placeholder = `<span>SHIKI_BLOCK_${i}</span>`;
+
+    try {
+      const highlighted = await codeToHtml(code.trim(), {
+        lang: lang || "text",
+        theme,
+      });
+
+      replacements.set(`<p>${placeholder}</p>`, highlighted);
+      processedMarkdown = processedMarkdown.replace(fullMatch, placeholder);
+    } catch (error) {
+      // If highlighting fails, keep the original code block
+      console.warn(
+        `Failed to highlight code block with language ${lang}:`,
+        error,
+      );
+    }
+  }
+
+  return { processedMarkdown, replacements };
+}
+
+/**
+ * Renders markdown content to HTML with syntax highlighting.
+ *
+ * Extracts code blocks, highlights them with Shiki,
+ * renders remaining markdown with @deno/gfm, then reinserts highlighted code.
+ *
+ * @param markdown Markdown content to render
+ * @param options Markdown rendering options including Shiki theme
+ */
+export async function renderToHtml(
+  markdown: string,
+  options?: MarkdownOptions,
+): Promise<string> {
+  // Extract and highlight code blocks first
+  const { processedMarkdown, replacements } =
+    await extractAndHighlightCodeBlocks(
+      markdown,
+      options,
+    );
+
+  // Render markdown without code blocks
+  let html = renderMarkdown(processedMarkdown);
+
+  // Replace placeholders with highlighted code
+  // @deno/gfm wraps the span in a paragraph, so we match <p><span>...</span></p>
+  for (const [placeholder, highlighted] of replacements) {
+    html = html.replace(placeholder, highlighted);
+  }
+
+  return html;
 }
 
 /**
@@ -64,14 +139,18 @@ export function renderToHtml(markdown: string): string {
  * Combines frontmatter extraction and markdown rendering into a single operation.
  *
  * @param markdown Raw markdown content with optional frontmatter
+ * @param options Markdown rendering options including Shiki theme
  * @throws Error if frontmatter is invalid or markdown cannot be rendered
  */
-export function parseAndRender(markdown: string): {
+export async function parseAndRender(
+  markdown: string,
+  options?: MarkdownOptions,
+): Promise<{
   frontmatter: Frontmatter;
   html: string;
-} {
+}> {
   const { frontmatter, content } = parseFrontmatter(markdown);
-  const html = renderToHtml(content);
+  const html = await renderToHtml(content, options);
 
   return {
     frontmatter,

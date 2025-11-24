@@ -62,6 +62,7 @@
   },
   "imports": {
     "@deno/gfm": "jsr:@deno/gfm@^0.11.0",
+    "@shikijs/shiki": "jsr:@shikijs/shiki@^3.7.0",
     "@standard-schema/spec": "jsr:@standard-schema/spec@^1.0.0",
     "@std/assert": "jsr:@std/assert@^1.0.11",
     "@std/async": "jsr:@std/async@^1.0.10",

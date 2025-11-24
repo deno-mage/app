@@ -109,4 +109,61 @@ describe("api - pages factory function", () => {
     // Verify it registered successfully by checking that routes were added
     expect(app).toBeDefined();
   });
+
+  it("should forward markdownOptions from factory to build", async () => {
+    const instance = pages({
+      siteMetadata: {
+        baseUrl: "https://example.com",
+      },
+      markdownOptions: {
+        shikiTheme: "github-light",
+      },
+    });
+
+    const tempDir = await Deno.makeTempDir();
+
+    // Should not throw - markdownOptions are properly forwarded
+    await instance.build({
+      rootDir: FIXTURES_DIR,
+      outDir: tempDir,
+    });
+
+    // Verify build succeeded
+    const indexPath = join(tempDir, "index.html");
+    const indexExists = await Deno.stat(indexPath).then(
+      () => true,
+      () => false,
+    );
+    expect(indexExists).toBe(true);
+  });
+
+  it("should allow build options to override factory markdownOptions", async () => {
+    const instance = pages({
+      siteMetadata: {
+        baseUrl: "https://example.com",
+      },
+      markdownOptions: {
+        shikiTheme: "github-light",
+      },
+    });
+
+    const tempDir = await Deno.makeTempDir();
+
+    // Should not throw - build options can override factory markdownOptions
+    await instance.build({
+      rootDir: FIXTURES_DIR,
+      outDir: tempDir,
+      markdownOptions: {
+        shikiTheme: "github-dark",
+      },
+    });
+
+    // Verify build succeeded
+    const indexPath = join(tempDir, "index.html");
+    const indexExists = await Deno.stat(indexPath).then(
+      () => true,
+      () => false,
+    );
+    expect(indexExists).toBe(true);
+  });
 });

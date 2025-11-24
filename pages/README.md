@@ -156,6 +156,31 @@ Your markdown content here.
 - `layout` - Layout name (optional, defaults to "default")
 - Custom fields - Pass any data to your layouts
 
+**Syntax highlighting:**
+
+Code blocks in markdown are automatically highlighted using
+[Shiki](https://shiki.style) with the `github-dark` theme by default. Just use
+fenced code blocks with language identifiers:
+
+````markdown
+```typescript
+const app = new MageApp();
+app.get("/", (c) => c.text("Hello"));
+```
+````
+
+**Customize the theme:**
+
+```typescript
+const { registerDevServer } = pages({
+  markdownOptions: {
+    shikiTheme: "github-light", // or any Shiki theme
+  },
+});
+```
+
+See [Shiki themes](https://shiki.style/themes) for available options.
+
 ## Architecture
 
 ### HTML Template vs Layout
@@ -538,9 +563,16 @@ Factory function that returns server and build functions.
 
 **Options:**
 
-| Option         | Type     | Description                                |
-| -------------- | -------- | ------------------------------------------ |
-| `siteMetadata` | `object` | Shared metadata (title, description, etc.) |
+| Option            | Type     | Description                                   |
+| ----------------- | -------- | --------------------------------------------- |
+| `siteMetadata`    | `object` | Shared metadata (title, description, etc.)    |
+| `markdownOptions` | `object` | Markdown rendering options (shikiTheme, etc.) |
+
+**Markdown Options:**
+
+| Option       | Type     | Default         | Description                                     |
+| ------------ | -------- | --------------- | ----------------------------------------------- |
+| `shikiTheme` | `string` | `"github-dark"` | Shiki theme for syntax highlighting code blocks |
 
 **Returns:** `{ registerDevServer, build, registerStaticServer }`
 
@@ -550,10 +582,13 @@ Register development server with hot reload.
 
 **Options:**
 
-| Option     | Type     | Default | Description                        |
-| ---------- | -------- | ------- | ---------------------------------- |
-| `rootDir`  | `string` | `"./"`  | Directory containing pages/layouts |
-| `basePath` | `string` | `"/"`   | Base path to mount at              |
+| Option            | Type     | Default | Description                           |
+| ----------------- | -------- | ------- | ------------------------------------- |
+| `rootDir`         | `string` | `"./"`  | Directory containing pages/layouts    |
+| `basePath`        | `string` | `"/"`   | Base path to mount at                 |
+| `markdownOptions` | `object` | `{}`    | Markdown rendering options (optional) |
+
+Options passed here override those set in `pages()`.
 
 **Behavior:**
 
@@ -568,11 +603,14 @@ Generate static site files.
 
 **Options:**
 
-| Option     | Type     | Default           | Description                        |
-| ---------- | -------- | ----------------- | ---------------------------------- |
-| `rootDir`  | `string` | `"./"`            | Directory containing pages/layouts |
-| `outDir`   | `string` | `${rootDir}/dist` | Output directory for static files  |
-| `basePath` | `string` | `"/"`             | Base path for URLs in built site   |
+| Option            | Type     | Default           | Description                           |
+| ----------------- | -------- | ----------------- | ------------------------------------- |
+| `rootDir`         | `string` | `"./"`            | Directory containing pages/layouts    |
+| `outDir`          | `string` | `${rootDir}/dist` | Output directory for static files     |
+| `basePath`        | `string` | `"/"`             | Base path for URLs in built site      |
+| `markdownOptions` | `object` | `{}`              | Markdown rendering options (optional) |
+
+Options passed here override those set in `pages()`.
 
 **Behavior:**
 

@@ -7,10 +7,15 @@ import { SideNav } from "../components/side-nav.tsx";
 import { useEffect } from "preact/hooks";
 
 const navigationItems = [
-  { label: "Introduction", href: "/" },
-  { label: "Installation", href: "/installation" },
-  { label: "Getting started", href: "/getting-started" },
-  { label: "Philosophy", href: "/philosophy" },
+  {
+    title: "Welcome",
+    items: [
+      { label: "Introduction", href: "/" },
+      { label: "Installation", href: "/installation" },
+      { label: "Getting started", href: "/getting-started" },
+      { label: "Philosophy", href: "/philosophy" },
+    ],
+  },
   {
     title: "Core",
     items: [
