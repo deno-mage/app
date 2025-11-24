@@ -54,6 +54,8 @@ export async function build(
   siteMetadata: SiteMetadata,
   options: BuildOptions = {},
 ): Promise<void> {
+  const startTime = performance.now();
+
   const rootDir = options.rootDir ?? "./";
   const outDir = options.outDir ?? join(rootDir, "dist");
   const basePath = normalizeBasePath(options.basePath ?? "/");
@@ -222,11 +224,15 @@ export async function build(
   // Clean up esbuild
   stopBundleBuilder();
 
+  // Calculate build time
+  const endTime = performance.now();
+  const buildTime = Math.round(endTime - startTime);
+
   // Log summary
   if (errorCount > 0) {
     logger.error(new Error(`Build completed with ${errorCount} error(s)`));
   }
-  logger.info(`✓ Built ${successCount} pages to ${outDir}`);
+  logger.info(`✓ Built ${successCount} pages to ${outDir} (${buildTime}ms)`);
 }
 
 /**

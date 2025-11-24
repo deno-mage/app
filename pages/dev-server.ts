@@ -230,7 +230,7 @@ export async function registerDevServer(
         );
 
         const duration = (performance.now() - startTime).toFixed(2);
-        logger.ephemeral(`Rendered page: ${urlPath} [${duration}ms]`);
+        logger.ephemeral(`Rendered page: ${urlPath} (${duration}ms)`);
 
         // Inject hot reload script
         const reloadEndpoint = `${basePath}__reload`;
@@ -296,7 +296,7 @@ export async function registerDevServer(
       );
 
       const duration = (performance.now() - startTime).toFixed(2);
-      logger.ephemeral(`Rendered page: ${urlPath} [${duration}ms]`);
+      logger.ephemeral(`Rendered page: ${urlPath} (${duration}ms)`);
 
       // Inject hot reload script
       const reloadEndpoint = `${basePath}__reload`;
@@ -352,7 +352,7 @@ export async function registerDevServer(
         );
 
         const duration = (performance.now() - startTime).toFixed(2);
-        logger.ephemeral(`Rendered page: ${urlPath} [${duration}ms]`);
+        logger.ephemeral(`Rendered page: ${urlPath} (${duration}ms)`);
 
         // Inject hot reload script
         const reloadEndpoint = `${basePath}__reload`;
