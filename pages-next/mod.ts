@@ -28,6 +28,14 @@ export type { LoadedPage, LoadPageOptions } from "./tsx-loader.ts";
 export { LayoutLoadError, loadLayouts } from "./layout-loader.ts";
 export type { LoadedLayout, LoadLayoutsOptions } from "./layout-loader.ts";
 
+// Markdown Loader
+export { loadMarkdownPage, MarkdownLoadError } from "./md-loader.ts";
+export type { LoadedMarkdownPage, LoadMarkdownOptions } from "./md-loader.ts";
+
+// Markdown Page Component
+export { MarkdownPage } from "./markdown-page.tsx";
+export type { MarkdownPageProps } from "./markdown-page.tsx";
+
 // Head
 export { Head, HEAD_MARKER_ELEMENT } from "./head.tsx";
 export type { HeadProps } from "./head.tsx";
@@ -38,7 +46,13 @@ export type { HeadExtractionResult } from "./head-extractor.ts";
 export { composePage, composeWithLayout } from "./compositor.tsx";
 
 // Renderer
-export { HtmlTemplateError, renderToHtml, renderTsxPage } from "./renderer.tsx";
+export {
+  HtmlTemplateError,
+  renderMarkdownPage,
+  renderPage,
+  renderToHtml,
+  renderTsxPage,
+} from "./renderer.tsx";
 export type { RenderPageOptions, RenderResult } from "./renderer.tsx";
 
 // Types

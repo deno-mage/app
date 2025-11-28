@@ -1,25 +1,36 @@
 # Pages Rebuild Plan
 
-## Phase 1: Foundation
+## Phase 1: Foundation ✅
 
-- Define new types (`PageComponent`, `LayoutComponent` with `children`)
-- Create context system (`FrontmatterContext`, `useFrontmatter` hook)
-- Build default system files (`_layout.tsx`, `_html.tsx`, `_not-found.tsx`, `_error.tsx`)
-- Directory scanner for `_layout.tsx` discovery
+- [x] Define new types (`PageComponent`, `LayoutComponent` with `children`)
+- [x] Create context system (`FrontmatterContext`, `useFrontmatter` hook)
+- [x] Build default system files (`_layout.tsx`, `_html.tsx`, `_not-found.tsx`,
+      `_error.tsx`)
+- [x] Directory scanner for `_layout.tsx` discovery
 
-## Phase 2: TSX Pages
+## Phase 2: TSX Pages ✅
 
-- TSX page loader (import, validate `frontmatter` export and default component)
-- Nested layout resolver (walk up directory tree, collect `_layout.tsx` files)
-- Layout composition (wrap page in layouts, innermost first)
-- SSR with `preact-render-to-string`
+- [x] TSX page loader (import, validate `frontmatter` export and default
+      component)
+- [x] Nested layout resolver (walk up directory tree, collect `_layout.tsx`
+      files)
+- [x] Layout composition (wrap page in layouts, innermost first)
+- [x] SSR with `preact-render-to-string`
+- [x] `<Head>` component for declarative head management
+- [x] Path traversal protection on dynamic imports
+- [x] Zod validation for frontmatter
 
-## Phase 3: Markdown Pages
+## Phase 3: Markdown Pages ✅
 
-- Markdown-to-Preact transformer (AST to VNodes, not HTML strings)
-- Frontmatter extraction (YAML parsing, same schema as TSX)
-- Markdown page component wrapper (renders VNodes, provides frontmatter context)
-- Syntax highlighting integration (Shiki, same as current)
+- [x] Markdown loader (`md-loader.ts`) - reads file, extracts frontmatter,
+      validates with Zod
+- [x] Frontmatter extraction (YAML parsing, same schema as TSX)
+- [x] Markdown page component (`MarkdownPage.tsx`) - wraps HTML in composable
+      VNode
+- [x] Syntax highlighting integration (Shiki via `@deno/gfm`)
+- [x] Unified `renderPage()` function - auto-detects .tsx or .md and renders
+      appropriately
+- [x] Path traversal protection on markdown loading
 
 ## Phase 4: Hydration
 

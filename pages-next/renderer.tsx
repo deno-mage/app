@@ -6,30 +6,36 @@
 
 import { render as preactRender } from "preact-render-to-string";
 import type { VNode } from "preact";
-import { dirname, relative } from "@std/path";
+import { dirname, extname, relative } from "@std/path";
 import { composePage } from "./compositor.tsx";
 import { extractHeadContent } from "./head-extractor.ts";
 import { loadLayouts } from "./layout-loader.ts";
+import { loadMarkdownPage } from "./md-loader.ts";
+import { MarkdownPage } from "./markdown-page.tsx";
 import { getLayoutsForPage } from "./scanner.ts";
 import { loadTsxPage } from "./tsx-loader.ts";
 import type {
+  Frontmatter,
   HtmlTemplateComponent,
   LayoutInfo,
+  MarkdownOptions,
   SystemFiles,
 } from "./types.ts";
 import DefaultHtml from "./defaults/_html.tsx";
 import DefaultLayout from "./defaults/_layout.tsx";
 
 /**
- * Options for rendering a TSX page.
+ * Options for rendering a page (TSX or Markdown).
  */
 export interface RenderPageOptions {
-  /** Absolute path to the TSX page file */
+  /** Absolute path to the page file (.tsx or .md) */
   pagePath: string;
   /** Absolute path to the pages directory */
   pagesDir: string;
   /** Discovered system files (layouts, templates, etc.) */
   systemFiles: SystemFiles;
+  /** Markdown rendering options (only used for .md files) */
+  markdownOptions?: MarkdownOptions;
 }
 
 /**
@@ -143,43 +149,18 @@ function injectHeadContent(html: string, headContent: string): string {
 }
 
 /**
- * Renders a TSX page to a complete HTML document.
+ * Shared rendering logic for both TSX and Markdown pages.
  *
- * This is the main rendering orchestration function that:
- * 1. Loads the TSX page component and validates its frontmatter
- * 2. Resolves and loads applicable layouts (nested by directory)
- * 3. Composes the page with layouts and FrontmatterProvider
- * 4. Wraps in HTML template (_html.tsx or default)
- * 5. Renders the full document to HTML via preact-render-to-string
- * 6. Extracts Head component markers and injects content into <head>
- *
- * **Security notes:**
- * - Page and layout paths are validated to prevent path traversal attacks
- *
- * @param options Render options
- * @returns Complete HTML document and page metadata
- *
- * @example
- * ```typescript
- * const systemFiles = await scanSystemFiles(pagesDir);
- * const result = await renderTsxPage({
- *   pagePath: "/app/pages/docs/getting-started.tsx",
- *   pagesDir: "/app/pages",
- *   systemFiles,
- * });
- *
- * console.log(result.html); // <!DOCTYPE html><html>...
- * console.log(result.frontmatter.title); // "Getting Started"
- * ```
+ * Takes a page element and frontmatter, composes with layouts,
+ * wraps in HTML template, and renders to final HTML.
  */
-export async function renderTsxPage(
-  options: RenderPageOptions,
+async function renderPageInternal(
+  pageElement: VNode,
+  frontmatter: Frontmatter,
+  pagePath: string,
+  pagesDir: string,
+  systemFiles: SystemFiles,
 ): Promise<RenderResult> {
-  const { pagePath, pagesDir, systemFiles } = options;
-
-  // Load the page (with path validation)
-  const page = await loadTsxPage({ filePath: pagePath, pagesDir });
-
   // Get applicable layouts
   const layoutInfos = getApplicableLayouts(pagePath, pagesDir, systemFiles);
 
@@ -192,18 +173,14 @@ export async function renderTsxPage(
   // Load HTML template
   const HtmlTemplate = await loadHtmlTemplate(systemFiles);
 
-  // Create page element
-  const PageComponent = page.component;
-  const pageElement = <PageComponent />;
-
   // Compose page with layouts
-  const composed = composePage(pageElement, layouts, page.frontmatter);
+  const composed = composePage(pageElement, layouts, frontmatter);
 
   // Build complete document as VNode tree
   const fullDocument = (
     <HtmlTemplate
-      title={page.frontmatter.title}
-      description={page.frontmatter.description}
+      title={frontmatter.title}
+      description={frontmatter.description}
     >
       {composed}
     </HtmlTemplate>
@@ -218,8 +195,143 @@ export async function renderTsxPage(
 
   return {
     html: `<!DOCTYPE html>${finalHtml}`,
-    frontmatter: page.frontmatter,
+    frontmatter,
   };
+}
+
+/**
+ * Renders a TSX page to a complete HTML document.
+ *
+ * @param options Render options
+ * @returns Complete HTML document and page metadata
+ *
+ * @example
+ * ```typescript
+ * const result = await renderTsxPage({
+ *   pagePath: "/app/pages/docs/getting-started.tsx",
+ *   pagesDir: "/app/pages",
+ *   systemFiles,
+ * });
+ * ```
+ */
+export async function renderTsxPage(
+  options: RenderPageOptions,
+): Promise<RenderResult> {
+  const { pagePath, pagesDir, systemFiles } = options;
+
+  // Load the page (with path validation)
+  const page = await loadTsxPage({ filePath: pagePath, pagesDir });
+
+  // Create page element
+  const PageComponent = page.component;
+  const pageElement = <PageComponent />;
+
+  return renderPageInternal(
+    pageElement,
+    page.frontmatter,
+    pagePath,
+    pagesDir,
+    systemFiles,
+  );
+}
+
+/**
+ * Renders a Markdown page to a complete HTML document.
+ *
+ * @param options Render options
+ * @returns Complete HTML document and page metadata
+ *
+ * @example
+ * ```typescript
+ * const result = await renderMarkdownPage({
+ *   pagePath: "/app/pages/docs/getting-started.md",
+ *   pagesDir: "/app/pages",
+ *   systemFiles,
+ *   markdownOptions: { shikiTheme: "github-dark" },
+ * });
+ * ```
+ */
+export async function renderMarkdownPage(
+  options: RenderPageOptions,
+): Promise<RenderResult> {
+  const { pagePath, pagesDir, systemFiles, markdownOptions } = options;
+
+  // Load the markdown page (with path validation)
+  const page = await loadMarkdownPage({
+    filePath: pagePath,
+    pagesDir,
+    markdownOptions,
+  });
+
+  // Create page element using MarkdownPage component
+  const pageElement = <MarkdownPage html={page.html} />;
+
+  return renderPageInternal(
+    pageElement,
+    page.frontmatter,
+    pagePath,
+    pagesDir,
+    systemFiles,
+  );
+}
+
+/**
+ * Renders a page (TSX or Markdown) to a complete HTML document.
+ *
+ * Automatically detects the page type based on file extension
+ * and uses the appropriate renderer.
+ *
+ * This is the main rendering orchestration function that:
+ * 1. Detects page type (.tsx or .md)
+ * 2. Loads and validates the page
+ * 3. Resolves and loads applicable layouts (nested by directory)
+ * 4. Composes the page with layouts and FrontmatterProvider
+ * 5. Wraps in HTML template (_html.tsx or default)
+ * 6. Renders the full document to HTML via preact-render-to-string
+ * 7. Extracts Head component markers and injects content into <head>
+ *
+ * **Security notes:**
+ * - Page and layout paths are validated to prevent path traversal attacks
+ *
+ * @param options Render options
+ * @returns Complete HTML document and page metadata
+ *
+ * @example
+ * ```typescript
+ * const systemFiles = await scanSystemFiles(pagesDir);
+ *
+ * // Works with TSX pages
+ * const tsxResult = await renderPage({
+ *   pagePath: "/app/pages/about.tsx",
+ *   pagesDir: "/app/pages",
+ *   systemFiles,
+ * });
+ *
+ * // Works with Markdown pages
+ * const mdResult = await renderPage({
+ *   pagePath: "/app/pages/docs/intro.md",
+ *   pagesDir: "/app/pages",
+ *   systemFiles,
+ *   markdownOptions: { shikiTheme: "github-dark" },
+ * });
+ * ```
+ */
+export function renderPage(
+  options: RenderPageOptions,
+): Promise<RenderResult> {
+  const ext = extname(options.pagePath).toLowerCase();
+
+  if (ext === ".md") {
+    return renderMarkdownPage(options);
+  }
+
+  if (ext === ".tsx") {
+    return renderTsxPage(options);
+  }
+
+  throw new Error(
+    `Unsupported page type "${ext}". Only .tsx and .md files are supported.`,
+  );
 }
 
 /**
