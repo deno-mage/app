@@ -47,6 +47,28 @@ describe("Markdown Loader", () => {
       expect(page.html).toContain("<pre");
     });
 
+    it("should use custom shiki theme when provided", async () => {
+      const filePath = resolve(FIXTURES_DIR, "valid-page.md");
+      const page = await loadMarkdownPage({
+        filePath,
+        pagesDir: FIXTURES_DIR,
+        markdownOptions: { shikiTheme: "github-light" },
+      });
+
+      // Should still render with Shiki (different theme, same structure)
+      expect(page.html).toContain("<pre");
+      expect(page.html).toContain("const");
+    });
+
+    it("should handle code blocks without language specifier", async () => {
+      const filePath = resolve(FIXTURES_DIR, "code-no-lang.md");
+      const page = await loadMarkdownPage({ filePath, pagesDir: FIXTURES_DIR });
+
+      // Should render the code block with "text" fallback
+      expect(page.html).toContain("<pre");
+      expect(page.html).toContain("plain text code");
+    });
+
     it("should load minimal markdown page with only title", async () => {
       const filePath = resolve(FIXTURES_DIR, "minimal-page.md");
       const page = await loadMarkdownPage({ filePath, pagesDir: FIXTURES_DIR });

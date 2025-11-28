@@ -176,6 +176,6 @@ export async function buildBundle(
  *
  * Call this after all bundles are built to prevent resource leaks.
  */
-export function stopBundleBuilder(): void {
-  esbuild.stop();
+export async function stopBundleBuilder(): Promise<void> {
+  await esbuild.stop();
 }

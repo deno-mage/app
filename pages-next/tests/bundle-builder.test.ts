@@ -19,8 +19,8 @@ describe(
   "Bundle Builder",
   { sanitizeOps: false, sanitizeResources: false },
   () => {
-    afterAll(() => {
-      stopBundleBuilder();
+    afterAll(async () => {
+      await stopBundleBuilder();
     });
 
     describe("generateEntryPoint", () => {
