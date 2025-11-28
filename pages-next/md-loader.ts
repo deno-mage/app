@@ -125,17 +125,13 @@ async function highlightCodeBlocks(
     const [fullMatch, lang, code] = match;
     const placeholder = `<span>SHIKI_BLOCK_${i}</span>`;
 
-    try {
-      const highlighted = await codeToHtml(code.trim(), {
-        lang: lang || "text",
-        theme,
-      });
+    const highlighted = await codeToHtml(code.trim(), {
+      lang: lang || "text",
+      theme,
+    });
 
-      replacements.set(`<p>${placeholder}</p>`, highlighted);
-      processedMarkdown = processedMarkdown.replace(fullMatch, placeholder);
-    } catch {
-      // If highlighting fails, keep original - will be rendered as plain code
-    }
+    replacements.set(`<p>${placeholder}</p>`, highlighted);
+    processedMarkdown = processedMarkdown.replace(fullMatch, placeholder);
   }
 
   return { processedMarkdown, replacements };

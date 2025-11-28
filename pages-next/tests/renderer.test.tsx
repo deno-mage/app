@@ -8,6 +8,7 @@ import { expect } from "@std/expect";
 import { afterEach, beforeEach, describe, it } from "@std/testing/bdd";
 import type { ComponentChildren } from "preact";
 import {
+  HtmlTemplateError,
   renderMarkdownPage,
   renderPage,
   renderToHtml,
@@ -131,6 +132,179 @@ describe("Renderer", () => {
       expect(result.headContent).toContain("<title>Article Title</title>");
       expect(result.html).toContain("<header>Header</header>");
       expect(result.html).toContain("<h1>Article</h1>");
+    });
+  });
+
+  describe("HtmlTemplateError", () => {
+    it("should create error with template path and reason", () => {
+      const error = new HtmlTemplateError(
+        "/app/pages/_html.tsx",
+        "Something went wrong",
+      );
+
+      expect(error.name).toBe("HtmlTemplateError");
+      expect(error.templatePath).toBe("/app/pages/_html.tsx");
+      expect(error.reason).toBe("Something went wrong");
+      expect(error.message).toBe(
+        'Failed to load HTML template "/app/pages/_html.tsx": Something went wrong',
+      );
+    });
+
+    it("should create error with cause and include cause message", () => {
+      const cause = new Error("Original error");
+      const error = new HtmlTemplateError(
+        "/app/pages/_html.tsx",
+        "Import failed",
+        cause,
+      );
+
+      expect(error.cause).toBe(cause);
+      expect(error.message).toContain("Original error");
+    });
+
+    it("should be instance of Error", () => {
+      const error = new HtmlTemplateError(
+        "/app/pages/_html.tsx",
+        "Test reason",
+      );
+      expect(error).toBeInstanceOf(Error);
+    });
+  });
+
+  describe("custom HTML template", () => {
+    it("should use custom _html.tsx template when provided", async () => {
+      const tempDir = await Deno.makeTempDir({ prefix: "html_template_test_" });
+
+      // Create custom HTML template
+      const htmlTemplatePath = resolve(tempDir, "_html.tsx");
+      await Deno.writeTextFile(
+        htmlTemplatePath,
+        `
+        export default function CustomHtml({ title, description, children }) {
+          return (
+            <html lang="fr">
+              <head>
+                <meta charset="UTF-8" />
+                <title>{title}</title>
+                {description && <meta name="description" content={description} />}
+                <meta name="custom-template" content="true" />
+              </head>
+              <body class="custom-body">{children}</body>
+            </html>
+          );
+        }
+        `,
+      );
+
+      // Create a simple page
+      const pagePath = resolve(tempDir, "test.tsx");
+      await Deno.writeTextFile(
+        pagePath,
+        `
+        export const frontmatter = { title: "Test Page" };
+        export default function TestPage() {
+          return <div>Test content</div>;
+        }
+        `,
+      );
+
+      const systemFiles: SystemFiles = {
+        layouts: [],
+        htmlTemplate: htmlTemplatePath,
+      };
+
+      const result = await renderTsxPage({
+        pagePath,
+        pagesDir: tempDir,
+        systemFiles,
+      });
+
+      // Custom template uses lang="fr" instead of lang="en"
+      expect(result.html).toContain('<html lang="fr">');
+      expect(result.html).toContain(
+        '<meta name="custom-template" content="true"/>',
+      );
+      expect(result.html).toContain('class="custom-body"');
+    });
+
+    it("should throw HtmlTemplateError for non-function default export", async () => {
+      const tempDir = await Deno.makeTempDir({ prefix: "html_template_test_" });
+
+      // Create invalid HTML template (object instead of function)
+      const htmlTemplatePath = resolve(tempDir, "_html.tsx");
+      await Deno.writeTextFile(
+        htmlTemplatePath,
+        `
+        export default { notAFunction: true };
+        `,
+      );
+
+      // Create a simple page
+      const pagePath = resolve(tempDir, "test.tsx");
+      await Deno.writeTextFile(
+        pagePath,
+        `
+        export const frontmatter = { title: "Test Page" };
+        export default function TestPage() {
+          return <div>Test content</div>;
+        }
+        `,
+      );
+
+      const systemFiles: SystemFiles = {
+        layouts: [],
+        htmlTemplate: htmlTemplatePath,
+      };
+
+      try {
+        await renderTsxPage({
+          pagePath,
+          pagesDir: tempDir,
+          systemFiles,
+        });
+        expect(false).toBe(true); // Should not reach here
+      } catch (error) {
+        expect(error).toBeInstanceOf(HtmlTemplateError);
+        expect((error as HtmlTemplateError).reason).toContain(
+          "Default export must be a function",
+        );
+        expect((error as HtmlTemplateError).reason).toContain("got object");
+      }
+    });
+
+    it("should throw HtmlTemplateError for non-existent template", async () => {
+      const tempDir = await Deno.makeTempDir({ prefix: "html_template_test_" });
+
+      // Create a simple page
+      const pagePath = resolve(tempDir, "test.tsx");
+      await Deno.writeTextFile(
+        pagePath,
+        `
+        export const frontmatter = { title: "Test Page" };
+        export default function TestPage() {
+          return <div>Test content</div>;
+        }
+        `,
+      );
+
+      const systemFiles: SystemFiles = {
+        layouts: [],
+        htmlTemplate: resolve(tempDir, "does-not-exist.tsx"),
+      };
+
+      try {
+        await renderTsxPage({
+          pagePath,
+          pagesDir: tempDir,
+          systemFiles,
+        });
+        expect(false).toBe(true); // Should not reach here
+      } catch (error) {
+        expect(error).toBeInstanceOf(HtmlTemplateError);
+        expect((error as HtmlTemplateError).reason).toContain(
+          "Failed to import module",
+        );
+      }
     });
   });
 

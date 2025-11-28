@@ -28,8 +28,6 @@ export async function scanSystemFiles(pagesDir: string): Promise<SystemFiles> {
         exts: [".tsx"],
       })
     ) {
-      if (!entry.isFile) continue;
-
       const relativePath = relative(pagesDir, entry.path);
       const fileName = entry.name;
 
@@ -103,8 +101,6 @@ export async function scanPages(pagesDir: string): Promise<PageInfo[]> {
         exts: [".md", ".tsx"],
       })
     ) {
-      if (!entry.isFile) continue;
-
       const relativePath = relative(pagesDir, entry.path);
 
       // Skip system files (files starting with underscore)
