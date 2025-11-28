@@ -32,12 +32,13 @@
       appropriately
 - [x] Path traversal protection on markdown loading
 
-## Phase 4: Hydration
+## Phase 4: Hydration ✅
 
-- Client entry point generator (per-page or shared bundle strategy TBD)
-- Hydration script injection
-- Markdown DOM extraction (read from DOM, don't re-ship content)
-- Error boundary wrapper
+- [x] Client entry point generator (per-page bundles)
+- [x] Hydration script injection (**PAGE_PROPS**, bundle script)
+- [x] #app wrapper for hydration target
+- [x] Error boundary wrapper for graceful degradation
+- [x] Head component returns null on client (already implemented in Phase 2)
 
 ## Phase 5: Production Build
 
