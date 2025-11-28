@@ -68,32 +68,14 @@ describe("default components", () => {
       );
     });
 
-    it("should wrap children in div", () => {
+    it("should render children directly in body", () => {
       const html = render(
         <DefaultHtml title="Test Page">
           <main>Main content</main>
         </DefaultHtml>,
       );
 
-      expect(html).toContain("<div><main>Main content</main></div>");
-    });
-
-    it("should render head content when provided", () => {
-      const head = (
-        <>
-          <link rel="stylesheet" href="/style.css" />
-          <script src="/script.js"></script>
-        </>
-      );
-
-      const html = render(
-        <DefaultHtml title="Test Page" head={head}>
-          <div>Content</div>
-        </DefaultHtml>,
-      );
-
-      expect(html).toContain('<link rel="stylesheet" href="/style.css"/>');
-      expect(html).toContain('<script src="/script.js"></script>');
+      expect(html).toContain("<body><main>Main content</main></body>");
     });
 
     it("should handle multiple children", () => {

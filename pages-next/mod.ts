@@ -20,6 +20,27 @@ export {
   scanSystemFiles,
 } from "./scanner.ts";
 
+// TSX Loader
+export { FrontmatterSchema, loadTsxPage, PageLoadError } from "./tsx-loader.ts";
+export type { LoadedPage, LoadPageOptions } from "./tsx-loader.ts";
+
+// Layout Loader
+export { LayoutLoadError, loadLayouts } from "./layout-loader.ts";
+export type { LoadedLayout, LoadLayoutsOptions } from "./layout-loader.ts";
+
+// Head
+export { Head, HEAD_MARKER_ELEMENT } from "./head.tsx";
+export type { HeadProps } from "./head.tsx";
+export { extractHeadContent } from "./head-extractor.ts";
+export type { HeadExtractionResult } from "./head-extractor.ts";
+
+// Compositor
+export { composePage, composeWithLayout } from "./compositor.tsx";
+
+// Renderer
+export { HtmlTemplateError, renderToHtml, renderTsxPage } from "./renderer.tsx";
+export type { RenderPageOptions, RenderResult } from "./renderer.tsx";
+
 // Types
 export type {
   BuildOptions,

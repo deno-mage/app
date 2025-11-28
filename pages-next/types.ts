@@ -50,6 +50,22 @@ export interface LayoutProps {
  *
  * Layouts compose by directory structure - each _layout.tsx
  * wraps its children, innermost first.
+ *
+ * **Important:** Layout components MUST render their `children` prop.
+ * A layout that doesn't render children will break page composition
+ * and result in missing content. Example:
+ *
+ * ```tsx
+ * // CORRECT - renders children
+ * export default function Layout({ children }: LayoutProps) {
+ *   return <main>{children}</main>;
+ * }
+ *
+ * // WRONG - ignores children, page content will be lost
+ * export default function Layout({ children }: LayoutProps) {
+ *   return <main>Static content only</main>;
+ * }
+ * ```
  */
 export type LayoutComponent = (props: LayoutProps) => VNode | null;
 
@@ -75,6 +91,10 @@ export type NotFoundPageComponent = () => VNode | null;
 
 /**
  * Props passed to the document template (_html.tsx).
+ *
+ * Note: Head content from `<Head>` components is automatically extracted
+ * and injected into `<head>` after rendering. You don't need to handle
+ * head content manually in your template.
  */
 export interface HtmlTemplateProps {
   /** Page title */
@@ -83,8 +103,6 @@ export interface HtmlTemplateProps {
   description?: string;
   /** Child content (the composed layout + page) */
   children: ComponentChildren;
-  /** Head content collected from Head components */
-  head?: ComponentChildren;
 }
 
 /**

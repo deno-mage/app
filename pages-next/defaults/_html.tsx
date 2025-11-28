@@ -17,13 +17,14 @@ import type { HtmlTemplateProps } from "../types.ts";
  * - Responsive viewport
  * - Title from frontmatter
  * - Optional description meta tag
- * - Additional head content from Head components
+ *
+ * Head content from `<Head>` components is automatically injected
+ * into `<head>` after rendering.
  */
 export default function DefaultHtml({
   title,
   description,
   children,
-  head,
 }: HtmlTemplateProps) {
   return (
     <html lang="en">
@@ -32,10 +33,9 @@ export default function DefaultHtml({
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>{title}</title>
         {description && <meta name="description" content={description} />}
-        {head}
       </head>
       <body>
-        <div>{children}</div>
+        {children}
       </body>
     </html>
   );
