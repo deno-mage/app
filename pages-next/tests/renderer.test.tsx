@@ -5,7 +5,7 @@
  */
 
 import { expect } from "@std/expect";
-import { afterEach, beforeEach, describe, it } from "@std/testing/bdd";
+import { beforeEach, describe, it } from "@std/testing/bdd";
 import type { ComponentChildren } from "preact";
 import {
   HtmlTemplateError,
@@ -320,15 +320,6 @@ describe("Renderer", () => {
       systemFiles = {
         layouts: [],
       };
-    });
-
-    afterEach(async () => {
-      // Clean up temp directory
-      try {
-        await Deno.remove(tempDir, { recursive: true });
-      } catch {
-        // Ignore errors during cleanup
-      }
     });
 
     it("should render complete HTML document with DOCTYPE", async () => {
@@ -734,18 +725,17 @@ describe("Renderer", () => {
     it("should render complete TSX page with layout and head content", async () => {
       const tempDir = await Deno.makeTempDir({ prefix: "integration_test_" });
 
-      try {
-        // Create layout
-        const layoutPath = resolve(tempDir, "_layout.tsx");
-        await Deno.writeTextFile(
-          layoutPath,
-          `
+      // Create layout
+      const layoutPath = resolve(tempDir, "_layout.tsx");
+      await Deno.writeTextFile(
+        layoutPath,
+        `
           import { Head } from "${
-            resolve(import.meta.dirname!, "../head.tsx")
-          }";
+          resolve(import.meta.dirname!, "../head.tsx")
+        }";
           import { useFrontmatter } from "${
-            resolve(import.meta.dirname!, "../context.tsx")
-          }";
+          resolve(import.meta.dirname!, "../context.tsx")
+        }";
 
           export default function Layout({ children }) {
             const fm = useFrontmatter();
@@ -764,21 +754,21 @@ describe("Renderer", () => {
             );
           }
           `,
-        );
+      );
 
-        // Create page
-        const pagePath = resolve(tempDir, "about.tsx");
-        await Deno.writeTextFile(
-          pagePath,
-          `
+      // Create page
+      const pagePath = resolve(tempDir, "about.tsx");
+      await Deno.writeTextFile(
+        pagePath,
+        `
           export const frontmatter = {
             title: "About Us",
             description: "Learn about our company",
           };
 
           import { Head } from "${
-            resolve(import.meta.dirname!, "../head.tsx")
-          }";
+          resolve(import.meta.dirname!, "../head.tsx")
+        }";
 
           export default function About() {
             return (
@@ -795,82 +785,78 @@ describe("Renderer", () => {
             );
           }
           `,
-        );
+      );
 
-        const systemFiles: SystemFiles = {
-          layouts: [
-            {
-              filePath: layoutPath,
-              directory: "",
-              depth: 0,
-            },
-          ],
-        };
+      const systemFiles: SystemFiles = {
+        layouts: [
+          {
+            filePath: layoutPath,
+            directory: "",
+            depth: 0,
+          },
+        ],
+      };
 
-        const result = await renderTsxPage({
-          pagePath,
-          pagesDir: tempDir,
-          systemFiles,
-        });
+      const result = await renderTsxPage({
+        pagePath,
+        pagesDir: tempDir,
+        systemFiles,
+      });
 
-        // Verify complete document structure
-        expect(result.html).toContain("<!DOCTYPE html>");
-        expect(result.html).toContain('<html lang="en">');
+      // Verify complete document structure
+      expect(result.html).toContain("<!DOCTYPE html>");
+      expect(result.html).toContain('<html lang="en">');
 
-        // Verify head content merged from both sources
-        expect(result.html).toContain("<title>About Us</title>");
-        expect(result.html).toContain(
-          '<meta name="description" content="Learn about our company"/>',
-        );
-        expect(result.html).toContain(
-          '<link rel="stylesheet" href="/base.css"/>',
-        );
-        expect(result.html).toContain(
-          '<meta property="og:site_name" content="Test Site"/>',
-        );
-        expect(result.html).toContain(
-          '<meta property="og:type" content="website"/>',
-        );
-        expect(result.html).toContain(
-          '<link rel="canonical" href="https://example.com/about"/>',
-        );
+      // Verify head content merged from both sources
+      expect(result.html).toContain("<title>About Us</title>");
+      expect(result.html).toContain(
+        '<meta name="description" content="Learn about our company"/>',
+      );
+      expect(result.html).toContain(
+        '<link rel="stylesheet" href="/base.css"/>',
+      );
+      expect(result.html).toContain(
+        '<meta property="og:site_name" content="Test Site"/>',
+      );
+      expect(result.html).toContain(
+        '<meta property="og:type" content="website"/>',
+      );
+      expect(result.html).toContain(
+        '<link rel="canonical" href="https://example.com/about"/>',
+      );
 
-        // Verify layout structure
-        expect(result.html).toContain('<div class="site-layout">');
-        expect(result.html).toContain("<header>");
-        expect(result.html).toContain("<h1>About Us</h1>");
-        expect(result.html).toContain("<footer>Footer</footer>");
+      // Verify layout structure
+      expect(result.html).toContain('<div class="site-layout">');
+      expect(result.html).toContain("<header>");
+      expect(result.html).toContain("<h1>About Us</h1>");
+      expect(result.html).toContain("<footer>Footer</footer>");
 
-        // Verify page content
-        expect(result.html).toContain("<h2>Our Story</h2>");
-        expect(result.html).toContain("<p>We started in 2025...</p>");
+      // Verify page content
+      expect(result.html).toContain("<h2>Our Story</h2>");
+      expect(result.html).toContain("<p>We started in 2025...</p>");
 
-        // Verify no markers remain
-        expect(result.html).not.toContain("<mage-head");
+      // Verify no markers remain
+      expect(result.html).not.toContain("<mage-head");
 
-        // Verify frontmatter
-        expect(result.frontmatter.title).toBe("About Us");
-        expect(result.frontmatter.description).toBe("Learn about our company");
-      } finally {
-        await Deno.remove(tempDir, { recursive: true });
-      }
+      // Verify frontmatter
+      expect(result.frontmatter.title).toBe("About Us");
+      expect(result.frontmatter.description).toBe("Learn about our company");
     });
 
     it("should render complete Markdown page with layout and head content", async () => {
       const tempDir = await Deno.makeTempDir({ prefix: "integration_test_" });
 
-      try {
-        // Create layout with Head component
-        const layoutPath = resolve(tempDir, "_layout.tsx");
-        await Deno.writeTextFile(
-          layoutPath,
-          `
+      // Create layout with Head component
+      const layoutPath = resolve(tempDir, "_layout.tsx");
+      await Deno.writeTextFile(
+        layoutPath,
+        `
           import { Head } from "${
-            resolve(import.meta.dirname!, "../head.tsx")
-          }";
+          resolve(import.meta.dirname!, "../head.tsx")
+        }";
           import { useFrontmatter } from "${
-            resolve(import.meta.dirname!, "../context.tsx")
-          }";
+          resolve(import.meta.dirname!, "../context.tsx")
+        }";
 
           export default function Layout({ children }) {
             const fm = useFrontmatter();
@@ -892,13 +878,13 @@ describe("Renderer", () => {
             );
           }
           `,
-        );
+      );
 
-        // Create markdown page
-        const pagePath = resolve(tempDir, "getting-started.md");
-        await Deno.writeTextFile(
-          pagePath,
-          `---
+      // Create markdown page
+      const pagePath = resolve(tempDir, "getting-started.md");
+      await Deno.writeTextFile(
+        pagePath,
+        `---
 title: Getting Started
 description: Learn how to use the framework
 author: John Doe
@@ -925,120 +911,113 @@ app.start();
 
 That's all you need to get started!
 `,
-        );
+      );
 
-        const systemFiles: SystemFiles = {
-          layouts: [
-            {
-              filePath: layoutPath,
-              directory: "",
-              depth: 0,
-            },
-          ],
-        };
+      const systemFiles: SystemFiles = {
+        layouts: [
+          {
+            filePath: layoutPath,
+            directory: "",
+            depth: 0,
+          },
+        ],
+      };
 
-        const result = await renderMarkdownPage({
-          pagePath,
-          pagesDir: tempDir,
-          systemFiles,
-        });
+      const result = await renderMarkdownPage({
+        pagePath,
+        pagesDir: tempDir,
+        systemFiles,
+      });
 
-        // Verify complete document structure
-        expect(result.html).toContain("<!DOCTYPE html>");
-        expect(result.html).toContain('<html lang="en">');
+      // Verify complete document structure
+      expect(result.html).toContain("<!DOCTYPE html>");
+      expect(result.html).toContain('<html lang="en">');
 
-        // Verify head content from layout and frontmatter
-        expect(result.html).toContain("<title>Getting Started</title>");
-        expect(result.html).toContain(
-          '<meta name="description" content="Learn how to use the framework"/>',
-        );
-        expect(result.html).toContain(
-          '<link rel="stylesheet" href="/docs.css"/>',
-        );
-        expect(result.html).toContain(
-          '<meta property="og:site_name" content="Mage Docs"/>',
-        );
+      // Verify head content from layout and frontmatter
+      expect(result.html).toContain("<title>Getting Started</title>");
+      expect(result.html).toContain(
+        '<meta name="description" content="Learn how to use the framework"/>',
+      );
+      expect(result.html).toContain(
+        '<link rel="stylesheet" href="/docs.css"/>',
+      );
+      expect(result.html).toContain(
+        '<meta property="og:site_name" content="Mage Docs"/>',
+      );
 
-        // Verify layout structure
-        expect(result.html).toContain('<div class="docs-layout">');
-        expect(result.html).toContain("<nav>");
-        expect(result.html).toContain("<h1>Getting Started</h1>");
-        expect(result.html).toContain("<footer>Documentation Footer</footer>");
+      // Verify layout structure
+      expect(result.html).toContain('<div class="docs-layout">');
+      expect(result.html).toContain("<nav>");
+      expect(result.html).toContain("<h1>Getting Started</h1>");
+      expect(result.html).toContain("<footer>Documentation Footer</footer>");
 
-        // Verify markdown content is rendered
-        expect(result.html).toContain("Installation</h2>");
-        expect(result.html).toContain("Quick Start</h2>");
-        expect(result.html).toContain("That's all you need to get started!");
+      // Verify markdown content is rendered
+      expect(result.html).toContain("Installation</h2>");
+      expect(result.html).toContain("Quick Start</h2>");
+      expect(result.html).toContain("That's all you need to get started!");
 
-        // Verify code blocks are syntax highlighted (Shiki output)
-        expect(result.html).toContain("<pre");
-        expect(result.html).toContain("shiki"); // Shiki class
-        expect(result.html).toContain("github-dark"); // Theme class
+      // Verify code blocks are syntax highlighted (Shiki output)
+      expect(result.html).toContain("<pre");
+      expect(result.html).toContain("shiki"); // Shiki class
+      expect(result.html).toContain("github-dark"); // Theme class
 
-        // Verify no markers remain
-        expect(result.html).not.toContain("<mage-head");
+      // Verify no markers remain
+      expect(result.html).not.toContain("<mage-head");
 
-        // Verify frontmatter includes custom fields
-        expect(result.frontmatter.title).toBe("Getting Started");
-        expect(result.frontmatter.description).toBe(
-          "Learn how to use the framework",
-        );
-        expect(result.frontmatter.author).toBe("John Doe");
-      } finally {
-        await Deno.remove(tempDir, { recursive: true });
-      }
+      // Verify frontmatter includes custom fields
+      expect(result.frontmatter.title).toBe("Getting Started");
+      expect(result.frontmatter.description).toBe(
+        "Learn how to use the framework",
+      );
+      expect(result.frontmatter.author).toBe("John Doe");
     });
 
     it("should auto-detect page type with renderPage", async () => {
       const tempDir = await Deno.makeTempDir({ prefix: "integration_test_" });
 
-      try {
-        // Create TSX page
-        const tsxPath = resolve(tempDir, "about.tsx");
-        await Deno.writeTextFile(
-          tsxPath,
-          `
+      // Create TSX page
+      const tsxPath = resolve(tempDir, "about.tsx");
+      await Deno.writeTextFile(
+        tsxPath,
+        `
           export const frontmatter = { title: "About TSX" };
           export default function About() {
             return <div>TSX content</div>;
           }
           `,
-        );
+      );
 
-        // Create Markdown page
-        const mdPath = resolve(tempDir, "readme.md");
-        await Deno.writeTextFile(
-          mdPath,
-          `---
+      // Create Markdown page
+      const mdPath = resolve(tempDir, "readme.md");
+      await Deno.writeTextFile(
+        mdPath,
+        `---
 title: About MD
 ---
 
 Markdown content
 `,
-        );
+      );
 
-        const systemFiles: SystemFiles = { layouts: [] };
+      const systemFiles: SystemFiles = { layouts: [] };
 
-        // Render TSX via renderPage
-        const tsxResult = await renderPage({
-          pagePath: tsxPath,
-          pagesDir: tempDir,
-          systemFiles,
-        });
-        expect(tsxResult.html).toContain("<title>About TSX</title>");
-        expect(tsxResult.html).toContain("<div>TSX content</div>");
+      // Render TSX via renderPage
+      const tsxResult = await renderPage({
+        pagePath: tsxPath,
+        pagesDir: tempDir,
+        systemFiles,
+      });
+      expect(tsxResult.html).toContain("<title>About TSX</title>");
+      expect(tsxResult.html).toContain("<div>TSX content</div>");
 
-        // Render Markdown via renderPage
-        const mdResult = await renderPage({
-          pagePath: mdPath,
-          pagesDir: tempDir,
-          systemFiles,
-        });
-        expect(mdResult.html).toContain("<title>About MD</title>");
-        expect(mdResult.html).toContain("Markdown content");
-      } finally {
-        await Deno.remove(tempDir, { recursive: true });
-      }
+      // Render Markdown via renderPage
+      const mdResult = await renderPage({
+        pagePath: mdPath,
+        pagesDir: tempDir,
+        systemFiles,
+      });
+      expect(mdResult.html).toContain("<title>About MD</title>");
+      expect(mdResult.html).toContain("Markdown content");
     });
 
     it("should throw for unsupported file extension", async () => {
