@@ -1036,4 +1036,109 @@ Markdown content
       }
     });
   });
+
+  describe("hydration", () => {
+    it("should inject hydration scripts when bundleUrl is provided", async () => {
+      const tempDir = await Deno.makeTempDir({ prefix: "hydration_test_" });
+
+      const pagePath = resolve(tempDir, "page.tsx");
+      await Deno.writeTextFile(
+        pagePath,
+        `
+        export const frontmatter = {
+          title: "Hydration Test",
+          description: "Testing hydration"
+        };
+        export default function Page() {
+          return <div>Content</div>;
+        }
+        `,
+      );
+
+      const systemFiles: SystemFiles = { layouts: [] };
+
+      const result = await renderTsxPage({
+        pagePath,
+        pagesDir: tempDir,
+        systemFiles,
+        bundleUrl: "/__bundles/page.js",
+      });
+
+      // Should have #app wrapper
+      expect(result.html).toContain('<div id="app">');
+
+      // Should have __PAGE_PROPS__ script
+      expect(result.html).toContain("window.__PAGE_PROPS__=");
+      expect(result.html).toContain('"title":"Hydration Test"');
+      expect(result.html).toContain('"description":"Testing hydration"');
+
+      // Should have bundle script
+      expect(result.html).toContain(
+        '<script type="module" src="/__bundles/page.js"></script>',
+      );
+
+      // Scripts should be before </body>
+      expect(result.html).toMatch(/<script.*<\/body>/s);
+    });
+
+    it("should not inject hydration scripts when bundleUrl is not provided", async () => {
+      const tempDir = await Deno.makeTempDir({ prefix: "hydration_test_" });
+
+      const pagePath = resolve(tempDir, "page.tsx");
+      await Deno.writeTextFile(
+        pagePath,
+        `
+        export const frontmatter = { title: "No Hydration" };
+        export default function Page() {
+          return <div>Static content</div>;
+        }
+        `,
+      );
+
+      const systemFiles: SystemFiles = { layouts: [] };
+
+      const result = await renderTsxPage({
+        pagePath,
+        pagesDir: tempDir,
+        systemFiles,
+        // No bundleUrl
+      });
+
+      // Should not have #app wrapper
+      expect(result.html).not.toContain('<div id="app">');
+
+      // Should not have hydration scripts
+      expect(result.html).not.toContain("window.__PAGE_PROPS__");
+      expect(result.html).not.toContain("/__bundles/");
+    });
+
+    it("should escape special characters in frontmatter for JSON", async () => {
+      const tempDir = await Deno.makeTempDir({ prefix: "hydration_test_" });
+
+      const pagePath = resolve(tempDir, "page.tsx");
+      await Deno.writeTextFile(
+        pagePath,
+        `
+        export const frontmatter = {
+          title: 'Test "quotes" and <tags>',
+        };
+        export default function Page() {
+          return <div>Content</div>;
+        }
+        `,
+      );
+
+      const systemFiles: SystemFiles = { layouts: [] };
+
+      const result = await renderTsxPage({
+        pagePath,
+        pagesDir: tempDir,
+        systemFiles,
+        bundleUrl: "/__bundles/page.js",
+      });
+
+      // JSON.stringify should escape the quotes
+      expect(result.html).toContain('\\"quotes\\"');
+    });
+  });
 });

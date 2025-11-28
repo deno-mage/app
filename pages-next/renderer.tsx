@@ -36,6 +36,8 @@ export interface RenderPageOptions {
   systemFiles: SystemFiles;
   /** Markdown rendering options (only used for .md files) */
   markdownOptions?: MarkdownOptions;
+  /** URL to the client bundle for hydration (omit to disable hydration) */
+  bundleUrl?: string;
 }
 
 /**
@@ -149,10 +151,54 @@ function injectHeadContent(html: string, headContent: string): string {
 }
 
 /**
+ * Injects hydration scripts before the closing </body> tag.
+ *
+ * Adds:
+ * 1. Inline script with __PAGE_PROPS__ containing frontmatter
+ * 2. Script tag loading the page bundle
+ *
+ * @param html Full HTML document string
+ * @param bundleUrl URL to the client bundle
+ * @param frontmatter Page frontmatter to pass to client
+ * @returns HTML with hydration scripts injected
+ */
+function injectHydrationScripts(
+  html: string,
+  bundleUrl: string,
+  frontmatter: Frontmatter,
+): string {
+  const propsScript = `<script>window.__PAGE_PROPS__=${
+    JSON.stringify({ frontmatter })
+  };</script>`;
+  const bundleScript = `<script type="module" src="${bundleUrl}"></script>`;
+
+  return html.replace("</body>", `${propsScript}${bundleScript}</body>`);
+}
+
+/**
+ * Wraps body content in an #app div for hydration.
+ *
+ * The hydration entry point expects to find an #app element.
+ * This wraps the rendered body content in that div.
+ *
+ * @param html Full HTML document string
+ * @returns HTML with body content wrapped in #app div
+ */
+function wrapInAppDiv(html: string): string {
+  // Match the body content between <body...> and </body>
+  return html.replace(
+    /(<body[^>]*>)([\s\S]*?)(<\/body>)/,
+    '$1<div id="app">$2</div>$3',
+  );
+}
+
+/**
  * Shared rendering logic for both TSX and Markdown pages.
  *
  * Takes a page element and frontmatter, composes with layouts,
  * wraps in HTML template, and renders to final HTML.
+ *
+ * If bundleUrl is provided, injects hydration scripts.
  */
 async function renderPageInternal(
   pageElement: VNode,
@@ -160,6 +206,7 @@ async function renderPageInternal(
   pagePath: string,
   pagesDir: string,
   systemFiles: SystemFiles,
+  bundleUrl?: string,
 ): Promise<RenderResult> {
   // Get applicable layouts
   const layoutInfos = getApplicableLayouts(pagePath, pagesDir, systemFiles);
@@ -191,7 +238,13 @@ async function renderPageInternal(
 
   // Extract head markers and inject content into <head>
   const { html: cleanedHtml, headContent } = extractHeadContent(renderedHtml);
-  const finalHtml = injectHeadContent(cleanedHtml, headContent);
+  let finalHtml = injectHeadContent(cleanedHtml, headContent);
+
+  // If bundle URL provided, inject hydration scripts
+  if (bundleUrl) {
+    finalHtml = wrapInAppDiv(finalHtml);
+    finalHtml = injectHydrationScripts(finalHtml, bundleUrl, frontmatter);
+  }
 
   return {
     html: `<!DOCTYPE html>${finalHtml}`,
@@ -217,7 +270,7 @@ async function renderPageInternal(
 export async function renderTsxPage(
   options: RenderPageOptions,
 ): Promise<RenderResult> {
-  const { pagePath, pagesDir, systemFiles } = options;
+  const { pagePath, pagesDir, systemFiles, bundleUrl } = options;
 
   // Load the page (with path validation)
   const page = await loadTsxPage({ filePath: pagePath, pagesDir });
@@ -232,6 +285,7 @@ export async function renderTsxPage(
     pagePath,
     pagesDir,
     systemFiles,
+    bundleUrl,
   );
 }
 
@@ -254,7 +308,8 @@ export async function renderTsxPage(
 export async function renderMarkdownPage(
   options: RenderPageOptions,
 ): Promise<RenderResult> {
-  const { pagePath, pagesDir, systemFiles, markdownOptions } = options;
+  const { pagePath, pagesDir, systemFiles, markdownOptions, bundleUrl } =
+    options;
 
   // Load the markdown page (with path validation)
   const page = await loadMarkdownPage({
@@ -272,6 +327,7 @@ export async function renderMarkdownPage(
     pagePath,
     pagesDir,
     systemFiles,
+    bundleUrl,
   );
 }
 
