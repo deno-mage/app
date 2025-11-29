@@ -1,5 +1,5 @@
 import type { JSX } from "preact";
-import type { HtmlTemplateProps } from "../pages/mod.ts";
+import type { HtmlTemplateProps } from "../../pages-next/mod.ts";
 
 export default function Html(props: HtmlTemplateProps): JSX.Element {
   return (
@@ -7,7 +7,7 @@ export default function Html(props: HtmlTemplateProps): JSX.Element {
       <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Mage | {props.layoutProps.title}</title>
+        <title>Mage | {props.title}</title>
         <link rel="stylesheet" href="/public/styles.css" />
         <link rel="icon" href="/public/favicon.png" />
         {
@@ -29,6 +29,7 @@ export default function Html(props: HtmlTemplateProps): JSX.Element {
         />
       </head>
       <body className="bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-50 fill-zinc-900 dark:fill-zinc-50">
+        {props.children}
       </body>
     </html>
   );

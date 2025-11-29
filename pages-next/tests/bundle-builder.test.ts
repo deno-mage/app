@@ -66,7 +66,9 @@ describe(
       it("should wrap content in FrontmatterProvider", () => {
         const code = generateEntryPoint("/app/pages/index.tsx", []);
 
-        expect(code).toContain("<FrontmatterProvider value={frontmatter}>");
+        expect(code).toContain(
+          "<FrontmatterProvider frontmatter={frontmatter}>",
+        );
         expect(code).toContain("window.__PAGE_PROPS__?.frontmatter");
       });
 
@@ -129,7 +131,9 @@ describe(
       it("should wrap content in FrontmatterProvider", () => {
         const code = generateMarkdownEntryPoint([]);
 
-        expect(code).toContain("<FrontmatterProvider value={frontmatter}>");
+        expect(code).toContain(
+          "<FrontmatterProvider frontmatter={frontmatter}>",
+        );
         expect(code).toContain("window.__PAGE_PROPS__?.frontmatter");
       });
     });

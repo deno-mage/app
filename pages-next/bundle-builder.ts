@@ -99,7 +99,7 @@ if (!appRoot) {
   try {
     hydrate(
       <ErrorBoundary>
-        <FrontmatterProvider value={frontmatter}>
+        <FrontmatterProvider frontmatter={frontmatter}>
           ${composedTree}
         </FrontmatterProvider>
       </ErrorBoundary>,
@@ -166,7 +166,7 @@ if (!appRoot) {
   try {
     hydrate(
       <ErrorBoundary>
-        <FrontmatterProvider value={frontmatter}>
+        <FrontmatterProvider frontmatter={frontmatter}>
           ${composedTree}
         </FrontmatterProvider>
       </ErrorBoundary>,

@@ -291,8 +291,6 @@ export async function build(
   const pagesDir = resolve(rootDir, "pages");
   const publicDir = resolve(rootDir, "public");
 
-  logger.info(`Building static site from ${rootDir}...`);
-
   // Clean and recreate output directory
   try {
     await Deno.remove(outDir, { recursive: true });
@@ -308,8 +306,6 @@ export async function build(
   const systemFiles = await scanSystemFiles(pagesDir);
   const pages = await scanPages(pagesDir);
 
-  logger.info(`Found ${pages.length} pages to build`);
-
   // Build asset map for cache-busting
   const assetMap = await buildAssetMap(publicDir, basePath);
 
@@ -321,11 +317,9 @@ export async function build(
   await ensureDir(bundlesDir);
 
   // Render and write each page
-  let successCount = 0;
-  let errorCount = 0;
-
-  for (const page of pages) {
-    try {
+  // Build all pages in parallel
+  const pageResults = await Promise.allSettled(
+    pages.map(async (page) => {
       const pageId = urlPathToPageId(page.urlPath);
       const relativePath = relative(pagesDir, page.filePath);
       const pageDir = getPageDir(relativePath);
@@ -368,12 +362,26 @@ export async function build(
       await ensureDir(dirname(outputPath));
       await Deno.writeTextFile(outputPath, finalHtml);
 
+      return page.urlPath;
+    }),
+  );
+
+  // Count successes and log errors
+  let successCount = 0;
+  let errorCount = 0;
+
+  for (let i = 0; i < pageResults.length; i++) {
+    const result = pageResults[i];
+    if (result.status === "fulfilled") {
       successCount++;
-    } catch (error) {
+    } else {
       errorCount++;
+      const page = pages[i];
       logger.error(
         `Failed to render ${page.urlPath}: ${
-          error instanceof Error ? error.message : String(error)
+          result.reason instanceof Error
+            ? result.reason.message
+            : String(result.reason)
         }`,
       );
     }
@@ -421,7 +429,8 @@ export async function build(
   const buildTime = Math.round(endTime - startTime);
 
   if (errorCount > 0) {
-    logger.error(`Build completed with ${errorCount} error(s)`);
+    logger.error(`Build failed with ${errorCount} error(s)`);
+  } else {
+    logger.success(`Built ${successCount} pages (${buildTime}ms)`);
   }
-  logger.success(`Built ${successCount} pages to ${outDir} (${buildTime}ms)`);
 }

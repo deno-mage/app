@@ -1,5 +1,5 @@
 import { MageApp } from "../app/mod.ts";
-import { pages } from "../pages/mod.ts";
+import { pages } from "../pages-next/mod.ts";
 import { MageLogger } from "../logs/mod.ts";
 
 const logger = new MageLogger("Mage Pages");

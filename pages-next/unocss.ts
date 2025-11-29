@@ -227,7 +227,7 @@ export async function processUnoCSS(
     return undefined;
   }
 
-  logger.info("UnoCSS enabled - generating styles...");
+  logger.info("UnoCSS enabled");
 
   // Load user config
   let userConfig: UserConfig | undefined;
@@ -246,8 +246,6 @@ export async function processUnoCSS(
 
   // Write to disk
   await writeCSS(outDir, result.filename, result.css);
-
-  logger.info(`Generated ${result.filename} (${result.css.length} bytes)`);
 
   return result.url;
 }
