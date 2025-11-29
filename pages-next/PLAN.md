@@ -53,10 +53,10 @@
 - [x] Static file serving (`registerStaticServer` using `serveFiles` middleware)
 - [x] Custom 404 page (`_not-found.html` served on not found)
 
-## Phase 7: Optional Features
+## Phase 7: Optional Features ✅
 
-- UnoCSS integration (detect `uno.config.ts`, generate CSS)
-- Base path support (`/docs/` prefix)
+- [x] UnoCSS integration (detect `uno.config.ts`, generate CSS)
+- [x] Base path support (`/docs/` prefix) - implemented in Phase 5
 
 ## Phase 8: Dev Server
 
