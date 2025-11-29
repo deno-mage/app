@@ -32,6 +32,16 @@ beforeAll(() => {
     serveFiles({ directory: resolve(Deno.cwd(), "test-utils/files") }),
   );
 
+  server.app.get(
+    "/custom-not-found/*",
+    serveFiles({
+      directory: resolve(Deno.cwd(), "test-utils/files"),
+      onNotFound: (c) => {
+        c.html("<h1>Custom 404</h1>", 404);
+      },
+    }),
+  );
+
   server.start();
 });
 
@@ -195,5 +205,20 @@ describe("serve file", () => {
 
     expect(response.status).toBe(404);
     expect(await response.text()).toEqual("Not Found");
+  });
+
+  it("should use custom onNotFound handler when file does not exist", async () => {
+    const response = await fetch(
+      server.url("/custom-not-found/does-not-exist"),
+      {
+        method: "GET",
+      },
+    );
+
+    expect(response.status).toBe(404);
+    expect(await response.text()).toEqual("<h1>Custom 404</h1>");
+    expect(response.headers.get("content-type")).toEqual(
+      "text/html; charset=UTF-8",
+    );
   });
 });

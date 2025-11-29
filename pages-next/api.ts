@@ -6,6 +6,7 @@
 
 import type { MageApp } from "../app/mod.ts";
 import { build as buildStatic } from "./build.ts";
+import { registerStaticServer as registerStatic } from "./static-server.ts";
 import type {
   BuildOptions,
   DevServerOptions,
@@ -81,15 +82,14 @@ export function pages(options: PagesOptions = {}): {
      *
      * Serves pre-built static files from dist directory.
      *
-     * @param _app Mage application instance
-     * @param _staticOptions Static server configuration
+     * @param app Mage application instance
+     * @param staticOptions Static server configuration
      */
     registerStaticServer(
-      _app: MageApp,
-      _staticOptions: StaticServerOptions = {},
+      app: MageApp,
+      staticOptions: StaticServerOptions = {},
     ): void {
-      // TODO: Implement in Phase 6
-      throw new Error("Static server not yet implemented (Phase 6)");
+      registerStatic(app, staticOptions);
     },
   };
 }

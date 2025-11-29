@@ -112,12 +112,6 @@ describe(
       );
     });
 
-    it("should throw when registerStaticServer is called (not yet implemented)", () => {
-      const api = pages();
-
-      expect(() => api.registerStaticServer({} as never)).toThrow(
-        "Static server not yet implemented",
-      );
-    });
+    // Static server integration tests are in static-server.test.ts
   },
 );

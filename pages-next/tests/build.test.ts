@@ -182,7 +182,7 @@ describe(
       expect(html).toMatch(/__public\/styles-[a-f0-9]{8}\.css/);
     });
 
-    it("should generate 404.html from _not-found.tsx", async () => {
+    it("should generate _not-found.html from _not-found.tsx", async () => {
       const testOutputDir = await Deno.makeTempDir();
 
       await build(siteMetadata, {
@@ -190,7 +190,7 @@ describe(
         outDir: testOutputDir,
       });
 
-      const notFoundPath = join(testOutputDir, "404.html");
+      const notFoundPath = join(testOutputDir, "_not-found.html");
       expect(await exists(notFoundPath)).toBe(true);
 
       const html = await Deno.readTextFile(notFoundPath);
@@ -198,7 +198,7 @@ describe(
       expect(html).toContain("404 - Page Not Found");
     });
 
-    it("should generate 500.html from _error.tsx", async () => {
+    it("should generate _error.html from _error.tsx", async () => {
       const testOutputDir = await Deno.makeTempDir();
 
       await build(siteMetadata, {
@@ -206,7 +206,7 @@ describe(
         outDir: testOutputDir,
       });
 
-      const errorPath = join(testOutputDir, "500.html");
+      const errorPath = join(testOutputDir, "_error.html");
       expect(await exists(errorPath)).toBe(true);
 
       const html = await Deno.readTextFile(errorPath);

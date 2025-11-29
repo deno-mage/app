@@ -385,10 +385,10 @@ export async function build(
     }
   }
 
-  // Render special pages (404 and 500)
+  // Render special pages (_not-found and _error)
   await renderSpecialPage(
     systemFiles.notFound,
-    "404.html",
+    "_not-found.html",
     pagesDir,
     outDir,
     bundlesDir,
@@ -400,7 +400,7 @@ export async function build(
 
   await renderSpecialPage(
     systemFiles.error,
-    "500.html",
+    "_error.html",
     pagesDir,
     outDir,
     bundlesDir,

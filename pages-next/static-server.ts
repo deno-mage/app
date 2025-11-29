@@ -1,5 +1,5 @@
 /**
- * Static server for pages module.
+ * Static server for pages-next module.
  *
  * Serves pre-built static files from dist directory.
  *
@@ -33,7 +33,7 @@ function normalizeBasePath(basePath: string): string {
  * Behavior:
  * - Serves pre-built HTML files from dist/
  * - Serves hashed assets from dist/__public/
- * - Falls back to 404.html if it exists
+ * - Falls back to _not-found.html if it exists
  * - No building, watching, or rendering
  * - Production serving mode
  *
@@ -49,13 +49,13 @@ export function registerStaticServer(
   const rootDir = options.rootDir ?? "./";
   const basePath = normalizeBasePath(options.basePath ?? "/");
 
-  // Pre-load 404.html at startup to avoid blocking on 404 errors
-  const notFoundPath = join(rootDir, "404.html");
+  // Pre-load _not-found.html at startup to avoid blocking on 404 errors
+  const notFoundPath = join(rootDir, "_not-found.html");
   let notFoundHtml: string | null = null;
   try {
     notFoundHtml = Deno.readTextFileSync(notFoundPath);
   } catch {
-    // 404.html doesn't exist, will use default notFound
+    // _not-found.html doesn't exist, will use default notFound
   }
 
   app.get(

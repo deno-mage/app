@@ -48,11 +48,10 @@
 - [x] Sitemap and robots.txt generation
 - [x] Public API: `pages()` factory function with `build()` method
 
-## Phase 6: Production Server
+## Phase 6: Production Server ✅
 
-- Static file serving
-- SPA fallback for client-side navigation (if needed)
-- Cache headers
+- [x] Static file serving (`registerStaticServer` using `serveFiles` middleware)
+- [x] Custom 404 page (`_not-found.html` served on not found)
 
 ## Phase 7: Optional Features
 
