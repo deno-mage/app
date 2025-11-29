@@ -1,57 +1,62 @@
 /**
- * Head content extraction from rendered HTML.
- *
- * Extracts <head data-mage-head="true"> markers from rendered layout HTML
- * and returns separated head and body content.
+ * Head content extraction from SSR output.
  *
  * @module
  */
 
+import { HEAD_MARKER_ELEMENT } from "./head.tsx";
+
 /**
  * Result of extracting head content from HTML.
  */
-export interface ExtractedHead {
+export interface HeadExtractionResult {
+  /** HTML with head markers removed */
+  html: string;
   /** Extracted head content (inner HTML of all Head components) */
   headContent: string;
-  /** Body content with Head markers removed */
-  bodyContent: string;
 }
 
 /**
- * Extracts head content from rendered HTML string.
+ * Extracts Head component content from SSR-rendered HTML.
  *
- * Finds all <head data-mage-head="true">...</head> tags, extracts their
- * inner content, and removes the markers from the body HTML.
+ * During SSR, Head components render as `<mage-head data-mage-head="true">...</mage-head>`
+ * markers. This function:
+ * 1. Finds all markers in the HTML
+ * 2. Extracts their inner content
+ * 3. Removes the markers from the HTML
+ * 4. Returns both the cleaned HTML and the extracted head content
  *
- * Layouts should NOT render <body> tags - that's handled by _html.tsx.
- * This function simply extracts <Head> component content and returns
- * the rest as body content.
+ * @param html SSR-rendered HTML containing head markers
+ * @returns Object with cleaned HTML and extracted head content
  *
- * If multiple Head components exist, concatenates all extracted content
- * in order.
- *
- * @param html Rendered HTML from layout
- * @returns Separated head and body content
+ * @example
+ * ```typescript
+ * const rendered = '<div><mage-head><title>Hi</title></mage-head><p>Content</p></div>';
+ * const result = extractHeadContent(rendered);
+ * // result.html === '<div><p>Content</p></div>'
+ * // result.headContent === '<title>Hi</title>'
+ * ```
  */
-export function extractHead(html: string): ExtractedHead {
-  const headRegex = /<head\s+data-mage-head="true">([\s\S]*?)<\/head>/g;
+export function extractHeadContent(html: string): HeadExtractionResult {
+  // Create regex per call to avoid global state issues with 'g' flag
+  const markerRegex = new RegExp(
+    `<${HEAD_MARKER_ELEMENT}>([\\s\\S]*?)</${HEAD_MARKER_ELEMENT}>`,
+    "g",
+  );
 
   const headParts: string[] = [];
-  let match: RegExpExecArray | null;
 
-  // Extract all head content
-  while ((match = headRegex.exec(html)) !== null) {
+  // Extract content from each marker
+  let match: RegExpExecArray | null;
+  while ((match = markerRegex.exec(html)) !== null) {
     headParts.push(match[1]);
   }
 
-  // Remove all head markers from body
-  const bodyContent = html.replace(headRegex, "");
-
-  // Concatenate all head content
-  const headContent = headParts.join("\n");
+  // Remove all markers from HTML
+  const cleanedHtml = html.replace(markerRegex, "");
 
   return {
-    headContent,
-    bodyContent,
+    html: cleanedHtml,
+    headContent: headParts.join("\n"),
   };
 }

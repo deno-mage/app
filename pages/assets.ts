@@ -51,15 +51,15 @@ export function buildHashedFilename(filePath: string, hash: string): string {
  * Scans a directory and builds a map of clean URLs to hashed URLs.
  *
  * Computes hash of each file's contents and maps:
- * `/public/path/file.ext` → `{baseRoute}__public/path/file-[hash].ext`
+ * `/public/path/file.ext` → `{basePath}__public/path/file-[hash].ext`
  *
  * @param publicDir Directory containing static assets
- * @param baseRoute Base path for URLs (e.g., "/", "/docs/")
+ * @param basePath Base path for URLs (e.g., "/", "/docs/")
  * @returns Map of clean URLs to hashed URLs for cache-busting
  */
 export async function buildAssetMap(
   publicDir: string,
-  baseRoute = "/",
+  basePath = "/",
 ): Promise<Map<string, string>> {
   const assetMap = new Map<string, string>();
 
@@ -73,8 +73,8 @@ export async function buildAssetMap(
         // Clean URL: /public/path/file.ext
         const cleanUrl = `/public/${relativePath}`;
 
-        // Hashed URL: {baseRoute}__public/path/file-hash.ext
-        const hashedUrl = `${baseRoute}__public/${hashedFilename}`;
+        // Hashed URL: {basePath}__public/path/file-hash.ext
+        const hashedUrl = `${basePath}__public/${hashedFilename}`;
 
         assetMap.set(cleanUrl, hashedUrl);
       }
@@ -129,7 +129,7 @@ export function replaceAssetUrls(
 /**
  * Reverses a hashed URL back to its clean file path.
  *
- * Maps incoming requests `{baseRoute}__public/file-hash.ext` → `file.ext`
+ * Maps incoming requests `{basePath}__public/file-hash.ext` → `file.ext`
  * for serving original files in dev mode.
  *
  * @param hashedUrl Incoming request URL with hash
@@ -143,7 +143,14 @@ export function resolveAssetPath(
   for (const [cleanUrl, hashedUrlMapped] of assetMap) {
     if (hashedUrlMapped === hashedUrl) {
       // Remove /public/ prefix to get relative path
-      return cleanUrl.replace(/^\/public\//, "");
+      const relativePath = cleanUrl.replace(/^\/public\//, "");
+
+      // Path traversal protection
+      if (relativePath.includes("..") || relativePath.startsWith("/")) {
+        return null;
+      }
+
+      return relativePath;
     }
   }
   return null;

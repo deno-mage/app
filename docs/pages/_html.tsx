@@ -1,5 +1,5 @@
 import type { JSX } from "preact";
-import type { HtmlTemplateProps } from "../../pages-next/mod.ts";
+import type { HtmlTemplateProps } from "../../pages/mod.ts";
 
 export default function Html(props: HtmlTemplateProps): JSX.Element {
   return (

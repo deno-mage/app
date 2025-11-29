@@ -1,4 +1,4 @@
-import { pages } from "../pages-next/mod.ts";
+import { pages } from "../pages/mod.ts";
 
 const { build } = pages({
   siteMetadata: {

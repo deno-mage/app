@@ -9,31 +9,35 @@
  */
 
 import * as esbuild from "esbuild";
-import { crypto } from "@std/crypto/crypto";
 import { encodeHex } from "@std/encoding/hex";
 import { join } from "@std/path";
 
-// Path to error-boundary.tsx in the pages module
 const ERROR_BOUNDARY_PATH = join(
   new URL(".", import.meta.url).pathname,
   "error-boundary.tsx",
+);
+
+const CONTEXT_PATH = join(
+  new URL(".", import.meta.url).pathname,
+  "context.tsx",
 );
 
 /**
  * Options for building a client bundle.
  */
 export interface BundleBuildOptions {
-  /** Path to the layout file to bundle */
-  layoutPath: string;
-  /** Root directory of the project */
+  /** Absolute path to the page file (.tsx or .md) */
+  pagePath: string;
+  /** Paths to layout files, ordered root to leaf */
+  layoutPaths: string[];
+  /** Root directory of the project for import resolution */
   rootDir: string;
-  /**
-   * Whether this is a production build
-   * @default false
-   */
+  /** Whether this is a production build */
   production?: boolean;
-  /** Page-specific identifier for the bundle */
+  /** Page identifier for the bundle filename */
   pageId: string;
+  /** Whether this is a markdown page (uses static content preservation) */
+  isMarkdown?: boolean;
 }
 
 /**
@@ -42,59 +46,134 @@ export interface BundleBuildOptions {
 export interface BundleResult {
   /** Bundled JavaScript code */
   code: string;
-  /** Source map (development only) */
-  map?: string;
   /** Hashed filename (production only) */
   filename?: string;
 }
 
 /**
- * Generates a hydration entry point for a page.
+ * Generates a hydration entry point for a TSX page.
  *
- * The entry point imports the layout, extracts article HTML from the DOM,
- * merges with window.__PAGE_PROPS__, and hydrates the layout component
- * wrapped in an error boundary for graceful degradation.
+ * The entry point:
+ * 1. Imports the page and all layouts
+ * 2. Composes layouts around the page
+ * 3. Hydrates with frontmatter from window.__PAGE_PROPS__
  *
- * The Head component returns null on the client, so it doesn't interfere
- * with hydration - only the actual content components are hydrated.
- *
- * @param layoutPath Absolute path to the layout file
- * @param _pageId Unique identifier for the page (currently unused)
+ * @param pagePath Absolute path to the page file
+ * @param layoutPaths Layout paths ordered root to leaf
  * @returns Entry point code as a string
  */
 export function generateEntryPoint(
-  layoutPath: string,
-  _pageId: string,
+  pagePath: string,
+  layoutPaths: string[],
 ): string {
-  return `import { hydrate } from "preact";
-import { ErrorBoundary } from "${ERROR_BOUNDARY_PATH}";
-import LayoutComponent from "${layoutPath}";
+  const layoutImports = layoutPaths
+    .map((path, i) => `import Layout${i} from "${path}";`)
+    .join("\n");
 
-// Extract layout content HTML from DOM before hydration
-const appRoot = document.getElementById("app");
-if (!appRoot) {
-  console.error("[Mage Pages] Failed to find #app element - hydration aborted");
-  // Page still works with SSR'd content, just no interactivity
-} else {
-  const layoutContainer = appRoot.querySelector('[data-mage-content="true"]');
-
-  const props = {
-    ...window.__PAGE_PROPS__,
-    html: layoutContainer ? layoutContainer.innerHTML : "",
+  // Build nested layout composition: Layout0 > Layout1 > ... > Page
+  // Outermost layout (index 0) wraps everything
+  const composeLayouts = (innerContent: string, index: number): string => {
+    if (index >= layoutPaths.length) {
+      return innerContent;
+    }
+    const deeper = composeLayouts(innerContent, index + 1);
+    return `<Layout${index}>{${deeper}}</Layout${index}>`;
   };
 
+  const composedTree = layoutPaths.length > 0
+    ? composeLayouts("<PageComponent />", 0)
+    : "<PageComponent />";
+
+  return `import { hydrate } from "preact";
+import { ErrorBoundary } from "${ERROR_BOUNDARY_PATH}";
+import { FrontmatterProvider } from "${CONTEXT_PATH}";
+import PageComponent from "${pagePath}";
+${layoutImports}
+
+const appRoot = document.getElementById("app");
+if (!appRoot) {
+  console.error("[Mage] Failed to find #app element - hydration aborted");
+} else {
+  const frontmatter = window.__PAGE_PROPS__?.frontmatter ?? {};
+
   try {
-    // Hydrate the layout component directly
-    // Head component returns null on client, so it won't affect hydration
     hydrate(
       <ErrorBoundary>
-        <LayoutComponent {...props} />
+        <FrontmatterProvider frontmatter={frontmatter}>
+          ${composedTree}
+        </FrontmatterProvider>
       </ErrorBoundary>,
       appRoot
     );
   } catch (error) {
-    console.error("[Mage Pages] Hydration failed:", error);
-    // Page remains functional with SSR'd HTML
+    console.error("[Mage] Hydration failed:", error);
+  }
+}
+`;
+}
+
+/**
+ * Generates a hydration entry point for a Markdown page.
+ *
+ * For markdown pages, the page content is already rendered as static HTML.
+ * This entry point:
+ * 1. Imports only the layouts (not the markdown)
+ * 2. Preserves the static HTML content during hydration
+ * 3. Hydrates the layouts around the preserved content
+ *
+ * @param layoutPaths Layout paths ordered root to leaf
+ * @returns Entry point code as a string
+ */
+export function generateMarkdownEntryPoint(layoutPaths: string[]): string {
+  const layoutImports = layoutPaths
+    .map((path, i) => `import Layout${i} from "${path}";`)
+    .join("\n");
+
+  // Build nested layout composition with StaticContent as the innermost
+  const composeLayouts = (innerContent: string, index: number): string => {
+    if (index >= layoutPaths.length) {
+      return innerContent;
+    }
+    const deeper = composeLayouts(innerContent, index + 1);
+    return `<Layout${index}>{${deeper}}</Layout${index}>`;
+  };
+
+  const composedTree = layoutPaths.length > 0
+    ? composeLayouts("<StaticContent />", 0)
+    : "<StaticContent />";
+
+  // StaticContent component preserves the server-rendered markdown HTML
+  // by using dangerouslySetInnerHTML with the captured innerHTML
+  return `import { hydrate } from "preact";
+import { ErrorBoundary } from "${ERROR_BOUNDARY_PATH}";
+import { FrontmatterProvider } from "${CONTEXT_PATH}";
+${layoutImports}
+
+const appRoot = document.getElementById("app");
+if (!appRoot) {
+  console.error("[Mage] Failed to find #app element - hydration aborted");
+} else {
+  const frontmatter = window.__PAGE_PROPS__?.frontmatter ?? {};
+
+  // Capture the server-rendered markdown content before hydration
+  const markdownContent = appRoot.innerHTML;
+
+  // StaticContent preserves the markdown HTML during hydration
+  function StaticContent() {
+    return <div dangerouslySetInnerHTML={{ __html: markdownContent }} />;
+  }
+
+  try {
+    hydrate(
+      <ErrorBoundary>
+        <FrontmatterProvider frontmatter={frontmatter}>
+          ${composedTree}
+        </FrontmatterProvider>
+      </ErrorBoundary>,
+      appRoot
+    );
+  } catch (error) {
+    console.error("[Mage] Hydration failed:", error);
   }
 }
 `;
@@ -103,31 +182,34 @@ if (!appRoot) {
 /**
  * Builds a client bundle for a page.
  *
- * Generates an entry point, runs esbuild, and returns the bundled code.
- *
  * In development mode:
  * - No minification
  * - Inline source maps
- * - Returns code directly
  *
  * In production mode:
  * - Minified
- * - No source maps
  * - Content-hashed filename
  *
  * @param options Bundle build options
- * @returns Bundle result with code and optional metadata
- * @throws Error if esbuild fails or bundle cannot be generated
+ * @returns Bundle result with code and optional filename
+ * @throws Error if esbuild fails
  */
 export async function buildBundle(
   options: BundleBuildOptions,
 ): Promise<BundleResult> {
-  const { layoutPath, rootDir, production = false, pageId } = options;
+  const {
+    pagePath,
+    layoutPaths,
+    rootDir,
+    production = false,
+    pageId,
+    isMarkdown = false,
+  } = options;
 
-  // Generate entry point
-  const entryCode = generateEntryPoint(layoutPath, pageId);
+  const entryCode = isMarkdown
+    ? generateMarkdownEntryPoint(layoutPaths)
+    : generateEntryPoint(pagePath, layoutPaths);
 
-  // Create a virtual entry point using esbuild's stdin
   const buildResult = await esbuild.build({
     stdin: {
       contents: entryCode,
@@ -152,12 +234,11 @@ export async function buildBundle(
   const code = buildResult.outputFiles[0].text;
 
   if (production) {
-    // Generate content hash for filename
     const hashBytes = await crypto.subtle.digest(
       "SHA-256",
       new TextEncoder().encode(code),
     );
-    const hash = encodeHex(hashBytes).slice(0, 8);
+    const hash = encodeHex(new Uint8Array(hashBytes)).slice(0, 8);
     const filename = `${pageId}-${hash}.js`;
 
     return { code, filename };
@@ -167,65 +248,10 @@ export async function buildBundle(
 }
 
 /**
- * Builds an SSR bundle for a layout component.
- *
- * Bundles the layout file and all its dependencies (components, etc.) into
- * a single module for server-side rendering. This solves Deno's module cache
- * problem in development mode.
- *
- * The Problem:
- * When a layout imports components (e.g., `import { Container } from "./container.tsx"`),
- * even if we cache-bust the layout file with `?t=timestamp`, Deno's module cache
- * still returns the old cached version of Container because the import path hasn't changed.
- *
- * The Solution:
- * Bundle the layout AND all its dependencies into a single ESM module, then load it
- * via a data URL. Each bundle gets a unique data URL (with timestamp + random ID),
- * completely bypassing Deno's module cache. Changes to Container show up immediately.
- *
- * IMPORTANT: Preact and preact/hooks are marked as external to ensure the bundled
- * components use the same Preact instance as the main process. This is critical for
- * hooks to work - if the bundle has its own Preact copy, hooks will fail because
- * the rendering context is in a different Preact instance.
- *
- * Note: Only used in development. Production builds use regular imports since they
- * render each page exactly once (no cache issues).
- *
- * @param layoutPath Absolute path to the layout file
- * @param rootDir Root directory of the project for import resolution
- * @returns Bundled layout code as ESM module
- * @throws Error if esbuild fails or bundle cannot be generated
- */
-export async function buildSSRBundle(
-  layoutPath: string,
-  rootDir: string,
-): Promise<string> {
-  const buildResult = await esbuild.build({
-    entryPoints: [layoutPath],
-    bundle: true,
-    format: "esm",
-    platform: "neutral",
-    write: false,
-    jsxImportSource: "preact",
-    jsx: "automatic",
-    absWorkingDir: rootDir,
-    external: [
-      "preact",
-      "preact/hooks",
-      "preact/jsx-runtime",
-      "preact-render-to-string",
-    ],
-  });
-
-  return buildResult.outputFiles[0].text;
-}
-
-/**
  * Stops the esbuild service and releases resources.
  *
- * Call this after all bundles are built (e.g., at end of static build or
- * when shutting down dev server) to prevent resource leaks.
+ * Call this after all bundles are built to prevent resource leaks.
  */
-export function stopBundleBuilder(): void {
-  esbuild.stop();
+export async function stopBundleBuilder(): Promise<void> {
+  await esbuild.stop();
 }

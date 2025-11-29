@@ -1,6 +1,6 @@
 # Dev Server Issues Plan
 
-Issues identified from code review of the pages-next dev server implementation.
+Issues identified from code review of the pages dev server implementation.
 
 ## Critical Issues
 

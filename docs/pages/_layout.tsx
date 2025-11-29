@@ -1,6 +1,6 @@
-import type { LayoutProps } from "../../pages-next/mod.ts";
-import { Head } from "../../pages-next/head.tsx";
-import { useFrontmatter } from "../../pages-next/context.tsx";
+import type { LayoutProps } from "../../pages/mod.ts";
+import { Head } from "../../pages/head.tsx";
+import { useFrontmatter } from "../../pages/context.tsx";
 import { Footer } from "../components/footer.tsx";
 import { Header } from "../components/header.tsx";
 import { ArticleToc } from "../components/article-toc.tsx";

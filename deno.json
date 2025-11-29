@@ -42,6 +42,8 @@
     "./linear-router": "./linear-router/mod.ts",
     "./logs": "./logs/mod.ts",
     "./pages": "./pages/mod.ts",
+    "./pages/head": "./pages/head.tsx",
+    "./pages/hooks": "./pages/hooks.ts",
     "./rate-limit": "./rate-limit/mod.ts",
     "./request-id": "./request-id/mod.ts",
     "./security-headers": "./security-headers/mod.ts",
