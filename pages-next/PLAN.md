@@ -40,12 +40,13 @@
 - [x] Error boundary wrapper for graceful degradation
 - [x] Head component returns null on client (already implemented in Phase 2)
 
-## Phase 5: Production Build
+## Phase 5: Production Build ✅
 
-- Static pre-rendering (all pages to HTML)
-- Asset hashing and manifest
-- Bundle optimization (tree shaking, minification)
-- Sitemap and robots.txt generation
+- [x] Static pre-rendering (all pages to HTML)
+- [x] Asset hashing and manifest
+- [x] Bundle optimization (tree shaking, minification)
+- [x] Sitemap and robots.txt generation
+- [x] Public API: `pages()` factory function with `build()` method
 
 ## Phase 6: Production Server
 

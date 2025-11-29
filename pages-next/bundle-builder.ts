@@ -26,7 +26,7 @@ const CONTEXT_PATH = join(
  * Options for building a client bundle.
  */
 export interface BundleBuildOptions {
-  /** Absolute path to the page file (.tsx only - markdown pages don't hydrate) */
+  /** Absolute path to the page file (.tsx or .md) */
   pagePath: string;
   /** Paths to layout files, ordered root to leaf */
   layoutPaths: string[];
@@ -36,6 +36,8 @@ export interface BundleBuildOptions {
   production?: boolean;
   /** Page identifier for the bundle filename */
   pageId: string;
+  /** Whether this is a markdown page (uses static content preservation) */
+  isMarkdown?: boolean;
 }
 
 /**
@@ -53,9 +55,8 @@ export interface BundleResult {
  *
  * The entry point:
  * 1. Imports the page and all layouts
- * 2. Extracts markdown content from DOM (for markdown pages wrapped in TSX layouts)
- * 3. Composes layouts around the page
- * 4. Hydrates with frontmatter from window.__PAGE_PROPS__
+ * 2. Composes layouts around the page
+ * 3. Hydrates with frontmatter from window.__PAGE_PROPS__
  *
  * @param pagePath Absolute path to the page file
  * @param layoutPaths Layout paths ordered root to leaf
@@ -112,6 +113,73 @@ if (!appRoot) {
 }
 
 /**
+ * Generates a hydration entry point for a Markdown page.
+ *
+ * For markdown pages, the page content is already rendered as static HTML.
+ * This entry point:
+ * 1. Imports only the layouts (not the markdown)
+ * 2. Preserves the static HTML content during hydration
+ * 3. Hydrates the layouts around the preserved content
+ *
+ * @param layoutPaths Layout paths ordered root to leaf
+ * @returns Entry point code as a string
+ */
+export function generateMarkdownEntryPoint(layoutPaths: string[]): string {
+  const layoutImports = layoutPaths
+    .map((path, i) => `import Layout${i} from "${path}";`)
+    .join("\n");
+
+  // Build nested layout composition with StaticContent as the innermost
+  const composeLayouts = (innerContent: string, index: number): string => {
+    if (index >= layoutPaths.length) {
+      return innerContent;
+    }
+    const deeper = composeLayouts(innerContent, index + 1);
+    return `<Layout${index}>{${deeper}}</Layout${index}>`;
+  };
+
+  const composedTree = layoutPaths.length > 0
+    ? composeLayouts("<StaticContent />", 0)
+    : "<StaticContent />";
+
+  // StaticContent component preserves the server-rendered markdown HTML
+  // by using dangerouslySetInnerHTML with the captured innerHTML
+  return `import { hydrate } from "preact";
+import { ErrorBoundary } from "${ERROR_BOUNDARY_PATH}";
+import { FrontmatterProvider } from "${CONTEXT_PATH}";
+${layoutImports}
+
+const appRoot = document.getElementById("app");
+if (!appRoot) {
+  console.error("[Mage] Failed to find #app element - hydration aborted");
+} else {
+  const frontmatter = window.__PAGE_PROPS__?.frontmatter ?? {};
+
+  // Capture the server-rendered markdown content before hydration
+  const markdownContent = appRoot.innerHTML;
+
+  // StaticContent preserves the markdown HTML during hydration
+  function StaticContent() {
+    return <div dangerouslySetInnerHTML={{ __html: markdownContent }} />;
+  }
+
+  try {
+    hydrate(
+      <ErrorBoundary>
+        <FrontmatterProvider value={frontmatter}>
+          ${composedTree}
+        </FrontmatterProvider>
+      </ErrorBoundary>,
+      appRoot
+    );
+  } catch (error) {
+    console.error("[Mage] Hydration failed:", error);
+  }
+}
+`;
+}
+
+/**
  * Builds a client bundle for a page.
  *
  * In development mode:
@@ -129,10 +197,18 @@ if (!appRoot) {
 export async function buildBundle(
   options: BundleBuildOptions,
 ): Promise<BundleResult> {
-  const { pagePath, layoutPaths, rootDir, production = false, pageId } =
-    options;
+  const {
+    pagePath,
+    layoutPaths,
+    rootDir,
+    production = false,
+    pageId,
+    isMarkdown = false,
+  } = options;
 
-  const entryCode = generateEntryPoint(pagePath, layoutPaths);
+  const entryCode = isMarkdown
+    ? generateMarkdownEntryPoint(layoutPaths)
+    : generateEntryPoint(pagePath, layoutPaths);
 
   const buildResult = await esbuild.build({
     stdin: {

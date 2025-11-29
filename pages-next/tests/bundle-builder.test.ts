@@ -9,6 +9,7 @@ import { afterAll, describe, it } from "@std/testing/bdd";
 import {
   buildBundle,
   generateEntryPoint,
+  generateMarkdownEntryPoint,
   stopBundleBuilder,
 } from "../bundle-builder.ts";
 import { resolve } from "@std/path";
@@ -81,6 +82,55 @@ describe(
         expect(code).toContain('document.getElementById("app")');
         expect(code).toContain("if (!appRoot)");
         expect(code).toContain("console.error");
+      });
+    });
+
+    describe("generateMarkdownEntryPoint", () => {
+      it("should generate entry point without page import", () => {
+        const code = generateMarkdownEntryPoint([]);
+
+        // Should NOT import a page component
+        expect(code).not.toContain("import PageComponent");
+        expect(code).toContain('import { hydrate } from "preact"');
+        expect(code).toContain("import { ErrorBoundary }");
+        expect(code).toContain("import { FrontmatterProvider }");
+      });
+
+      it("should capture and preserve markdown content", () => {
+        const code = generateMarkdownEntryPoint([]);
+
+        expect(code).toContain("const markdownContent = appRoot.innerHTML");
+        expect(code).toContain("function StaticContent()");
+        expect(code).toContain("dangerouslySetInnerHTML");
+        expect(code).toContain("__html: markdownContent");
+      });
+
+      it("should use StaticContent component in composition", () => {
+        const code = generateMarkdownEntryPoint([]);
+
+        expect(code).toContain("<StaticContent />");
+      });
+
+      it("should generate entry point with layouts wrapping StaticContent", () => {
+        const code = generateMarkdownEntryPoint([
+          "/app/pages/_layout.tsx",
+          "/app/pages/docs/_layout.tsx",
+        ]);
+
+        expect(code).toContain('import Layout0 from "/app/pages/_layout.tsx"');
+        expect(code).toContain(
+          'import Layout1 from "/app/pages/docs/_layout.tsx"',
+        );
+        expect(code).toContain(
+          "<Layout0>{<Layout1>{<StaticContent />}</Layout1>}</Layout0>",
+        );
+      });
+
+      it("should wrap content in FrontmatterProvider", () => {
+        const code = generateMarkdownEntryPoint([]);
+
+        expect(code).toContain("<FrontmatterProvider value={frontmatter}>");
+        expect(code).toContain("window.__PAGE_PROPS__?.frontmatter");
       });
     });
 
@@ -170,6 +220,39 @@ describe(
         });
 
         expect(result1.filename).toBe(result2.filename);
+      });
+
+      it("should build bundle for markdown page with isMarkdown flag", async () => {
+        const layoutPath = resolve(FIXTURES_DIR, "valid-layout.tsx");
+
+        const result = await buildBundle({
+          pagePath: "/does/not/matter.md",
+          layoutPaths: [layoutPath],
+          rootDir: FIXTURES_DIR,
+          pageId: "docs-intro",
+          isMarkdown: true,
+        });
+
+        expect(result.code).toBeDefined();
+        expect(result.code.length).toBeGreaterThan(0);
+        // Should have StaticContent for markdown preservation
+        expect(result.code).toContain("innerHTML");
+      });
+
+      it("should build production markdown bundle with hash", async () => {
+        const layoutPath = resolve(FIXTURES_DIR, "valid-layout.tsx");
+
+        const result = await buildBundle({
+          pagePath: "/does/not/matter.md",
+          layoutPaths: [layoutPath],
+          rootDir: FIXTURES_DIR,
+          pageId: "docs-intro",
+          isMarkdown: true,
+          production: true,
+        });
+
+        expect(result.filename).toBeDefined();
+        expect(result.filename).toMatch(/^docs-intro-[a-f0-9]{8}\.js$/);
       });
     });
   },

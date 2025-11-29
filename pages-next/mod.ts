@@ -4,8 +4,8 @@
  * @module
  */
 
-// Public API (to be implemented in later phases)
-// export { pages } from "./api.ts";
+// Public API
+export { pages } from "./api.ts";
 
 // Components for use in pages and layouts
 export { Head } from "./head.tsx";
@@ -15,6 +15,8 @@ export type { ErrorBoundaryProps } from "./error-boundary.tsx";
 
 // Types for user-defined pages and layouts
 export type {
+  BuildOptions,
+  DevServerOptions,
   Frontmatter,
   HtmlTemplateComponent,
   HtmlTemplateProps,
@@ -25,4 +27,5 @@ export type {
   PageProps,
   PagesOptions,
   SiteMetadata,
+  StaticServerOptions,
 } from "./types.ts";
