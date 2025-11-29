@@ -1,7 +1,12 @@
 import { resolve } from "@std/path";
-import type { MageMiddleware } from "../app/mod.ts";
+import type { MageContext, MageMiddleware } from "../app/mod.ts";
 import { MageError } from "../app/mod.ts";
 import { statusText } from "../status/mod.ts";
+
+/**
+ * Handler called when a file is not found.
+ */
+type NotFoundHandler = (c: MageContext) => void | Promise<void>;
 
 /**
  * Options for the useServeFiles middleware.
@@ -11,6 +16,8 @@ interface ServeFilesOptions {
   directory: string;
   /** Serve index.html for directory paths @default true */
   serveIndex?: boolean;
+  /** Custom handler for not found responses. If not provided, calls c.notFound() */
+  onNotFound?: NotFoundHandler;
 }
 
 /**
@@ -35,6 +42,15 @@ export const serveFiles = (
 
     const serveIndex = options.serveIndex ?? true;
 
+    // Helper to handle not found - uses custom handler if provided
+    const handleNotFound = async () => {
+      if (options.onNotFound) {
+        await options.onNotFound(c);
+      } else {
+        c.notFound();
+      }
+    };
+
     // Resolve filepath
     const filepath = resolve(options.directory, c.req.wildcard);
 
@@ -42,7 +58,7 @@ export const serveFiles = (
     const normalizedBase = resolve(options.directory);
     const normalizedPath = resolve(filepath);
     if (!normalizedPath.startsWith(normalizedBase)) {
-      c.notFound();
+      await handleNotFound();
       return;
     }
 
@@ -93,7 +109,7 @@ export const serveFiles = (
       return;
     }
 
-    // If no file found, return a 404.
-    c.notFound();
+    // If no file found, handle not found
+    await handleNotFound();
   };
 };

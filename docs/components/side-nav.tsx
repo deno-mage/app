@@ -113,14 +113,14 @@ export function SideNav({ items }: SideNavProps) {
         type="button"
         onClick={toggleNav}
         aria-label={isOpen ? "Close navigation" : "Open navigation"}
-        className="fixed top-[110px] z-30 right-4 cursor-pointer lg:hidden bg-zinc-100 dark:bg-zinc-300 text-zinc-900 dark:text-zinc-900 p-2 rounded shadow-lg hover:bg-zinc-300 dark:hover:bg-zinc-200 transition-all duration-300"
+        className="fixed top-[110px] z-30 right-4 cursor-pointer lg:hidden bg-zinc-100 dark:bg-zinc-300 text-zinc-900 dark:text-zinc-900 p-2 rounded shadow-lg hover:bg-zinc-300 dark:hover:bg-zinc-200"
       >
         {isOpen ? <CloseIcon /> : <MenuIcon />}
       </button>
 
       {/* Navigation sidebar */}
       <aside
-        className={`fixed lg:sticky top-[94px] bottom-0 z-30 w-64 flex-shrink-0 h-[calc(100vh-94px)] bg-zinc-50 dark:bg-zinc-900 border-r border-zinc-300 dark:border-zinc-700 overflow-y-auto transition-all duration-300 ${
+        className={`fixed lg:sticky top-[94px] bottom-0 z-30 w-64 flex-shrink-0 h-[calc(100vh-94px)] bg-zinc-50 dark:bg-zinc-900 border-r border-zinc-300 dark:border-zinc-700 overflow-y-auto ${
           isOpen ? "block" : "hidden lg:block"
         }`}
       >

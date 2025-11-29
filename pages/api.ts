@@ -5,8 +5,8 @@
  */
 
 import type { MageApp } from "../app/mod.ts";
-import { registerDevServer as registerDev } from "./dev-server.ts";
 import { build as buildStatic } from "./build.ts";
+import { registerDevServer as registerDev } from "./dev-server.ts";
 import { registerStaticServer as registerStatic } from "./static-server.ts";
 import type {
   BuildOptions,
@@ -47,11 +47,11 @@ export function pages(options: PagesOptions = {}): {
      * @param devOptions Dev server configuration
      * @returns Promise resolving to cleanup function to stop watchers
      */
-    async registerDevServer(
+    registerDevServer(
       app: MageApp,
       devOptions: DevServerOptions = {},
     ): Promise<() => void> {
-      return await registerDev(app, {
+      return registerDev(app, {
         ...devOptions,
         markdownOptions: devOptions.markdownOptions ?? markdownOptions,
       });

@@ -33,7 +33,7 @@ function normalizeBasePath(basePath: string): string {
  * Behavior:
  * - Serves pre-built HTML files from dist/
  * - Serves hashed assets from dist/__public/
- * - Falls back to 404.html if it exists
+ * - Falls back to _not-found.html if it exists
  * - No building, watching, or rendering
  * - Production serving mode
  *
@@ -49,34 +49,27 @@ export function registerStaticServer(
   const rootDir = options.rootDir ?? "./";
   const basePath = normalizeBasePath(options.basePath ?? "/");
 
-  // Pre-load 404.html at startup to avoid blocking on 404 errors
-  const notFoundPath = join(rootDir, "404.html");
+  // Pre-load _not-found.html at startup to avoid blocking on 404 errors
+  const notFoundPath = join(rootDir, "_not-found.html");
   let notFoundHtml: string | null = null;
   try {
     notFoundHtml = Deno.readTextFileSync(notFoundPath);
   } catch {
-    // 404.html doesn't exist, will use default notFound
+    // _not-found.html doesn't exist, will use default notFound
   }
 
-  // Wrap serveFiles to handle custom 404 page
-  app.get(`${basePath}*`, async (c, next) => {
-    // Store the original notFound function
-    const originalNotFound = c.notFound.bind(c);
-
-    // Override notFound to serve custom 404.html
-    c.notFound = (text?: string) => {
-      if (notFoundHtml) {
-        c.html(notFoundHtml, 404);
-      } else {
-        // Fall back to original notFound if 404.html doesn't exist
-        originalNotFound(text);
-      }
-    };
-
-    // Call serveFiles middleware
-    await serveFiles({
+  app.get(
+    `${basePath}*`,
+    serveFiles({
       directory: rootDir,
       serveIndex: true,
-    })(c, next);
-  });
+      onNotFound: (c) => {
+        if (notFoundHtml) {
+          c.html(notFoundHtml, 404);
+        } else {
+          c.notFound();
+        }
+      },
+    }),
+  );
 }

@@ -1,169 +1,126 @@
-import { describe, it } from "@std/testing/bdd";
+/**
+ * Tests for the pages() public API.
+ *
+ * @module
+ */
+
+import { afterAll, describe, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
 import { join } from "@std/path";
-import { pages } from "../mod.ts";
-import { MageApp } from "../../app/mod.ts";
+import { exists } from "@std/fs";
+import { pages } from "../api.ts";
+import { stopBundleBuilder } from "../bundle-builder.ts";
 
-const FIXTURES_DIR = join(
-  new URL(".", import.meta.url).pathname,
-  "fixtures",
-);
+const FIXTURES_DIR = join(import.meta.dirname!, "fixtures", "build-test");
 
-describe("api - pages factory function", () => {
-  it("should create pages instance without siteMetadata", () => {
-    const instance = pages();
-
-    expect(instance).toHaveProperty("registerDevServer");
-    expect(instance).toHaveProperty("build");
-    expect(instance).toHaveProperty("registerStaticServer");
-  });
-
-  it("should create pages instance with siteMetadata", () => {
-    const instance = pages({
-      siteMetadata: {
-        baseUrl: "https://example.com",
-        title: "Test Site",
-      },
+describe(
+  "pages() API",
+  { sanitizeResources: false, sanitizeOps: false },
+  () => {
+    afterAll(async () => {
+      await stopBundleBuilder();
     });
 
-    expect(instance).toHaveProperty("registerDevServer");
-    expect(instance).toHaveProperty("build");
-    expect(instance).toHaveProperty("registerStaticServer");
-  });
+    it("should return an object with registerDevServer, build, and registerStaticServer", () => {
+      const api = pages();
 
-  it("registerDevServer should return cleanup function", async () => {
-    const instance = pages();
-    const app = new MageApp();
-
-    const cleanup = await instance.registerDevServer(app, {
-      rootDir: FIXTURES_DIR,
+      expect(typeof api.registerDevServer).toBe("function");
+      expect(typeof api.build).toBe("function");
+      expect(typeof api.registerStaticServer).toBe("function");
     });
 
-    expect(typeof cleanup).toBe("function");
+    it("should throw when build() is called without siteMetadata", async () => {
+      const api = pages();
 
-    // Call cleanup to stop watchers
-    cleanup();
-
-    // Wait a bit for watchers to fully stop
-    await new Promise((resolve) => setTimeout(resolve, 100));
-  });
-
-  it("registerDevServer should work without options", async () => {
-    const instance = pages();
-    const app = new MageApp();
-
-    const cleanup = await instance.registerDevServer(app);
-
-    expect(typeof cleanup).toBe("function");
-    cleanup();
-
-    // Wait a bit for watchers to fully stop
-    await new Promise((resolve) => setTimeout(resolve, 100));
-  });
-
-  it("build should throw error when siteMetadata not provided", async () => {
-    const instance = pages();
-
-    try {
-      await instance.build({ rootDir: FIXTURES_DIR });
-      expect(true).toBe(false); // Should not reach here
-    } catch (error) {
-      expect(error).toBeInstanceOf(Error);
-      expect((error as Error).message).toContain(
+      await expect(api.build()).rejects.toThrow(
         "siteMetadata is required for build()",
       );
-    }
-  });
-
-  it("build should work when siteMetadata provided", async () => {
-    const instance = pages({
-      siteMetadata: {
-        baseUrl: "https://example.com",
-        title: "Test Site",
-      },
     });
 
-    const tempDir = await Deno.makeTempDir();
+    it("should build successfully when siteMetadata is provided", async () => {
+      const testOutputDir = await Deno.makeTempDir();
 
-    await instance.build({
-      rootDir: FIXTURES_DIR,
-      outDir: tempDir,
+      const api = pages({
+        siteMetadata: {
+          baseUrl: "https://example.com",
+        },
+      });
+
+      await api.build({
+        rootDir: FIXTURES_DIR,
+        outDir: testOutputDir,
+      });
+
+      expect(await exists(join(testOutputDir, "index.html"))).toBe(true);
+      expect(await exists(join(testOutputDir, "sitemap.xml"))).toBe(true);
+      expect(await exists(join(testOutputDir, "robots.txt"))).toBe(true);
     });
 
-    // Verify build created files
-    const indexPath = join(tempDir, "index.html");
-    const indexExists = await Deno.stat(indexPath).then(
-      () => true,
-      () => false,
-    );
-    expect(indexExists).toBe(true);
-  });
+    it("should pass markdownOptions from pages() to build()", async () => {
+      const testOutputDir = await Deno.makeTempDir();
 
-  it("registerStaticServer should register without errors", () => {
-    const instance = pages();
-    const app = new MageApp();
+      const api = pages({
+        siteMetadata: {
+          baseUrl: "https://example.com",
+        },
+        markdownOptions: {
+          shikiTheme: "github-light",
+        },
+      });
 
-    // Should not throw
-    instance.registerStaticServer(app);
+      await api.build({
+        rootDir: FIXTURES_DIR,
+        outDir: testOutputDir,
+      });
 
-    // Verify it registered successfully by checking that routes were added
-    expect(app).toBeDefined();
-  });
-
-  it("should forward markdownOptions from factory to build", async () => {
-    const instance = pages({
-      siteMetadata: {
-        baseUrl: "https://example.com",
-      },
-      markdownOptions: {
-        shikiTheme: "github-light",
-      },
+      // Build should complete without error
+      expect(await exists(join(testOutputDir, "docs/intro/index.html"))).toBe(
+        true,
+      );
     });
 
-    const tempDir = await Deno.makeTempDir();
+    it("should allow buildOptions to override markdownOptions", async () => {
+      const testOutputDir = await Deno.makeTempDir();
 
-    // Should not throw - markdownOptions are properly forwarded
-    await instance.build({
-      rootDir: FIXTURES_DIR,
-      outDir: tempDir,
+      const api = pages({
+        siteMetadata: {
+          baseUrl: "https://example.com",
+        },
+        markdownOptions: {
+          shikiTheme: "github-light",
+        },
+      });
+
+      await api.build({
+        rootDir: FIXTURES_DIR,
+        outDir: testOutputDir,
+        markdownOptions: {
+          shikiTheme: "github-dark",
+        },
+      });
+
+      expect(await exists(join(testOutputDir, "docs/intro/index.html"))).toBe(
+        true,
+      );
     });
 
-    // Verify build succeeded
-    const indexPath = join(tempDir, "index.html");
-    const indexExists = await Deno.stat(indexPath).then(
-      () => true,
-      () => false,
-    );
-    expect(indexExists).toBe(true);
-  });
+    it("should return a cleanup function from registerDevServer", async () => {
+      const api = pages();
 
-  it("should allow build options to override factory markdownOptions", async () => {
-    const instance = pages({
-      siteMetadata: {
-        baseUrl: "https://example.com",
-      },
-      markdownOptions: {
-        shikiTheme: "github-light",
-      },
+      // Need to use a MageApp
+      const { MageApp } = await import("../../app/mod.ts");
+      const app = new MageApp();
+
+      const cleanup = await api.registerDevServer(app, {
+        rootDir: FIXTURES_DIR,
+      });
+
+      expect(typeof cleanup).toBe("function");
+
+      // Call cleanup to stop watchers
+      cleanup();
     });
 
-    const tempDir = await Deno.makeTempDir();
-
-    // Should not throw - build options can override factory markdownOptions
-    await instance.build({
-      rootDir: FIXTURES_DIR,
-      outDir: tempDir,
-      markdownOptions: {
-        shikiTheme: "github-dark",
-      },
-    });
-
-    // Verify build succeeded
-    const indexPath = join(tempDir, "index.html");
-    const indexExists = await Deno.stat(indexPath).then(
-      () => true,
-      () => false,
-    );
-    expect(indexExists).toBe(true);
-  });
-});
+    // Static server integration tests are in static-server.test.ts
+  },
+);

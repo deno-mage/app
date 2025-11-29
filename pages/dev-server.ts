@@ -1,45 +1,118 @@
 /**
- * Development server for pages module with hot reload.
+ * Development server for pages module.
+ *
+ * Provides on-demand page rendering, hot reload, and dev-time error display.
  *
  * @module
  */
 
 import { join, resolve } from "@std/path";
-import type { MageApp } from "../app/mod.ts";
-import { scanPages } from "./scanner.ts";
-import { renderPageFromFile } from "./renderer.ts";
-import { buildAssetMap, resolveAssetPath } from "./assets.ts";
-import { watchDirectories } from "./watcher.ts";
+import type { MageApp, MageMiddleware } from "../app/mod.ts";
+import { buildBundle, stopBundleBuilder } from "./bundle-builder.ts";
+import { renderErrorOverlay } from "./error-overlay.tsx";
 import {
-  injectHotReload,
-  notifyClients,
-  registerHotReloadClient,
+  createFileWatcher,
+  type FileChange,
+  requiresFullRebuild,
+} from "./file-watcher.ts";
+import {
+  createHotReloadServer,
+  type HotReloadServer,
+  injectHotReloadScript,
 } from "./hot-reload.ts";
 import { logger } from "./logger.ts";
-import type { DevServerOptions } from "./types.ts";
-import {
-  buildBundle,
-  buildSSRBundle,
-  stopBundleBuilder,
-} from "./bundle-builder.ts";
-import type { BundleResult } from "./bundle-builder.ts";
-import { extractLayoutName } from "./frontmatter-parser.ts";
+import { renderPage } from "./renderer.tsx";
+import { getLayoutsForPage, scanSystemFiles } from "./scanner.ts";
+import type {
+  DevServerOptions,
+  MarkdownOptions,
+  SystemFiles,
+} from "./types.ts";
 import {
   checkUnoConfigExists,
   generateCSS,
   loadUnoConfig,
   scanSourceFiles,
 } from "./unocss.ts";
-import type { UserConfig } from "@unocss/core";
+
+/**
+ * Maximum number of bundles to keep in cache.
+ * This prevents unbounded memory growth during long dev sessions.
+ */
+const BUNDLE_CACHE_MAX_SIZE = 50;
+
+/**
+ * Cache for generated bundles.
+ */
+interface BundleCache {
+  code: string;
+  timestamp: number;
+}
+
+/**
+ * Cache for UnoCSS styles.
+ */
+interface StylesCache {
+  css: string;
+  url: string;
+  timestamp: number;
+  /** Modification time of uno.config.ts when cache was created */
+  configMtime: number;
+}
+
+/**
+ * State for the development server.
+ */
+interface DevServerState {
+  /** Root directory */
+  rootDir: string;
+  /** Pages directory */
+  pagesDir: string;
+  /** Public directory */
+  publicDir: string;
+  /** Base path */
+  basePath: string;
+  /** Markdown options */
+  markdownOptions?: MarkdownOptions;
+  /** System files cache */
+  systemFiles: SystemFiles | null;
+  /** System files cache timestamp */
+  systemFilesTimestamp: number;
+  /** Bundle cache by page path */
+  bundleCache: Map<string, BundleCache>;
+  /** UnoCSS styles cache */
+  stylesCache: StylesCache | null;
+  /** Hot reload server */
+  hotReload: HotReloadServer;
+  /** Cleanup function for file watcher */
+  stopWatcher: (() => void) | null;
+}
+
+/**
+ * Sets a bundle in the cache with LRU eviction.
+ *
+ * When cache exceeds max size, removes oldest entries (FIFO).
+ */
+function setBundleCache(
+  cache: Map<string, BundleCache>,
+  key: string,
+  value: BundleCache,
+): void {
+  // Delete and re-add to move to end (most recent)
+  cache.delete(key);
+  cache.set(key, value);
+
+  // Evict oldest entries if over max size
+  while (cache.size > BUNDLE_CACHE_MAX_SIZE) {
+    const firstKey = cache.keys().next().value;
+    if (firstKey !== undefined) {
+      cache.delete(firstKey);
+    }
+  }
+}
 
 /**
  * Normalizes a base path to ensure it has a trailing slash.
- *
- * This ensures consistent URL building across the application.
- * Root path "/" is a special case that remains unchanged.
- *
- * @param basePath Base path to normalize
- * @returns Normalized base path with trailing slash
  */
 function normalizeBasePath(basePath: string): string {
   if (basePath === "/") {
@@ -49,406 +122,466 @@ function normalizeBasePath(basePath: string): string {
 }
 
 /**
- * State for the dev server.
+ * Converts a URL path to a page file path.
+ *
+ * @param urlPath URL path (e.g., "/docs/intro")
+ * @param pagesDir Pages directory
+ * @returns Potential file paths to try
  */
-interface DevServerState {
-  /** Asset map rebuilt on asset changes for cache-busting */
-  assetMap: Map<string, string>;
-  /** Watcher abort controllers for cleanup */
-  watchers: AbortController[];
-  /** In-memory bundle cache to avoid rebuilding (pageId -> bundle) */
-  bundleCache: Map<string, BundleResult>;
-  /** In-memory SSR bundle cache (layoutPath -> bundled code) */
-  ssrBundleCache: Map<string, string>;
-  /** UnoCSS stylesheet URL (undefined if disabled) */
-  stylesheetUrl?: string;
-  /** UnoCSS generated CSS content */
-  stylesheetContent?: string;
-  /** UnoCSS user config */
-  unoConfig?: UserConfig;
+function urlPathToFilePaths(urlPath: string, pagesDir: string): string[] {
+  const paths: string[] = [];
+
+  // Normalize: remove leading slash
+  const normalized = urlPath === "/" ? "" : urlPath.slice(1);
+
+  if (normalized === "") {
+    // Root path: try index.tsx or index.md
+    paths.push(join(pagesDir, "index.tsx"));
+    paths.push(join(pagesDir, "index.md"));
+  } else {
+    // Try as direct file first
+    paths.push(join(pagesDir, `${normalized}.tsx`));
+    paths.push(join(pagesDir, `${normalized}.md`));
+    // Then try as directory index
+    paths.push(join(pagesDir, normalized, "index.tsx"));
+    paths.push(join(pagesDir, normalized, "index.md"));
+  }
+
+  return paths;
 }
 
 /**
- * Registers development server routes with hot reload.
+ * Finds the actual page file for a URL path.
  *
- * Behavior:
- * - Watches entire rootDir for changes (pages/, layouts/, components/, public/, etc.)
- * - Rebuilds asset map when public/ changes
- * - Renders pages on-demand from disk
- * - Serves assets from public/ with hashed URLs
- * - Triggers page reload on file changes
+ * Uses lstat to detect symlinks and verifies realPath is within pagesDir
+ * to prevent symlink attacks that could read files outside the pages directory.
+ */
+async function findPageFile(
+  urlPath: string,
+  pagesDir: string,
+): Promise<string | null> {
+  const candidates = urlPathToFilePaths(urlPath, pagesDir);
+  const resolvedPagesDir = resolve(pagesDir);
+
+  for (const path of candidates) {
+    try {
+      // Use lstat to detect symlinks
+      const stat = await Deno.lstat(path);
+
+      // Reject symlinks for security
+      if (stat.isSymlink) {
+        continue;
+      }
+
+      if (stat.isFile) {
+        // Verify the resolved path is still within pagesDir
+        const realPath = await Deno.realPath(path);
+        if (!realPath.startsWith(resolvedPagesDir)) {
+          continue;
+        }
+        return path;
+      }
+    } catch {
+      // File doesn't exist, try next
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Gets the page directory from a file path relative to pages dir.
+ */
+function getPageDir(filePath: string, pagesDir: string): string {
+  const relative = filePath.slice(pagesDir.length + 1);
+  const parts = relative.split("/");
+  parts.pop(); // Remove filename
+  return parts.join("/");
+}
+
+/**
+ * Gets the page ID from a URL path.
+ *
+ * Uses `__` as separator to avoid collision between
+ * `/a-b` and `/a/b` (both would become "a-b" with `-`).
+ */
+function urlPathToPageId(urlPath: string): string {
+  if (urlPath === "/") {
+    return "index";
+  }
+  return urlPath.slice(1).replace(/\//g, "__");
+}
+
+/**
+ * Refreshes system files cache if needed.
+ */
+async function refreshSystemFiles(state: DevServerState): Promise<SystemFiles> {
+  // Simple cache: refresh if null
+  if (!state.systemFiles) {
+    state.systemFiles = await scanSystemFiles(state.pagesDir);
+    state.systemFilesTimestamp = Date.now();
+  }
+  return state.systemFiles;
+}
+
+/**
+ * Gets the modification time of uno.config.ts.
+ */
+async function getConfigMtime(rootDir: string): Promise<number> {
+  try {
+    const configPath = join(rootDir, "uno.config.ts");
+    const stat = await Deno.stat(configPath);
+    return stat.mtime?.getTime() ?? 0;
+  } catch {
+    return 0;
+  }
+}
+
+/**
+ * Generates or retrieves cached UnoCSS styles.
+ */
+async function getStyles(state: DevServerState): Promise<string | undefined> {
+  // Check if UnoCSS is enabled
+  const configExists = await checkUnoConfigExists(state.rootDir);
+  if (!configExists) {
+    return undefined;
+  }
+
+  // Check config modification time
+  const configMtime = await getConfigMtime(state.rootDir);
+
+  // Use cached if available, recent (within 1 second), and config unchanged
+  if (
+    state.stylesCache &&
+    Date.now() - state.stylesCache.timestamp < 1000 &&
+    state.stylesCache.configMtime === configMtime
+  ) {
+    return state.stylesCache.url;
+  }
+
+  try {
+    const userConfig = await loadUnoConfig(state.rootDir);
+    const content = await scanSourceFiles(state.rootDir);
+    const result = await generateCSS(content, userConfig, state.basePath);
+
+    state.stylesCache = {
+      css: result.css,
+      url: `${state.basePath}__dev-styles/uno.css`,
+      timestamp: Date.now(),
+      configMtime,
+    };
+
+    return state.stylesCache.url;
+  } catch (error) {
+    logger.warn(
+      `UnoCSS generation failed: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
+    return undefined;
+  }
+}
+
+/**
+ * Creates a middleware for serving dev-time generated styles.
+ */
+function createStylesMiddleware(state: DevServerState): MageMiddleware {
+  return (c) => {
+    if (!state.stylesCache) {
+      c.notFound();
+      return;
+    }
+
+    c.text(state.stylesCache.css);
+    c.header("Content-Type", "text/css");
+    c.header("Cache-Control", "no-store");
+  };
+}
+
+/**
+ * Creates a middleware for serving dev-time generated bundles.
+ */
+function createBundleMiddleware(state: DevServerState): MageMiddleware {
+  return (c) => {
+    const pageId = c.req.wildcard;
+    if (typeof pageId !== "string") {
+      c.notFound();
+      return;
+    }
+
+    // Find bundle in cache
+    for (const [path, bundle] of state.bundleCache) {
+      const cachedPageId = urlPathToPageId(
+        path.includes("pages/")
+          ? "/" +
+              path
+                .split("pages/")[1]
+                .replace(/\.(tsx|md)$/, "")
+                .replace(/\/index$/, "") || "/"
+          : "/",
+      );
+
+      if (pageId === `${cachedPageId}.js` || pageId === cachedPageId) {
+        c.text(bundle.code);
+        c.header("Content-Type", "application/javascript");
+        c.header("Cache-Control", "no-store");
+        return;
+      }
+    }
+
+    c.notFound();
+  };
+}
+
+/**
+ * Creates a middleware for serving public assets.
+ */
+function createPublicMiddleware(state: DevServerState): MageMiddleware {
+  return async (c) => {
+    const filePath = c.req.wildcard;
+    if (typeof filePath !== "string") {
+      c.notFound();
+      return;
+    }
+
+    const fullPath = resolve(state.publicDir, filePath);
+
+    // Path traversal protection
+    if (!fullPath.startsWith(resolve(state.publicDir))) {
+      c.notFound();
+      return;
+    }
+
+    try {
+      await c.file(fullPath);
+    } catch {
+      c.notFound();
+    }
+  };
+}
+
+/**
+ * Creates a middleware for rendering pages on-demand.
+ */
+function createPageMiddleware(state: DevServerState): MageMiddleware {
+  return async (c) => {
+    const url = new URL(c.req.raw.url);
+    let urlPath = url.pathname;
+
+    // Strip base path if present
+    if (state.basePath !== "/" && urlPath.startsWith(state.basePath)) {
+      urlPath = urlPath.slice(state.basePath.length - 1) || "/";
+    }
+
+    // Find the page file
+    const pagePath = await findPageFile(urlPath, state.pagesDir);
+
+    if (!pagePath) {
+      // Try to render not-found page
+      const systemFiles = await refreshSystemFiles(state);
+      if (systemFiles.notFound) {
+        try {
+          const stylesheetUrl = await getStyles(state);
+          const pageDir = "";
+          const layoutInfos = getLayoutsForPage(pageDir, systemFiles.layouts);
+          const layoutPaths = layoutInfos.map((l) => l.filePath);
+          const pageId = "not-found";
+
+          const bundle = await buildBundle({
+            pagePath: systemFiles.notFound,
+            layoutPaths,
+            rootDir: state.rootDir,
+            production: false,
+            pageId,
+          });
+
+          setBundleCache(state.bundleCache, systemFiles.notFound, {
+            code: bundle.code,
+            timestamp: Date.now(),
+          });
+
+          const bundleUrl = `${state.basePath}__dev-bundles/${pageId}.js`;
+          const result = await renderPage({
+            pagePath: systemFiles.notFound,
+            pagesDir: state.pagesDir,
+            systemFiles,
+            markdownOptions: state.markdownOptions,
+            bundleUrl,
+            stylesheetUrl,
+          });
+
+          const html = injectHotReloadScript(result.html);
+          c.header("Cache-Control", "no-store");
+          c.html(html, 404);
+          return;
+        } catch (error) {
+          const err = error instanceof Error ? error : new Error(String(error));
+          state.hotReload.sendError(err.message, err.stack);
+          const html = renderErrorOverlay(err, systemFiles.notFound);
+          c.html(injectHotReloadScript(html), 500);
+          return;
+        }
+      }
+
+      c.notFound();
+      return;
+    }
+
+    try {
+      const systemFiles = await refreshSystemFiles(state);
+      const stylesheetUrl = await getStyles(state);
+
+      // Get layouts for this page
+      const pageDir = getPageDir(pagePath, state.pagesDir);
+      const layoutInfos = getLayoutsForPage(pageDir, systemFiles.layouts);
+      const layoutPaths = layoutInfos.map((l) => l.filePath);
+
+      // Build bundle
+      const pageId = urlPathToPageId(urlPath);
+      const isMarkdown = pagePath.endsWith(".md");
+
+      const bundle = await buildBundle({
+        pagePath,
+        layoutPaths,
+        rootDir: state.rootDir,
+        production: false,
+        pageId,
+        isMarkdown,
+      });
+
+      // Cache the bundle with LRU eviction
+      setBundleCache(state.bundleCache, pagePath, {
+        code: bundle.code,
+        timestamp: Date.now(),
+      });
+
+      const bundleUrl = `${state.basePath}__dev-bundles/${pageId}.js`;
+
+      // Render page
+      const result = await renderPage({
+        pagePath,
+        pagesDir: state.pagesDir,
+        systemFiles,
+        markdownOptions: state.markdownOptions,
+        bundleUrl,
+        stylesheetUrl,
+      });
+
+      // Inject hot reload script
+      const html = injectHotReloadScript(result.html);
+
+      c.header("Cache-Control", "no-store");
+      c.html(html);
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      state.hotReload.sendError(err.message, err.stack);
+      const html = renderErrorOverlay(err, pagePath);
+      c.html(injectHotReloadScript(html), 500);
+    }
+  };
+}
+
+/**
+ * Handles file changes and triggers appropriate actions.
+ */
+function handleFileChanges(state: DevServerState, changes: FileChange[]): void {
+  // If layout, system file, or config changed, invalidate all caches
+  if (requiresFullRebuild(changes)) {
+    state.systemFiles = null;
+    state.bundleCache.clear();
+    state.stylesCache = null;
+  } else {
+    // Otherwise, just invalidate affected pages
+    for (const change of changes) {
+      if (change.type === "page") {
+        const fullPath = resolve(state.rootDir, change.relativePath);
+        state.bundleCache.delete(fullPath);
+      }
+    }
+  }
+
+  // Trigger reload
+  state.hotReload.reload();
+}
+
+/**
+ * Registers the development server on a MageApp.
+ *
+ * Provides:
+ * - On-demand page rendering
+ * - Hot reload via WebSocket
+ * - Dev-time error overlay
+ * - Public asset serving (unhashed)
+ * - UnoCSS generation (if enabled)
  *
  * @param app Mage application instance
  * @param options Dev server configuration
- * @returns Cleanup function to stop watchers
- * @throws Error if file operations fail or rendering fails
+ * @returns Cleanup function to stop watchers and close connections
  */
 export async function registerDevServer(
   app: MageApp,
   options: DevServerOptions = {},
-): Promise<() => void> {
-  const rootDir = options.rootDir ?? "./";
+): Promise<() => Promise<void>> {
+  const rootDir = resolve(options.rootDir ?? "./");
   const basePath = normalizeBasePath(options.basePath ?? "/");
+  const pagesDir = resolve(rootDir, "pages");
+  const publicDir = resolve(rootDir, "public");
 
-  const pagesDir = join(rootDir, "pages");
-  const publicDir = resolve(join(rootDir, "public"));
-
-  // Initialize dev server state
+  // Initialize state
   const state: DevServerState = {
-    assetMap: new Map(),
-    watchers: [],
+    rootDir,
+    pagesDir,
+    publicDir,
+    basePath,
+    markdownOptions: options.markdownOptions,
+    systemFiles: null,
+    systemFilesTimestamp: 0,
     bundleCache: new Map(),
-    ssrBundleCache: new Map(),
+    stylesCache: null,
+    hotReload: createHotReloadServer(),
+    stopWatcher: null,
   };
 
-  // Build initial asset map
-  state.assetMap = await buildAssetMap(publicDir, basePath);
+  // Pre-scan system files
+  state.systemFiles = await scanSystemFiles(pagesDir);
 
-  // Initialize UnoCSS if enabled
-  const unoEnabled = await checkUnoConfigExists(rootDir);
-  if (unoEnabled) {
-    logger.info("UnoCSS enabled");
-    try {
-      state.unoConfig = await loadUnoConfig(rootDir);
-      const content = await scanSourceFiles(rootDir, "dist");
-      const result = await generateCSS(content, state.unoConfig, basePath);
-      state.stylesheetUrl = result.url;
-      state.stylesheetContent = result.css;
-    } catch (error) {
-      logger.error(error instanceof Error ? error : new Error(String(error)));
-    }
-  }
-
-  // Debounce reload notifications to prevent race conditions
-  // File watchers often fire multiple events for a single save
-  let reloadTimeout: number | undefined;
-
-  // Watch entire rootDir for changes
-  const watchCallback = async (path: string) => {
-    // Rebuild asset map if public/ changed
-    if (path.startsWith(publicDir)) {
-      state.assetMap = await buildAssetMap(publicDir, basePath);
-    }
-
-    // Regenerate UnoCSS if enabled and source files changed
-    if (
-      unoEnabled && !path.includes("/dist/") && !path.includes("/node_modules/")
-    ) {
-      try {
-        const content = await scanSourceFiles(rootDir, "dist");
-        const result = await generateCSS(content, state.unoConfig, basePath);
-        state.stylesheetUrl = result.url;
-        state.stylesheetContent = result.css;
-      } catch (error) {
-        logger.error(error instanceof Error ? error : new Error(String(error)));
-      }
-    }
-
-    // Clear bundle cache on any file change (layouts, components, etc.)
-    state.bundleCache.clear();
-    state.ssrBundleCache.clear();
-
-    // Debounce client notification to prevent race conditions
-    // where cache is cleared while browser is fetching bundles
-    if (reloadTimeout !== undefined) {
-      clearTimeout(reloadTimeout);
-    }
-    reloadTimeout = setTimeout(() => {
-      notifyClients();
-      reloadTimeout = undefined;
-    }, 100);
-  };
-
-  state.watchers = watchDirectories(
-    [rootDir],
-    watchCallback,
-  );
-
-  // Register routes for pages
-  app.get(`${basePath}*`, async (c) => {
-    const startTime = performance.now();
-
-    let pathname = c.req.url.pathname;
-
-    // Normalize pathname: if it matches basePath without trailing slash, add it
-    // This ensures both /docs and /docs/ work when basePath is /docs/
-    if (basePath !== "/" && pathname === basePath.slice(0, -1)) {
-      pathname = basePath;
-    }
-
-    let urlPath = pathname.replace(basePath, "");
-    // Ensure urlPath starts with /
-    if (!urlPath.startsWith("/")) {
-      urlPath = "/" + urlPath;
-    }
-
-    // Find matching page
-    const pages = await scanPages(pagesDir);
-    const page = pages.find((p) => p.urlPath === urlPath);
-
-    if (!page) {
-      // Try to render _not-found.md
-      const notFoundPath = join(pagesDir, "_not-found.md");
-      try {
-        const content = await Deno.readTextFile(notFoundPath);
-        const layoutName = extractLayoutName(content);
-
-        // Build or retrieve cached bundles for 404 page
-        const pageId = "404";
-        const layoutPath = resolve(rootDir, "layouts", `${layoutName}.tsx`);
-
-        // Build client bundle
-        let bundle = state.bundleCache.get(pageId);
-        if (!bundle) {
-          bundle = await buildBundle({
-            layoutPath,
-            rootDir: Deno.cwd(),
-            production: false,
-            pageId,
-          });
-          state.bundleCache.set(pageId, bundle);
-        }
-
-        // Build SSR bundle
-        let ssrBundle = state.ssrBundleCache.get(layoutPath);
-        if (!ssrBundle) {
-          ssrBundle = await buildSSRBundle(layoutPath, Deno.cwd());
-          state.ssrBundleCache.set(layoutPath, ssrBundle);
-        }
-
-        const bundleUrl = `${basePath}__bundles/${pageId}.js`;
-        const rendered = await renderPageFromFile(
-          notFoundPath,
-          rootDir,
-          {
-            assetMap: state.assetMap,
-            bundleUrl,
-            stylesheetUrl: state.stylesheetUrl,
-            ssrBundle,
-            markdownOptions: options.markdownOptions,
-          },
-        );
-
-        const duration = (performance.now() - startTime).toFixed(2);
-        logger.ephemeral(`Rendered page: ${urlPath} (${duration}ms)`);
-
-        // Inject hot reload script
-        const reloadEndpoint = `${basePath}__reload`;
-        const htmlWithReload = injectHotReload(rendered.html, reloadEndpoint);
-
-        c.html(htmlWithReload, 404);
-        return;
-      } catch {
-        // Fall back to simple 404 if _not-found.md doesn't exist or fails to render
-        const reloadEndpoint = `${basePath}__reload`;
-        const fallbackHtml =
-          `<html><body><h1>404 Not Found</h1><p>Page not found: ${urlPath}</p></body></html>`;
-        const htmlWithReload = injectHotReload(fallbackHtml, reloadEndpoint);
-        c.html(htmlWithReload, 404);
-        return;
-      }
-    }
-
-    // Render page on-demand
-    try {
-      // Read frontmatter to determine layout
-      const content = await Deno.readTextFile(page.filePath);
-      const layoutName = extractLayoutName(content);
-
-      // Build or retrieve cached bundles (both client and SSR)
-      const pageId = urlPath === "/"
-        ? "index"
-        : urlPath.slice(1).replace(/\//g, "-");
-      const layoutPath = resolve(rootDir, "layouts", `${layoutName}.tsx`);
-
-      // Build client bundle
-      let bundle = state.bundleCache.get(pageId);
-      if (!bundle) {
-        bundle = await buildBundle({
-          layoutPath,
-          rootDir: Deno.cwd(), // Use project root where deno.json is for import resolution
-          production: false, // Dev mode: no minification, with sourcemaps
-          pageId,
-        });
-        state.bundleCache.set(pageId, bundle);
-      }
-
-      // Build SSR bundle to bypass Deno module cache
-      // This ensures changes to layout components (Container, Header, etc.) show up immediately
-      let ssrBundle = state.ssrBundleCache.get(layoutPath);
-      if (!ssrBundle) {
-        ssrBundle = await buildSSRBundle(layoutPath, Deno.cwd());
-        state.ssrBundleCache.set(layoutPath, ssrBundle);
-      }
-
-      // Render page with bundle URL and SSR bundle
-      const bundleUrl = `${basePath}__bundles/${pageId}.js`;
-      const rendered = await renderPageFromFile(
-        page.filePath,
-        rootDir,
-        {
-          assetMap: state.assetMap,
-          bundleUrl,
-          stylesheetUrl: state.stylesheetUrl,
-          ssrBundle,
-          markdownOptions: options.markdownOptions,
-        },
-      );
-
-      const duration = (performance.now() - startTime).toFixed(2);
-      logger.ephemeral(`Rendered page: ${urlPath} (${duration}ms)`);
-
-      // Inject hot reload script
-      const reloadEndpoint = `${basePath}__reload`;
-      const htmlWithReload = injectHotReload(rendered.html, reloadEndpoint);
-
-      c.html(htmlWithReload);
-    } catch (error) {
-      // Log the error for debugging
-      logger.error(
-        error instanceof Error ? error : new Error(String(error)),
-      );
-
-      // Try to render _error.md
-      const errorPath = join(pagesDir, "_error.md");
-      try {
-        const content = await Deno.readTextFile(errorPath);
-        const layoutName = extractLayoutName(content);
-
-        // Build or retrieve cached bundles for 500 page
-        const pageId = "500";
-        const layoutPath = resolve(rootDir, "layouts", `${layoutName}.tsx`);
-
-        // Build client bundle
-        let bundle = state.bundleCache.get(pageId);
-        if (!bundle) {
-          bundle = await buildBundle({
-            layoutPath,
-            rootDir: Deno.cwd(),
-            production: false,
-            pageId,
-          });
-          state.bundleCache.set(pageId, bundle);
-        }
-
-        // Build SSR bundle
-        let ssrBundle = state.ssrBundleCache.get(layoutPath);
-        if (!ssrBundle) {
-          ssrBundle = await buildSSRBundle(layoutPath, Deno.cwd());
-          state.ssrBundleCache.set(layoutPath, ssrBundle);
-        }
-
-        const bundleUrl = `${basePath}__bundles/${pageId}.js`;
-        const rendered = await renderPageFromFile(
-          errorPath,
-          rootDir,
-          {
-            assetMap: state.assetMap,
-            bundleUrl,
-            stylesheetUrl: state.stylesheetUrl,
-            ssrBundle,
-            markdownOptions: options.markdownOptions,
-          },
-        );
-
-        const duration = (performance.now() - startTime).toFixed(2);
-        logger.ephemeral(`Rendered page: ${urlPath} (${duration}ms)`);
-
-        // Inject hot reload script
-        const reloadEndpoint = `${basePath}__reload`;
-        const htmlWithReload = injectHotReload(rendered.html, reloadEndpoint);
-
-        c.html(htmlWithReload, 500);
-        return;
-      } catch {
-        // Fall back to simple error page if _error.md doesn't exist or fails to render
-        const message = error instanceof Error
-          ? error.message
-          : "Unknown error";
-        const reloadEndpoint = `${basePath}__reload`;
-        const fallbackHtml =
-          `<html><body><h1>Error rendering page</h1><pre>${message}</pre></body></html>`;
-        const htmlWithReload = injectHotReload(fallbackHtml, reloadEndpoint);
-        c.html(htmlWithReload, 500);
-        return;
-      }
-    }
+  // Set up file watcher
+  state.stopWatcher = createFileWatcher({
+    rootDir,
+    debounceMs: 100,
+    onChange: (changes) => handleFileChanges(state, changes),
   });
 
-  // Register hot reload WebSocket endpoint
-  app.get(`${basePath}__reload`, (c) => {
-    c.webSocket((socket) => {
-      registerHotReloadClient(socket);
-    });
+  // Register WebSocket endpoint for hot reload
+  app.get(`${basePath}__hot-reload`, (c) => {
+    state.hotReload.handleUpgrade(c);
   });
 
-  // Register route for bundles
-  app.get(`${basePath}__bundles/*`, (c) => {
-    // Extract pageId from path (remove /__bundles/ prefix and .js suffix)
-    const path = c.req.url.pathname;
-    const bundlesPrefix = `${basePath}__bundles/`;
-    const pageId = path
-      .slice(bundlesPrefix.length)
-      .replace(/\.js$/, "");
+  // Register styles endpoint
+  app.get(`${basePath}__dev-styles/*`, createStylesMiddleware(state));
 
-    const bundle = state.bundleCache.get(pageId);
+  // Register bundles endpoint
+  app.get(`${basePath}__dev-bundles/*`, createBundleMiddleware(state));
 
-    if (!bundle) {
-      c.notFound();
-      return;
-    }
+  // Register public assets endpoint
+  app.get(`${basePath}public/*`, createPublicMiddleware(state));
 
-    // Serve bundle with correct content type
-    c.text(bundle.code);
-    c.header("Content-Type", "application/javascript");
-  });
+  // Register catch-all page handler
+  app.get(`${basePath}*`, createPageMiddleware(state));
 
-  // Register route for UnoCSS stylesheet
-  app.get(`${basePath}__styles/*`, (c) => {
-    if (!state.stylesheetContent) {
-      c.notFound();
-      return;
-    }
-
-    // Serve CSS with correct content type
-    c.text(state.stylesheetContent);
-    c.header("Content-Type", "text/css");
-  });
-
-  // Register routes for assets
-  app.get(`${basePath}__public/*`, async (c) => {
-    const hashedUrl = c.req.url.pathname;
-
-    // Resolve hashed URL to clean file path
-    const cleanPath = resolveAssetPath(hashedUrl, state.assetMap);
-
-    if (!cleanPath) {
-      c.notFound();
-      return;
-    }
-
-    const filePath = join(publicDir, cleanPath);
-
-    try {
-      await c.file(filePath);
-    } catch (error) {
-      if (error instanceof Deno.errors.NotFound) {
-        c.notFound();
-      } else {
-        throw error;
-      }
-    }
-  });
+  logger.info("Dev server ready");
 
   // Return cleanup function
-  return () => {
-    // Clear any pending reload timeout
-    if (reloadTimeout !== undefined) {
-      clearTimeout(reloadTimeout);
+  return async () => {
+    if (state.stopWatcher) {
+      state.stopWatcher();
     }
-    for (const watcher of state.watchers) {
-      watcher.abort();
-    }
-    stopBundleBuilder();
+    state.hotReload.close();
+    await stopBundleBuilder();
+
+    // Clear caches to free memory
+    state.bundleCache.clear();
+    state.stylesCache = null;
+    state.systemFiles = null;
   };
 }

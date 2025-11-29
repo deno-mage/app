@@ -5,234 +5,50 @@
  */
 
 import { ensureDir } from "@std/fs";
-import { join, resolve } from "@std/path";
-import { scanPages } from "./scanner.ts";
-import type { PageInfo } from "./scanner.ts";
-import { renderPageFromFile } from "./renderer.ts";
-import { buildAssetMap } from "./assets.ts";
+import { dirname, join, relative, resolve } from "@std/path";
+import { buildAssetMap, replaceAssetUrls } from "./assets.ts";
 import { buildBundle, stopBundleBuilder } from "./bundle-builder.ts";
+import { escapeXml } from "./html-utils.ts";
 import { logger } from "./logger.ts";
-import type { BuildOptions, SiteMetadata } from "./types.ts";
-import { extractLayoutName } from "./frontmatter-parser.ts";
+import { renderPage } from "./renderer.tsx";
+import { getLayoutsForPage, scanPages, scanSystemFiles } from "./scanner.ts";
+import type {
+  BuildOptions,
+  PageInfo,
+  SiteMetadata,
+  SystemFiles,
+} from "./types.ts";
 import { processUnoCSS } from "./unocss.ts";
 
 /**
  * Normalizes a base path to ensure it has a trailing slash.
  *
- * This ensures consistent URL building across the application.
  * Root path "/" is a special case that remains unchanged.
+ * Validates that basePath starts with "/" and contains only safe characters.
  *
  * @param basePath Base path to normalize
  * @returns Normalized base path with trailing slash
+ * @throws Error if basePath is invalid
  */
 function normalizeBasePath(basePath: string): string {
+  // Validate basePath format: must start with / and contain only safe URL characters
+  if (!/^\/[\w\-./]*$/.test(basePath)) {
+    throw new Error(
+      `Invalid basePath "${basePath}": must start with "/" and contain only alphanumeric characters, hyphens, underscores, dots, and slashes`,
+    );
+  }
+
+  // Reject path traversal attempts
+  if (basePath.includes("..")) {
+    throw new Error(
+      `Invalid basePath "${basePath}": path traversal not allowed`,
+    );
+  }
+
   if (basePath === "/") {
     return "/";
   }
   return basePath.endsWith("/") ? basePath : `${basePath}/`;
-}
-
-/**
- * Builds a static site from markdown files.
- *
- * Process:
- * 1. Cleans output directory (removes all existing files)
- * 2. Scans pages/ directory for markdown files
- * 3. Builds asset map from public/ directory
- * 4. Renders each page with layout and asset URL replacement
- * 5. Writes HTML files to outDir
- * 6. Copies assets to outDir/__public/ with hashed filenames
- *
- * Note: The output directory is completely cleaned before each build
- * to ensure no stale files remain from previous builds.
- *
- * @param siteMetadata Site-wide metadata for sitemap and robots.txt
- * @param options Build configuration
- * @throws Error if file operations fail or rendering fails
- */
-export async function build(
-  siteMetadata: SiteMetadata,
-  options: BuildOptions = {},
-): Promise<void> {
-  const startTime = performance.now();
-
-  const rootDir = options.rootDir ?? "./";
-  const outDir = options.outDir ?? join(rootDir, "dist");
-  const basePath = normalizeBasePath(options.basePath ?? "/");
-
-  const pagesDir = join(rootDir, "pages");
-  const publicDir = join(rootDir, "public");
-
-  logger.info(`Building static site from ${rootDir}...`);
-
-  // Clean and recreate output directory for fresh build
-  await Deno.remove(outDir, { recursive: true }).catch(() => {});
-  await ensureDir(outDir);
-
-  // Build asset map for cache-busting with configured base path
-  const assetMap = await buildAssetMap(publicDir, basePath);
-
-  // Scan for all markdown pages
-  const pages = await scanPages(pagesDir);
-  logger.info(`Found ${pages.length} pages to build`);
-
-  // Create bundles directory
-  const bundlesDir = join(outDir, "__bundles");
-  await ensureDir(bundlesDir);
-
-  // Generate UnoCSS styles if enabled
-  const stylesheetUrl = await processUnoCSS(rootDir, outDir, basePath);
-
-  // Render and write each page
-  let successCount = 0;
-  let errorCount = 0;
-
-  for (const page of pages) {
-    try {
-      // Read frontmatter to determine layout
-      const content = await Deno.readTextFile(page.filePath);
-      const layoutName = extractLayoutName(content);
-
-      // Build client bundle for this page
-      // Use resolve() to ensure absolute path for esbuild
-      const layoutPath = resolve(rootDir, "layouts", `${layoutName}.tsx`);
-      const pageId = page.urlPath === "/"
-        ? "index"
-        : page.urlPath.slice(1).replace(/\//g, "-");
-
-      const bundle = await buildBundle({
-        layoutPath,
-        rootDir: Deno.cwd(), // Use project root where deno.json is for import resolution
-        production: true,
-        pageId,
-      });
-
-      // Write bundle to disk
-      const bundlePath = join(bundlesDir, bundle.filename!);
-      await Deno.writeTextFile(bundlePath, bundle.code);
-
-      // Render page with bundle URL (respecting base path)
-      // Note: No SSR bundle needed in production - each page renders once,
-      // so Deno's module cache doesn't cause issues with component updates
-      const bundleUrl = `${basePath}__bundles/${bundle.filename}`;
-      const rendered = await renderPageFromFile(
-        page.filePath,
-        rootDir,
-        {
-          assetMap,
-          bundleUrl,
-          stylesheetUrl,
-          markdownOptions: options.markdownOptions,
-        },
-      );
-
-      // Determine output file path
-      const outputPath = urlPathToFilePath(page.urlPath, outDir);
-
-      // Ensure parent directory exists
-      const parentDir = join(outputPath, "..");
-      await ensureDir(parentDir);
-
-      // Write HTML file
-      await Deno.writeTextFile(outputPath, rendered.html);
-      successCount++;
-    } catch (error) {
-      errorCount++;
-      logger.error(
-        new Error(
-          `Failed to render ${page.urlPath}: ${
-            error instanceof Error ? error.message : String(error)
-          }`,
-        ),
-      );
-    }
-  }
-
-  // Render _not-found.md to 404.html (if it exists)
-  const notFoundPath = join(pagesDir, "_not-found.md");
-  try {
-    const content = await Deno.readTextFile(notFoundPath);
-    const layoutName = extractLayoutName(content);
-    const layoutPath = resolve(rootDir, "layouts", `${layoutName}.tsx`);
-
-    const notFoundBundle = await buildBundle({
-      layoutPath,
-      rootDir: Deno.cwd(),
-      production: true,
-      pageId: "404",
-    });
-
-    const notFoundBundlePath = join(bundlesDir, notFoundBundle.filename!);
-    await Deno.writeTextFile(notFoundBundlePath, notFoundBundle.code);
-
-    const rendered = await renderPageFromFile(
-      notFoundPath,
-      rootDir,
-      {
-        assetMap,
-        bundleUrl: `${basePath}__bundles/${notFoundBundle.filename}`,
-        stylesheetUrl,
-        markdownOptions: options.markdownOptions,
-      },
-    );
-    await Deno.writeTextFile(join(outDir, "404.html"), rendered.html);
-  } catch {
-    // _not-found.md doesn't exist, skip
-  }
-
-  // Render _error.md to 500.html (if it exists)
-  const errorPath = join(pagesDir, "_error.md");
-  try {
-    const content = await Deno.readTextFile(errorPath);
-    const layoutName = extractLayoutName(content);
-    const layoutPath = resolve(rootDir, "layouts", `${layoutName}.tsx`);
-
-    const errorBundle = await buildBundle({
-      layoutPath,
-      rootDir: Deno.cwd(),
-      production: true,
-      pageId: "500",
-    });
-
-    const errorBundlePath = join(bundlesDir, errorBundle.filename!);
-    await Deno.writeTextFile(errorBundlePath, errorBundle.code);
-
-    const rendered = await renderPageFromFile(
-      errorPath,
-      rootDir,
-      {
-        assetMap,
-        bundleUrl: `${basePath}__bundles/${errorBundle.filename}`,
-        stylesheetUrl,
-        markdownOptions: options.markdownOptions,
-      },
-    );
-    await Deno.writeTextFile(join(outDir, "500.html"), rendered.html);
-  } catch {
-    // _error.md doesn't exist, skip
-  }
-
-  // Copy assets to dist/__public/ with hashed filenames
-  await copyHashedAssets(publicDir, outDir, assetMap, basePath);
-
-  // Generate sitemap.xml
-  await generateSitemap(pages, siteMetadata, outDir);
-
-  // Generate robots.txt
-  await generateRobotsTxt(siteMetadata, outDir);
-
-  // Clean up esbuild
-  stopBundleBuilder();
-
-  // Calculate build time
-  const endTime = performance.now();
-  const buildTime = Math.round(endTime - startTime);
-
-  // Log summary
-  if (errorCount > 0) {
-    logger.error(new Error(`Build completed with ${errorCount} error(s)`));
-  }
-  logger.info(`✓ Built ${successCount} pages to ${outDir} (${buildTime}ms)`);
 }
 
 /**
@@ -253,16 +69,36 @@ function urlPathToFilePath(urlPath: string, outDir: string): string {
 }
 
 /**
- * Copies assets from public/ to dist/__public/ with hashed filenames.
+ * Gets the directory containing a page from its relative file path.
  *
- * Uses the asset map to determine hashed filenames and copies each file
- * to the correct location in the output directory.
+ * @param relativePath Relative path from pages directory
+ * @returns Directory path (empty string for root-level pages)
+ */
+function getPageDir(relativePath: string): string {
+  const dir = dirname(relativePath);
+  return dir === "." ? "" : dir;
+}
+
+/**
+ * Generates a page ID from a URL path for bundle naming.
+ *
+ * @param urlPath URL path for the page
+ * @returns Page ID suitable for filename
+ */
+function urlPathToPageId(urlPath: string): string {
+  if (urlPath === "/") {
+    return "index";
+  }
+  return urlPath.slice(1).replace(/\//g, "-");
+}
+
+/**
+ * Copies assets from public/ to dist/__public/ with hashed filenames.
  *
  * @param publicDir Source directory for assets
  * @param outDir Destination directory for build output
  * @param assetMap Map of clean URLs to hashed URLs
- * @param basePath Base path for URL construction (used to strip prefix)
- * @throws Error if file copy operations fail
+ * @param basePath Base path for URL construction
  */
 async function copyHashedAssets(
   publicDir: string,
@@ -270,21 +106,36 @@ async function copyHashedAssets(
   assetMap: Map<string, string>,
   basePath: string,
 ): Promise<void> {
+  const resolvedPublicDir = resolve(publicDir);
+  const resolvedOutDir = resolve(outDir, "__public");
+
   for (const [cleanUrl, hashedUrl] of assetMap) {
     // Extract relative path from clean URL
     // "/public/styles.css" → "styles.css"
     const relativePath = cleanUrl.replace(/^\/public\//, "");
 
     // Extract hashed path from hashed URL by stripping basePath prefix
-    // With basePath="/docs/": "/docs/__public/styles-abc123.css" → "styles-abc123.css"
-    // With basePath="/": "/__public/styles-abc123.css" → "styles-abc123.css"
     const hashedPath = hashedUrl.replace(`${basePath}__public/`, "");
 
-    const sourcePath = join(publicDir, relativePath);
-    const destPath = join(outDir, "__public", hashedPath);
+    const sourcePath = resolve(publicDir, relativePath);
+    const destPath = resolve(outDir, "__public", hashedPath);
+
+    // Path traversal protection
+    if (
+      !sourcePath.startsWith(resolvedPublicDir + "/") &&
+      sourcePath !== resolvedPublicDir
+    ) {
+      throw new Error(`Invalid source path: ${relativePath}`);
+    }
+    if (
+      !destPath.startsWith(resolvedOutDir + "/") &&
+      destPath !== resolvedOutDir
+    ) {
+      throw new Error(`Invalid destination path: ${hashedPath}`);
+    }
 
     // Ensure destination directory exists
-    await ensureDir(join(destPath, ".."));
+    await ensureDir(dirname(destPath));
 
     // Copy the file
     await Deno.copyFile(sourcePath, destPath);
@@ -294,12 +145,9 @@ async function copyHashedAssets(
 /**
  * Generates a sitemap.xml file for search engine indexing.
  *
- * Creates XML sitemap with all page URLs and weekly change frequency.
- *
  * @param pages Array of page information
  * @param siteMetadata Site metadata including baseUrl
  * @param outDir Output directory for sitemap.xml
- * @throws Error if file write fails
  */
 async function generateSitemap(
   pages: PageInfo[],
@@ -307,7 +155,7 @@ async function generateSitemap(
   outDir: string,
 ): Promise<void> {
   const urls = pages.map((page) => {
-    const url = `${siteMetadata.baseUrl}${page.urlPath}`;
+    const url = escapeXml(`${siteMetadata.baseUrl}${page.urlPath}`);
     return `  <url>
     <loc>${url}</loc>
     <changefreq>weekly</changefreq>
@@ -325,21 +173,264 @@ ${urls}
 /**
  * Generates a robots.txt file allowing all crawlers.
  *
- * Points to the sitemap for improved search engine discovery.
- *
  * @param siteMetadata Site metadata including baseUrl
  * @param outDir Output directory for robots.txt
- * @throws Error if file write fails
  */
 async function generateRobotsTxt(
   siteMetadata: SiteMetadata,
   outDir: string,
 ): Promise<void> {
+  const sitemapUrl = escapeXml(`${siteMetadata.baseUrl}/sitemap.xml`);
   const robots = `User-agent: *
 Allow: /
 
-Sitemap: ${siteMetadata.baseUrl}/sitemap.xml
+Sitemap: ${sitemapUrl}
 `;
 
   await Deno.writeTextFile(join(outDir, "robots.txt"), robots);
+}
+
+/**
+ * Renders a special page (404 or 500) if it exists.
+ *
+ * @param filePath Path to the special page file
+ * @param outputName Output filename (e.g., "404.html")
+ * @param pagesDir Pages directory
+ * @param outDir Output directory
+ * @param bundlesDir Bundles directory
+ * @param systemFiles System files
+ * @param assetMap Asset map for URL replacement
+ * @param basePath Base path for URLs
+ * @param rootDir Root directory for bundle resolution
+ * @param stylesheetUrl Optional stylesheet URL for UnoCSS
+ */
+async function renderSpecialPage(
+  filePath: string | undefined,
+  outputName: string,
+  pagesDir: string,
+  outDir: string,
+  bundlesDir: string,
+  systemFiles: SystemFiles,
+  assetMap: Map<string, string>,
+  basePath: string,
+  rootDir: string,
+  stylesheetUrl?: string,
+): Promise<void> {
+  if (!filePath) {
+    return;
+  }
+
+  try {
+    const pageId = outputName.replace(".html", "");
+
+    // Get layouts for the special page (it's at root level)
+    const layoutInfos = getLayoutsForPage("", systemFiles.layouts);
+    const layoutPaths = layoutInfos.map((l) => l.filePath);
+
+    // Build client bundle for TSX pages (special pages are always TSX)
+    const bundle = await buildBundle({
+      pagePath: filePath,
+      layoutPaths,
+      rootDir,
+      production: true,
+      pageId,
+    });
+
+    // Write bundle
+    const bundlePath = join(bundlesDir, bundle.filename!);
+    await Deno.writeTextFile(bundlePath, bundle.code);
+
+    // Render page
+    const bundleUrl = `${basePath}__bundles/${bundle.filename}`;
+    const result = await renderPage({
+      pagePath: filePath,
+      pagesDir,
+      systemFiles,
+      bundleUrl,
+      stylesheetUrl,
+    });
+
+    // Replace asset URLs and write
+    const finalHtml = replaceAssetUrls(result.html, assetMap);
+    await Deno.writeTextFile(join(outDir, outputName), finalHtml);
+  } catch (error) {
+    // Log rendering failures but don't fail the build (special pages are optional)
+    logger.warn(
+      `Failed to render ${outputName}: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
+  }
+}
+
+/**
+ * Builds a static site from pages.
+ *
+ * Process:
+ * 1. Cleans output directory
+ * 2. Scans pages/ directory for pages and system files
+ * 3. Builds asset map from public/ directory
+ * 4. For each TSX page: builds bundle and renders HTML
+ * 5. For each Markdown page: renders HTML (no hydration)
+ * 6. Copies assets with hashed filenames
+ * 7. Generates sitemap.xml and robots.txt
+ *
+ * @param siteMetadata Site-wide metadata for sitemap and robots.txt
+ * @param options Build configuration
+ */
+export async function build(
+  siteMetadata: SiteMetadata,
+  options: BuildOptions = {},
+): Promise<void> {
+  const startTime = performance.now();
+
+  const rootDir = options.rootDir ?? "./";
+  const outDir = options.outDir ?? join(rootDir, "dist");
+  const basePath = normalizeBasePath(options.basePath ?? "/");
+
+  const pagesDir = resolve(rootDir, "pages");
+  const publicDir = resolve(rootDir, "public");
+
+  // Clean and recreate output directory
+  try {
+    await Deno.remove(outDir, { recursive: true });
+  } catch (error) {
+    // NotFound is fine - directory doesn't exist yet
+    if (!(error instanceof Deno.errors.NotFound)) {
+      throw error;
+    }
+  }
+  await ensureDir(outDir);
+
+  // Scan for system files and pages
+  const systemFiles = await scanSystemFiles(pagesDir);
+  const pages = await scanPages(pagesDir);
+
+  // Build asset map for cache-busting
+  const assetMap = await buildAssetMap(publicDir, basePath);
+
+  // Process UnoCSS (if uno.config.ts exists)
+  const stylesheetUrl = await processUnoCSS(rootDir, outDir, basePath);
+
+  // Create bundles directory
+  const bundlesDir = join(outDir, "__bundles");
+  await ensureDir(bundlesDir);
+
+  // Render and write each page
+  // Build all pages in parallel
+  const pageResults = await Promise.allSettled(
+    pages.map(async (page) => {
+      const pageId = urlPathToPageId(page.urlPath);
+      const relativePath = relative(pagesDir, page.filePath);
+      const pageDir = getPageDir(relativePath);
+
+      // Get layouts for this page
+      const layoutInfos = getLayoutsForPage(pageDir, systemFiles.layouts);
+      const layoutPaths = layoutInfos.map((l) => l.filePath);
+
+      // Build client bundle for hydration (both TSX and markdown pages)
+      const bundle = await buildBundle({
+        pagePath: page.filePath,
+        layoutPaths,
+        rootDir: Deno.cwd(),
+        production: true,
+        pageId,
+        isMarkdown: page.type === "markdown",
+      });
+
+      // Write bundle to disk
+      const bundlePath = join(bundlesDir, bundle.filename!);
+      await Deno.writeTextFile(bundlePath, bundle.code);
+
+      const bundleUrl = `${basePath}__bundles/${bundle.filename}`;
+
+      // Render page
+      const result = await renderPage({
+        pagePath: page.filePath,
+        pagesDir,
+        systemFiles,
+        markdownOptions: options.markdownOptions,
+        bundleUrl,
+        stylesheetUrl,
+      });
+
+      // Replace asset URLs
+      const finalHtml = replaceAssetUrls(result.html, assetMap);
+
+      // Determine output path and write
+      const outputPath = urlPathToFilePath(page.urlPath, outDir);
+      await ensureDir(dirname(outputPath));
+      await Deno.writeTextFile(outputPath, finalHtml);
+
+      return page.urlPath;
+    }),
+  );
+
+  // Count successes and log errors
+  let successCount = 0;
+  let errorCount = 0;
+
+  for (let i = 0; i < pageResults.length; i++) {
+    const result = pageResults[i];
+    if (result.status === "fulfilled") {
+      successCount++;
+    } else {
+      errorCount++;
+      const page = pages[i];
+      logger.error(
+        `Failed to render ${page.urlPath}: ${
+          result.reason instanceof Error
+            ? result.reason.message
+            : String(result.reason)
+        }`,
+      );
+    }
+  }
+
+  // Render special pages (_not-found and _error)
+  await renderSpecialPage(
+    systemFiles.notFound,
+    "_not-found.html",
+    pagesDir,
+    outDir,
+    bundlesDir,
+    systemFiles,
+    assetMap,
+    basePath,
+    rootDir,
+    stylesheetUrl,
+  );
+
+  await renderSpecialPage(
+    systemFiles.error,
+    "_error.html",
+    pagesDir,
+    outDir,
+    bundlesDir,
+    systemFiles,
+    assetMap,
+    basePath,
+    rootDir,
+    stylesheetUrl,
+  );
+
+  // Copy hashed assets
+  await copyHashedAssets(publicDir, outDir, assetMap, basePath);
+
+  // Generate sitemap and robots.txt
+  await generateSitemap(pages, siteMetadata, outDir);
+  await generateRobotsTxt(siteMetadata, outDir);
+
+  // Clean up esbuild
+  await stopBundleBuilder();
+
+  // Log summary
+  const endTime = performance.now();
+  const buildTime = Math.round(endTime - startTime);
+
+  if (errorCount > 0) {
+    logger.error(`Build failed with ${errorCount} error(s)`);
+  } else {
+    logger.success(`Built ${successCount} pages (${buildTime}ms)`);
+  }
 }

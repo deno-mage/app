@@ -4,40 +4,151 @@
  * @module
  */
 
-import type { ComponentChildren, JSX } from "preact";
+import type { ComponentChildren, JSX, VNode } from "preact";
 
 /**
  * Metadata that can be included in frontmatter.
+ *
+ * Required for all pages (markdown and TSX).
  */
 export interface Frontmatter {
   /** Page title for <title> tag */
   title: string;
   /** Page description for meta tags */
   description?: string;
-  /** Layout name (resolves to layouts/{layout}.tsx) */
-  layout?: string;
   /** Allow custom fields */
   [key: string]: unknown;
 }
 
 /**
- * Props passed to layout components.
+ * Props passed to page components (TSX pages).
  */
-export interface LayoutProps {
-  /** Rendered HTML content from markdown */
-  html: string;
-  /** Page title for <title> tag */
-  title: string;
-  /** Page description for meta tags */
-  description?: string;
-  /** Additional custom fields from frontmatter */
-  additionalFrontmatter?: Record<string, unknown>;
+export interface PageProps {
+  /** Frontmatter metadata for the page */
+  frontmatter: Frontmatter;
 }
 
 /**
- * Layout component type.
+ * A TSX page component.
+ *
+ * Must export `frontmatter` and a default component.
  */
-export type LayoutComponent = (props: LayoutProps) => ComponentChildren;
+export type PageComponent = () => VNode | null;
+
+/**
+ * Props passed to layout components.
+ *
+ * Layouts receive children (VNodes), not HTML strings.
+ */
+export interface LayoutProps {
+  /** Child content to render (page or nested layout) */
+  children: ComponentChildren;
+}
+
+/**
+ * A layout component that wraps page content.
+ *
+ * Layouts compose by directory structure - each _layout.tsx
+ * wraps its children, innermost first.
+ *
+ * **Important:** Layout components MUST render their `children` prop.
+ * A layout that doesn't render children will break page composition
+ * and result in missing content. Example:
+ *
+ * ```tsx
+ * // CORRECT - renders children
+ * export default function Layout({ children }: LayoutProps) {
+ *   return <main>{children}</main>;
+ * }
+ *
+ * // WRONG - ignores children, page content will be lost
+ * export default function Layout({ children }: LayoutProps) {
+ *   return <main>Static content only</main>;
+ * }
+ * ```
+ */
+export type LayoutComponent = (props: LayoutProps) => VNode | null;
+
+/**
+ * Props passed to error page components.
+ */
+export interface ErrorPageProps {
+  /** The error that occurred */
+  error?: Error;
+  /** HTTP status code */
+  statusCode?: number;
+}
+
+/**
+ * An error page component (_error.tsx).
+ */
+export type ErrorPageComponent = (props: ErrorPageProps) => VNode | null;
+
+/**
+ * A not found page component (_not-found.tsx).
+ */
+export type NotFoundPageComponent = () => VNode | null;
+
+/**
+ * Props passed to the document template (_html.tsx).
+ *
+ * Note: Head content from `<Head>` components is automatically extracted
+ * and injected into `<head>` after rendering. You don't need to handle
+ * head content manually in your template.
+ */
+export interface HtmlTemplateProps {
+  /** Page title */
+  title: string;
+  /** Page description */
+  description?: string;
+  /** Child content (the composed layout + page) */
+  children: ComponentChildren;
+}
+
+/**
+ * The document template component (_html.tsx).
+ *
+ * Renders the full HTML document structure.
+ */
+export type HtmlTemplateComponent = (props: HtmlTemplateProps) => JSX.Element;
+
+/**
+ * Information about a discovered layout file.
+ */
+export interface LayoutInfo {
+  /** Absolute path to the _layout.tsx file */
+  filePath: string;
+  /** Directory path relative to pages root (e.g., "", "docs", "docs/api") */
+  directory: string;
+  /** Depth in the directory tree (0 = root) */
+  depth: number;
+}
+
+/**
+ * Information about a discovered page file.
+ */
+export interface PageInfo {
+  /** Absolute path to the page file */
+  filePath: string;
+  /** URL path for the page (e.g., "/", "/docs/getting-started") */
+  urlPath: string;
+  /** File type */
+  type: "markdown" | "tsx";
+}
+
+/**
+ * System files discovered in the pages directory.
+ */
+export interface SystemFiles {
+  /** Path to _html.tsx if present */
+  htmlTemplate?: string;
+  /** Path to _not-found.tsx if present */
+  notFound?: string;
+  /** Path to _error.tsx if present */
+  error?: string;
+  /** All _layout.tsx files by directory */
+  layouts: LayoutInfo[];
+}
 
 /**
  * Site-wide metadata for sitemap and robots.txt generation.
@@ -76,9 +187,9 @@ export interface PagesOptions {
  * Options for the dev server.
  */
 export interface DevServerOptions {
-  /** Root directory containing pages/, layouts/, public/ */
+  /** Root directory containing pages/, public/ */
   rootDir?: string;
-  /** Base path for development (e.g., "/docs/" for http://localhost:8000/docs/) */
+  /** Base path for development (e.g., "/docs/") */
   basePath?: string;
   /** Markdown rendering options */
   markdownOptions?: MarkdownOptions;
@@ -88,11 +199,11 @@ export interface DevServerOptions {
  * Options for building static files.
  */
 export interface BuildOptions {
-  /** Root directory containing pages/, layouts/, public/ */
+  /** Root directory containing pages/, public/ */
   rootDir?: string;
   /** Output directory for built files */
   outDir?: string;
-  /** Base path for deployment (e.g., "/docs/" for https://example.com/docs/) */
+  /** Base path for deployment (e.g., "/docs/") */
   basePath?: string;
   /** Markdown rendering options */
   markdownOptions?: MarkdownOptions;
@@ -104,43 +215,6 @@ export interface BuildOptions {
 export interface StaticServerOptions {
   /** Root directory containing built files (dist/) */
   rootDir?: string;
-  /** Base path for deployment (e.g., "/docs/" for https://example.com/docs/) */
+  /** Base path for deployment (e.g., "/docs/") */
   basePath?: string;
 }
-
-/**
- * Parsed markdown file with extracted frontmatter and content.
- */
-export interface ParsedMarkdown {
-  /** Extracted frontmatter metadata */
-  frontmatter: Frontmatter;
-  /** Markdown content (without frontmatter) */
-  content: string;
-}
-
-/**
- * Asset map entry for cache-busted assets.
- */
-export interface AssetMap {
-  /** Map from clean URL to hashed URL */
-  map: Map<string, string>;
-}
-
-/**
- * Props passed to the _html.tsx document template.
- *
- * The template receives only the page props for conditional rendering.
- * Head content, app wrapper, props script, and bundle script are injected
- * automatically after template rendering.
- */
-export interface HtmlTemplateProps {
-  /** Layout props for conditional logic in template */
-  layoutProps: LayoutProps;
-}
-
-/**
- * _html.tsx template component type.
- *
- * Should be a Preact component that returns JSX for the complete HTML document.
- */
-export type HtmlTemplate = (props: HtmlTemplateProps) => JSX.Element;

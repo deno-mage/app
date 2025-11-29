@@ -1,30 +1,64 @@
 /**
- * Declarative head element management for layouts.
+ * Declarative head element management.
  *
  * @module
  */
 
 import type { ComponentChildren, VNode } from "preact";
 
+/**
+ * Props for the Head component.
+ */
 export interface HeadProps {
+  /** Elements to add to the document head */
   children: ComponentChildren;
 }
 
 /**
- * Declarative head element management for layouts.
+ * Custom element name used as marker during SSR.
+ */
+export const HEAD_MARKER_ELEMENT = "mage-head";
+
+/**
+ * Declarative component for adding elements to the document `<head>`.
  *
- * During SSR: Renders to a marker for extraction.
- * On client: Returns null (head already exists).
+ * During SSR, renders a marker element that will be extracted and moved
+ * to the actual document head. On the client, returns null since the
+ * head content already exists in the document.
  *
- * @param props Component props
- * @returns Head marker during SSR, null on client
+ * @example
+ * ```tsx
+ * function MyLayout({ children }) {
+ *   return (
+ *     <>
+ *       <Head>
+ *         <link rel="stylesheet" href="/styles.css" />
+ *         <meta property="og:title" content="My Page" />
+ *       </Head>
+ *       <main>{children}</main>
+ *     </>
+ *   );
+ * }
+ * ```
+ *
+ * @example Multiple Head components merge
+ * ```tsx
+ * // In layout:
+ * <Head><link rel="stylesheet" href="/base.css" /></Head>
+ *
+ * // In page:
+ * <Head><link rel="stylesheet" href="/page.css" /></Head>
+ *
+ * // Result: both stylesheets are included in head
+ * ```
  */
 export function Head({ children }: HeadProps): VNode | null {
-  // SSR: render to marker for extraction
-  if (typeof window === "undefined") {
-    return <head data-mage-head="true">{children}</head>;
+  // Client-side: head content already exists, don't render anything
+  if (typeof document !== "undefined") {
+    return null;
   }
 
-  // Client: don't render (head already in document)
-  return null;
+  // SSR: render marker for extraction
+  // @ts-expect-error custom element for SSR marker
+  return <mage-head>{children}</mage-head>;
 }

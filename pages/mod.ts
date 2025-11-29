@@ -1,28 +1,24 @@
 /**
- * Simple, convention-based static site generator for Mage apps.
- *
- * Build static sites from Markdown with Preact layouts and file-based routing.
+ * Static site generator with nested layouts and interactive TSX pages.
  *
  * @module
  */
 
+// Public API
 export { pages } from "./api.ts";
-export { Head } from "./head.tsx";
-export { ErrorBoundary } from "./error-boundary.tsx";
 
-export type {
-  ErrorBoundaryProps,
-  ErrorBoundaryState,
-} from "./error-boundary.tsx";
-
+// Types for user-defined pages and layouts
 export type {
   BuildOptions,
   DevServerOptions,
   Frontmatter,
-  HtmlTemplate,
+  HtmlTemplateComponent,
   HtmlTemplateProps,
   LayoutComponent,
   LayoutProps,
+  MarkdownOptions,
+  PageComponent,
+  PageProps,
   PagesOptions,
   SiteMetadata,
   StaticServerOptions,

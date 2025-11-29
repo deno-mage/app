@@ -1,119 +1,215 @@
+/**
+ * Tests for hot-reload module.
+ *
+ * @module
+ */
+
 import { describe, it } from "@std/testing/bdd";
 import { expect } from "@std/expect";
 import {
-  generateHotReloadScript,
-  injectHotReload,
-  notifyClients,
-  registerHotReloadClient,
+  createHotReloadServer,
+  HOT_RELOAD_CLIENT_SCRIPT,
+  injectHotReloadScript,
 } from "../hot-reload.ts";
 
-describe("hot-reload - script generation", () => {
-  it("should generate script with reload endpoint", () => {
-    const script = generateHotReloadScript("/__reload");
+describe("createHotReloadServer", () => {
+  it("should create a server with required methods", () => {
+    const server = createHotReloadServer();
 
-    expect(script).toContain("<script>");
-    expect(script).toContain("</script>");
-    expect(script).toContain("/__reload");
-    expect(script).toContain("WebSocket");
+    expect(typeof server.reload).toBe("function");
+    expect(typeof server.sendError).toBe("function");
+    expect(typeof server.handleUpgrade).toBe("function");
+    expect(typeof server.close).toBe("function");
+
+    server.close();
   });
 
-  it("should include WebSocket connection logic", () => {
-    const script = generateHotReloadScript("/__reload");
+  it("should not throw when calling reload with no clients", () => {
+    const server = createHotReloadServer();
 
-    expect(script).toContain("new WebSocket");
-    expect(script).toContain("ws.onmessage");
-    expect(script).toContain("ws.onclose");
-    expect(script).toContain("ws.onerror");
+    expect(() => server.reload()).not.toThrow();
+
+    server.close();
   });
 
-  it("should include reload logic", () => {
-    const script = generateHotReloadScript("/__reload");
+  it("should not throw when calling sendError with no clients", () => {
+    const server = createHotReloadServer();
 
-    expect(script).toContain("window.location.reload");
+    expect(() => server.sendError("test error", "stack trace")).not.toThrow();
+
+    server.close();
   });
 
-  it("should handle both ws and wss protocols", () => {
-    const script = generateHotReloadScript("/__reload");
+  it("should not throw when calling close multiple times", () => {
+    const server = createHotReloadServer();
 
-    expect(script).toContain("wss:");
-    expect(script).toContain("ws:");
-  });
-});
-
-describe("hot-reload - HTML injection", () => {
-  it("should inject script before closing body tag", () => {
-    const html = `<html><body><h1>Test</h1></body></html>`;
-    const result = injectHotReload(html, "/__reload");
-
-    expect(result).toContain("<script>");
-    expect(result).toContain("/__reload");
-    expect(result.indexOf("<script>")).toBeLessThan(
-      result.indexOf("</body>"),
-    );
+    expect(() => {
+      server.close();
+      server.close();
+    }).not.toThrow();
   });
 
-  it("should handle HTML without body tag", () => {
-    const html = `<html><head><title>Test</title></head></html>`;
-    const result = injectHotReload(html, "/__reload");
+  it("should handle sendError with only message (no stack)", () => {
+    const server = createHotReloadServer();
 
-    expect(result).toContain("<script>");
-    expect(result).toContain("/__reload");
-  });
+    expect(() => server.sendError("error without stack")).not.toThrow();
 
-  it("should preserve existing HTML content", () => {
-    const html =
-      `<html><body><h1>Content</h1><p>More content</p></body></html>`;
-    const result = injectHotReload(html, "/__reload");
-
-    expect(result).toContain("<h1>Content</h1>");
-    expect(result).toContain("<p>More content</p>");
+    server.close();
   });
 });
 
-describe("hot-reload - WebSocket client management", () => {
-  it("should register WebSocket client", () => {
-    const mockSocket = {
-      onclose: null as (() => void) | null,
-      onerror: null as (() => void) | null,
-      readyState: WebSocket.OPEN,
-      send: () => {},
-    } as unknown as WebSocket;
+describe("HOT_RELOAD_CLIENT_SCRIPT", () => {
+  describe("WebSocket connection", () => {
+    it("should construct WebSocket URL from current location", () => {
+      expect(HOT_RELOAD_CLIENT_SCRIPT).toContain("location.protocol");
+      expect(HOT_RELOAD_CLIENT_SCRIPT).toContain("location.host");
+      expect(HOT_RELOAD_CLIENT_SCRIPT).toContain("'/__hot-reload'");
+    });
 
-    registerHotReloadClient(mockSocket);
-
-    // Should set up handlers
-    expect(mockSocket.onclose).not.toBeNull();
-    expect(mockSocket.onerror).not.toBeNull();
+    it("should support both ws and wss protocols", () => {
+      expect(HOT_RELOAD_CLIENT_SCRIPT).toContain("wss:");
+      expect(HOT_RELOAD_CLIENT_SCRIPT).toContain("ws:");
+    });
   });
 
-  it("should notify clients", () => {
-    const messages: string[] = [];
-    const mockSocket = {
-      onclose: null as (() => void) | null,
-      onerror: null as (() => void) | null,
-      readyState: WebSocket.OPEN,
-      send: (msg: string) => messages.push(msg),
-    } as unknown as WebSocket;
+  describe("message handlers", () => {
+    it("should handle reload message type", () => {
+      expect(HOT_RELOAD_CLIENT_SCRIPT).toContain("case 'reload'");
+      expect(HOT_RELOAD_CLIENT_SCRIPT).toContain("location.reload()");
+    });
 
-    registerHotReloadClient(mockSocket);
-    notifyClients();
+    it("should handle error message type", () => {
+      expect(HOT_RELOAD_CLIENT_SCRIPT).toContain("case 'error'");
+      expect(HOT_RELOAD_CLIENT_SCRIPT).toContain("showErrorOverlay");
+    });
 
-    expect(messages).toContain("reload");
+    it("should handle connected message type", () => {
+      expect(HOT_RELOAD_CLIENT_SCRIPT).toContain("case 'connected'");
+      expect(HOT_RELOAD_CLIENT_SCRIPT).toContain("hideErrorOverlay");
+    });
+
+    it("should parse JSON messages", () => {
+      expect(HOT_RELOAD_CLIENT_SCRIPT).toContain("JSON.parse");
+    });
   });
 
-  it("should handle socket errors gracefully", () => {
-    const mockSocket = {
-      onclose: null as (() => void) | null,
-      onerror: null as (() => void) | null,
-      readyState: WebSocket.OPEN,
-      send: () => {
-        throw new Error("Socket error");
-      },
-    } as unknown as WebSocket;
+  describe("reconnection logic", () => {
+    it("should have reconnection attempt limit", () => {
+      expect(HOT_RELOAD_CLIENT_SCRIPT).toContain("maxReconnectAttempts");
+    });
 
-    registerHotReloadClient(mockSocket);
+    it("should have reconnection delay", () => {
+      expect(HOT_RELOAD_CLIENT_SCRIPT).toContain("reconnectDelay");
+    });
 
-    // Should not throw
-    expect(() => notifyClients()).not.toThrow();
+    it("should reset attempts on successful connection", () => {
+      expect(HOT_RELOAD_CLIENT_SCRIPT).toContain("reconnectAttempts = 0");
+    });
+  });
+
+  describe("error overlay", () => {
+    it("should create overlay element", () => {
+      expect(HOT_RELOAD_CLIENT_SCRIPT).toContain("createElement");
+      expect(HOT_RELOAD_CLIENT_SCRIPT).toContain("mage-error-overlay");
+    });
+
+    it("should have dismiss button", () => {
+      expect(HOT_RELOAD_CLIENT_SCRIPT).toContain("Dismiss");
+    });
+
+    it("should display error message and stack", () => {
+      expect(HOT_RELOAD_CLIENT_SCRIPT).toContain("message.message");
+      expect(HOT_RELOAD_CLIENT_SCRIPT).toContain("message.stack");
+    });
+  });
+});
+
+describe("injectHotReloadScript", () => {
+  describe("injection behavior", () => {
+    it("should inject script before closing body tag", () => {
+      const html = "<html><body><p>Content</p></body></html>";
+      const result = injectHotReloadScript(html);
+
+      expect(result).toMatch(/<script>[\s\S]+<\/script><\/body>/);
+    });
+
+    it("should preserve all existing body content", () => {
+      const html =
+        '<html><body><div id="app"><h1>Title</h1><p>Paragraph</p></div></body></html>';
+      const result = injectHotReloadScript(html);
+
+      expect(result).toContain('<div id="app">');
+      expect(result).toContain("<h1>Title</h1>");
+      expect(result).toContain("<p>Paragraph</p>");
+    });
+
+    it("should preserve content before body", () => {
+      const html =
+        "<!DOCTYPE html><html><head><title>Test</title></head><body></body></html>";
+      const result = injectHotReloadScript(html);
+
+      expect(result).toContain("<!DOCTYPE html>");
+      expect(result).toContain("<title>Test</title>");
+    });
+  });
+
+  describe("script content", () => {
+    it("should include WebSocket connection setup", () => {
+      const html = "<html><body></body></html>";
+      const result = injectHotReloadScript(html);
+
+      expect(result).toContain("new WebSocket");
+    });
+
+    it("should include hot reload endpoint path", () => {
+      const html = "<html><body></body></html>";
+      const result = injectHotReloadScript(html);
+
+      expect(result).toContain("/__hot-reload");
+    });
+  });
+
+  describe("edge cases", () => {
+    it("should not modify HTML without body tag", () => {
+      const html = "<!DOCTYPE html><html><head></head></html>";
+      const result = injectHotReloadScript(html);
+
+      expect(result).toBe(html);
+    });
+
+    it("should handle self-closing body (invalid but possible)", () => {
+      const html = "<html><body/></html>";
+      const result = injectHotReloadScript(html);
+
+      // No </body> to match, so unchanged
+      expect(result).toBe(html);
+    });
+
+    it("should handle body with attributes", () => {
+      const html = '<html><body class="dark" data-theme="night"></body></html>';
+      const result = injectHotReloadScript(html);
+
+      expect(result).toContain('class="dark"');
+      expect(result).toContain('data-theme="night"');
+      expect(result).toContain("<script>");
+    });
+
+    it("should handle multiple body references in content", () => {
+      const html =
+        "<html><body><p>The body element is important</p></body></html>";
+      const result = injectHotReloadScript(html);
+
+      // Should inject before </body>, not before "body" text
+      expect(result).toContain("<p>The body element is important</p>");
+      expect(result).toMatch(/<\/script><\/body><\/html>$/);
+    });
+
+    it("should handle empty body", () => {
+      const html = "<html><body></body></html>";
+      const result = injectHotReloadScript(html);
+
+      expect(result).toContain("<script>");
+      expect(result).toContain("</script></body>");
+    });
   });
 });

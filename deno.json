@@ -1,6 +1,6 @@
 {
   "name": "@mage/app",
-  "version": "0.11.1",
+  "version": "0.12.0",
   "license": "MIT",
   "nodeModulesDir": "auto",
   "publish": {
@@ -42,6 +42,8 @@
     "./linear-router": "./linear-router/mod.ts",
     "./logs": "./logs/mod.ts",
     "./pages": "./pages/mod.ts",
+    "./pages/head": "./pages/head.tsx",
+    "./pages/hooks": "./pages/hooks.ts",
     "./rate-limit": "./rate-limit/mod.ts",
     "./request-id": "./request-id/mod.ts",
     "./security-headers": "./security-headers/mod.ts",
