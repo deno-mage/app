@@ -104,12 +104,21 @@ describe(
       );
     });
 
-    it("should throw when registerDevServer is called (not yet implemented)", () => {
+    it("should return a cleanup function from registerDevServer", async () => {
       const api = pages();
 
-      expect(() => api.registerDevServer({} as never)).toThrow(
-        "Dev server not yet implemented",
-      );
+      // Need to use a MageApp
+      const { MageApp } = await import("../../app/mod.ts");
+      const app = new MageApp();
+
+      const cleanup = await api.registerDevServer(app, {
+        rootDir: FIXTURES_DIR,
+      });
+
+      expect(typeof cleanup).toBe("function");
+
+      // Call cleanup to stop watchers
+      cleanup();
     });
 
     // Static server integration tests are in static-server.test.ts

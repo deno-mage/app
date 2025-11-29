@@ -7,6 +7,7 @@
 import { render as preactRender } from "preact-render-to-string";
 import type { VNode } from "preact";
 import { dirname, extname, relative } from "@std/path";
+import { toFileUrl } from "@std/path/to-file-url";
 import { composePage } from "./compositor.tsx";
 import { extractHeadContent } from "./head-extractor.ts";
 import { escapeHtmlAttr } from "./html-utils.ts";
@@ -89,7 +90,11 @@ async function loadHtmlTemplate(
   }
 
   try {
-    const module = await import(systemFiles.htmlTemplate);
+    // Convert to file URL and add cache-busting to force fresh import
+    const importUrl = `${
+      toFileUrl(systemFiles.htmlTemplate).href
+    }?t=${Date.now()}`;
+    const module = await import(importUrl);
 
     if (typeof module.default !== "function") {
       throw new HtmlTemplateError(

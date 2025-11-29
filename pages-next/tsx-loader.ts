@@ -5,6 +5,7 @@
  */
 
 import { relative } from "@std/path";
+import { toFileUrl } from "@std/path/to-file-url";
 import { z } from "zod";
 import type { Frontmatter, PageComponent } from "./types.ts";
 
@@ -110,7 +111,9 @@ export async function loadTsxPage(
   let module: Record<string, unknown>;
 
   try {
-    module = await import(filePath);
+    // Convert to file URL and add cache-busting to force fresh import
+    const importUrl = `${toFileUrl(filePath).href}?t=${Date.now()}`;
+    module = await import(importUrl);
   } catch (error) {
     throw new PageLoadError(filePath, "Failed to import module", error);
   }

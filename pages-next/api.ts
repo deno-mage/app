@@ -6,6 +6,7 @@
 
 import type { MageApp } from "../app/mod.ts";
 import { build as buildStatic } from "./build.ts";
+import { registerDevServer as registerDev } from "./dev-server.ts";
 import { registerStaticServer as registerStatic } from "./static-server.ts";
 import type {
   BuildOptions,
@@ -42,16 +43,18 @@ export function pages(options: PagesOptions = {}): {
      * Auto-watches files for changes, renders pages in-memory,
      * and triggers hot reload on changes.
      *
-     * @param _app Mage application instance
-     * @param _devOptions Dev server configuration
+     * @param app Mage application instance
+     * @param devOptions Dev server configuration
      * @returns Promise resolving to cleanup function to stop watchers
      */
     registerDevServer(
-      _app: MageApp,
-      _devOptions: DevServerOptions = {},
+      app: MageApp,
+      devOptions: DevServerOptions = {},
     ): Promise<() => void> {
-      // TODO: Implement in Phase 8
-      throw new Error("Dev server not yet implemented (Phase 8)");
+      return registerDev(app, {
+        ...devOptions,
+        markdownOptions: devOptions.markdownOptions ?? markdownOptions,
+      });
     },
 
     /**

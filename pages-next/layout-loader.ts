@@ -5,6 +5,7 @@
  */
 
 import { relative } from "@std/path";
+import { toFileUrl } from "@std/path/to-file-url";
 import type { LayoutComponent, LayoutInfo } from "./types.ts";
 
 /**
@@ -83,7 +84,9 @@ async function loadLayout(
   let module: Record<string, unknown>;
 
   try {
-    module = await import(layoutInfo.filePath);
+    // Convert to file URL and add cache-busting to force fresh import
+    const importUrl = `${toFileUrl(layoutInfo.filePath).href}?t=${Date.now()}`;
+    module = await import(importUrl);
   } catch (error) {
     throw new LayoutLoadError(
       layoutInfo.filePath,

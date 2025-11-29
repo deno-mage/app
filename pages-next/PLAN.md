@@ -58,12 +58,12 @@
 - [x] UnoCSS integration (detect `uno.config.ts`, generate CSS)
 - [x] Base path support (`/docs/` prefix) - implemented in Phase 5
 
-## Phase 8: Dev Server
+## Phase 8: Dev Server ✅
 
-- File watcher (pages, layouts, public assets)
-- On-demand page rendering
-- Hot reload (WebSocket, full page refresh initially)
-- Dev-time error overlay
+- [x] File watcher (pages, layouts, public assets, uno.config.ts)
+- [x] On-demand page rendering
+- [x] Hot reload (WebSocket, full page refresh)
+- [x] Dev-time error overlay
 
 ---
 
