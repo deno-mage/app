@@ -8,6 +8,7 @@ import { ensureDir } from "@std/fs";
 import { dirname, join, relative, resolve } from "@std/path";
 import { buildAssetMap, replaceAssetUrls } from "./assets.ts";
 import { buildBundle, stopBundleBuilder } from "./bundle-builder.ts";
+import { escapeXml } from "./html-utils.ts";
 import { logger } from "./logger.ts";
 import { renderPage } from "./renderer.tsx";
 import { getLayoutsForPage, scanPages, scanSystemFiles } from "./scanner.ts";
@@ -17,21 +18,7 @@ import type {
   SiteMetadata,
   SystemFiles,
 } from "./types.ts";
-
-/**
- * Escapes special XML characters to prevent XML injection.
- *
- * @param str String to escape
- * @returns XML-safe string
- */
-function escapeXml(str: string): string {
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;");
-}
+import { processUnoCSS } from "./unocss.ts";
 
 /**
  * Normalizes a base path to ensure it has a trailing slash.
@@ -215,6 +202,7 @@ Sitemap: ${sitemapUrl}
  * @param assetMap Asset map for URL replacement
  * @param basePath Base path for URLs
  * @param rootDir Root directory for bundle resolution
+ * @param stylesheetUrl Optional stylesheet URL for UnoCSS
  */
 async function renderSpecialPage(
   filePath: string | undefined,
@@ -226,6 +214,7 @@ async function renderSpecialPage(
   assetMap: Map<string, string>,
   basePath: string,
   rootDir: string,
+  stylesheetUrl?: string,
 ): Promise<void> {
   if (!filePath) {
     return;
@@ -258,6 +247,7 @@ async function renderSpecialPage(
       pagesDir,
       systemFiles,
       bundleUrl,
+      stylesheetUrl,
     });
 
     // Replace asset URLs and write
@@ -323,6 +313,9 @@ export async function build(
   // Build asset map for cache-busting
   const assetMap = await buildAssetMap(publicDir, basePath);
 
+  // Process UnoCSS (if uno.config.ts exists)
+  const stylesheetUrl = await processUnoCSS(rootDir, outDir, basePath);
+
   // Create bundles directory
   const bundlesDir = join(outDir, "__bundles");
   await ensureDir(bundlesDir);
@@ -364,6 +357,7 @@ export async function build(
         systemFiles,
         markdownOptions: options.markdownOptions,
         bundleUrl,
+        stylesheetUrl,
       });
 
       // Replace asset URLs
@@ -396,6 +390,7 @@ export async function build(
     assetMap,
     basePath,
     rootDir,
+    stylesheetUrl,
   );
 
   await renderSpecialPage(
@@ -408,6 +403,7 @@ export async function build(
     assetMap,
     basePath,
     rootDir,
+    stylesheetUrl,
   );
 
   // Copy hashed assets

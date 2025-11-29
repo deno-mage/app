@@ -9,6 +9,7 @@ import type { VNode } from "preact";
 import { dirname, extname, relative } from "@std/path";
 import { composePage } from "./compositor.tsx";
 import { extractHeadContent } from "./head-extractor.ts";
+import { escapeHtmlAttr } from "./html-utils.ts";
 import { loadLayouts } from "./layout-loader.ts";
 import { loadMarkdownPage } from "./md-loader.ts";
 import { MarkdownPage } from "./markdown-page.tsx";
@@ -38,6 +39,8 @@ export interface RenderPageOptions {
   markdownOptions?: MarkdownOptions;
   /** URL to the client bundle for hydration (omit to disable hydration) */
   bundleUrl?: string;
+  /** URL to a stylesheet to inject (e.g., generated UnoCSS) */
+  stylesheetUrl?: string;
 }
 
 /**
@@ -151,6 +154,19 @@ function injectHeadContent(html: string, headContent: string): string {
 }
 
 /**
+ * Injects a stylesheet link before the closing </head> tag.
+ *
+ * @param html Full HTML document string
+ * @param stylesheetUrl URL to the stylesheet
+ * @returns HTML with stylesheet link injected
+ */
+function injectStylesheet(html: string, stylesheetUrl: string): string {
+  const escapedUrl = escapeHtmlAttr(stylesheetUrl);
+  const link = `<link rel="stylesheet" href="${escapedUrl}">`;
+  return html.replace("</head>", `${link}</head>`);
+}
+
+/**
  * Injects hydration scripts before the closing </body> tag.
  *
  * Adds:
@@ -199,6 +215,7 @@ function wrapInAppDiv(html: string): string {
  * wraps in HTML template, and renders to final HTML.
  *
  * If bundleUrl is provided, injects hydration scripts.
+ * If stylesheetUrl is provided, injects stylesheet link in head.
  */
 async function renderPageInternal(
   pageElement: VNode,
@@ -207,6 +224,7 @@ async function renderPageInternal(
   pagesDir: string,
   systemFiles: SystemFiles,
   bundleUrl?: string,
+  stylesheetUrl?: string,
 ): Promise<RenderResult> {
   // Get applicable layouts
   const layoutInfos = getApplicableLayouts(pagePath, pagesDir, systemFiles);
@@ -240,6 +258,11 @@ async function renderPageInternal(
   const { html: cleanedHtml, headContent } = extractHeadContent(renderedHtml);
   let finalHtml = injectHeadContent(cleanedHtml, headContent);
 
+  // If stylesheet URL provided, inject stylesheet link
+  if (stylesheetUrl) {
+    finalHtml = injectStylesheet(finalHtml, stylesheetUrl);
+  }
+
   // If bundle URL provided, inject hydration scripts
   if (bundleUrl) {
     finalHtml = wrapInAppDiv(finalHtml);
@@ -270,7 +293,7 @@ async function renderPageInternal(
 export async function renderTsxPage(
   options: RenderPageOptions,
 ): Promise<RenderResult> {
-  const { pagePath, pagesDir, systemFiles, bundleUrl } = options;
+  const { pagePath, pagesDir, systemFiles, bundleUrl, stylesheetUrl } = options;
 
   // Load the page (with path validation)
   const page = await loadTsxPage({ filePath: pagePath, pagesDir });
@@ -286,6 +309,7 @@ export async function renderTsxPage(
     pagesDir,
     systemFiles,
     bundleUrl,
+    stylesheetUrl,
   );
 }
 
@@ -308,8 +332,14 @@ export async function renderTsxPage(
 export async function renderMarkdownPage(
   options: RenderPageOptions,
 ): Promise<RenderResult> {
-  const { pagePath, pagesDir, systemFiles, markdownOptions, bundleUrl } =
-    options;
+  const {
+    pagePath,
+    pagesDir,
+    systemFiles,
+    markdownOptions,
+    bundleUrl,
+    stylesheetUrl,
+  } = options;
 
   // Load the markdown page (with path validation)
   const page = await loadMarkdownPage({
@@ -328,6 +358,7 @@ export async function renderMarkdownPage(
     pagesDir,
     systemFiles,
     bundleUrl,
+    stylesheetUrl,
   );
 }
 
